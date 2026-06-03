@@ -16,10 +16,15 @@ export function Countdown({ lockTimeIso }: { lockTimeIso: string }) {
   const lockTime = new Date(lockTimeIso).getTime();
   const [now, setNow] = useState<number>(() => Date.now());
 
+  // Sekundengenauer Ticker NUR, wenn der Tipp-Schluss in < 1 Stunde ist.
+  // Für weit entfernte Spiele (Tage) wäre ein 1s-Interval pro Karte reine
+  // Verschwendung – das kostet auf dem Handy spürbar Leistung.
   useEffect(() => {
+    const remaining = lockTime - Date.now();
+    if (remaining <= 0 || remaining > 60 * 60 * 1000) return;
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [lockTime]);
 
   const ms = lockTime - now;
   const locked = ms <= 0;

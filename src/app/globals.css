@@ -129,3 +129,35 @@
     transition-duration: 0.001ms !important;
   }
 }
+
+/* Mobile-Performance: teure GPU-Effekte auf kleinen Screens abschalten.
+   backdrop-filter, große blur()-Blobs und Dauer-Animationen sind auf Handys
+   die Hauptursache für ruckelnde/verspätete Klicks. */
+@media (max-width: 768px) {
+  /* kein backdrop-blur (Glas, Header, Sticky-Header) -> stattdessen solide Fläche */
+  .glass,
+  [class*="backdrop-blur"] {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  .glass {
+    background: hsl(222 44% 16% / 0.92);
+  }
+
+  /* dekorative Blobs (blur 70px) komplett ausblenden – Verläufe der Panels bleiben */
+  .blob {
+    display: none !important;
+  }
+
+  /* fixierter Hintergrund verursacht Repaints beim Scrollen */
+  body {
+    background-attachment: scroll;
+  }
+
+  /* dauerhafte Animationen, die nicht essenziell sind, anhalten */
+  .shimmer-gold,
+  .animate-marquee,
+  .animate-glow-pulse {
+    animation: none !important;
+  }
+}
