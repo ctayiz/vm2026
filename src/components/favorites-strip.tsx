@@ -1,0 +1,110 @@
+import Link from "next/link";
+import { Star } from "lucide-react";
+import { Flag } from "@/components/flag";
+import { PredictionPicker } from "@/components/prediction-picker";
+import { formatTime, dayLabel } from "@/lib/format";
+import { isPickLocked } from "@/lib/lock";
+import { cn } from "@/lib/utils";
+import type { MatchWithPrediction } from "@/lib/queries";
+import type { Prediction } from "@/lib/constants";
+
+interface TeamRef {
+  name: string;
+  code: string;
+  flagCode: string | null;
+}
+
+export interface FavoriteOverview {
+  code: string;
+  team: TeamRef | null;
+  last: MatchWithPrediction | null;
+  next: MatchWithPrediction | null;
+}
+
+function ResultLine({ code, match }: { code: string; match: MatchWithPrediction }) {
+  const isHome = match.homeTeam?.code === code;
+  const own = isHome ? match.homeGoals : match.awayGoals;
+  const opp = isHome ? match.awayGoals : match.homeGoals;
+  const oppTeam = isHome ? match.awayTeam : match.homeTeam;
+  const res = own == null || opp == null ? null : own > opp ? "W" : own < opp ? "L" : "D";
+  const color = res === "W" ? "text-primary" : res === "L" ? "text-red-300" : "text-muted-foreground";
+  return (
+    <span className="flex items-center gap-1.5 text-xs">
+      <span className={cn("font-bold tabular-nums", color)}>
+        {own}:{opp}
+      </span>
+      <span className="text-muted-foreground">vs</span>
+      <Flag code={oppTeam?.flagCode} className="text-sm" />
+      <span className="truncate text-muted-foreground">{oppTeam?.code ?? "?"}</span>
+    </span>
+  );
+}
+
+export function FavoritesStrip({ items }: { items: FavoriteOverview[] }) {
+  return (
+    <section className="space-y-2">
+      <div className="flex items-center gap-2">
+        <Star className="size-4 fill-amber-300 text-amber-300" />
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          Deine Favoriten
+        </h2>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-3">
+        {items.map((f, i) => {
+          const next = f.next;
+          const nextLocked = next ? isPickLocked(next.kickoff) : false;
+          const oppOfNext = next
+            ? next.homeTeam?.code === f.code
+              ? next.awayTeam
+              : next.homeTeam
+            : null;
+          return (
+            <div
+              key={f.code}
+              className="card-hover animate-fade-up glass flex flex-col gap-1.5 rounded-xl px-3 py-2.5"
+              style={{ animationDelay: `${i * 60}ms` }}
+            >
+              <Link
+                href={`/spielplan?team=${f.code}`}
+                className="flex items-center gap-2 hover:opacity-90"
+              >
+                <Flag code={f.team?.flagCode} className="text-xl" />
+                <span className="truncate text-sm font-semibold">{f.team?.name}</span>
+                <Star className="ml-auto size-3.5 fill-amber-300 text-amber-300" />
+              </Link>
+
+              {f.last ? (
+                <ResultLine code={f.code} match={f.last} />
+              ) : (
+                <span className="text-xs text-muted-foreground">noch kein Ergebnis</span>
+              )}
+
+              {next ? (
+                <div className="mt-0.5 space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span>nächstes: vs</span>
+                    <Flag code={oppOfNext?.flagCode} className="text-sm" />
+                    <span className="truncate">{oppOfNext?.code ?? "offen"}</span>
+                    <span className="ml-auto whitespace-nowrap">
+                      {dayLabel(next.kickoff)} {formatTime(next.kickoff).replace(" Uhr", "")}
+                    </span>
+                  </div>
+                  <PredictionPicker
+                    matchId={next.id}
+                    initialPrediction={(next.myPrediction as Prediction | null) ?? null}
+                    locked={nextLocked}
+                    homeShort={next.homeTeam?.code ?? "Heim"}
+                    awayShort={next.awayTeam?.code ?? "Gast"}
+                    compact
+                  />
+                </div>
+              ) : (
+                <span className="text-xs text-muted-foreground">kein nächstes Spiel</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
