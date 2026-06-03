@@ -11,10 +11,11 @@
 import { buildSchedule, type NormalizedMatch, type NormalizedTeamRef } from "./worldcup-data";
 import { lookupTeam, resolveTeamRef, translatePlaceholder } from "./team-map";
 import { hasApiFootball, fetchFixtures, type ApiFixture } from "./api-football";
+import { hasFootballData, fetchWorldCupMatches, type FDMatch } from "./football-data";
 import type { Phase } from "./constants";
 
 export interface SyncResult {
-  source: "api-football" | "openfootball" | "builtin";
+  source: "football-data" | "api-football" | "openfootball" | "builtin";
   matches: NormalizedMatch[];
   note?: string;
 }
@@ -147,6 +148,68 @@ function mapApiStatus(short: string): "scheduled" | "live" | "finished" {
   return "scheduled";
 }
 
+// --- football-data.org (kostenlos, WM im Free-Tier) ------------------------
+
+const PHASE_LABEL: Record<Phase, string> = {
+  GROUP: "Gruppenphase",
+  R32: "Runde der letzten 32",
+  R16: "Achtelfinale",
+  QF: "Viertelfinale",
+  SF: "Halbfinale",
+  TP: "Spiel um Platz 3",
+  FINAL: "Finale",
+};
+
+function mapFdStage(stage: string): Phase {
+  const s = (stage ?? "").toUpperCase();
+  if (s.includes("GROUP")) return "GROUP";
+  if (s.includes("32")) return "R32";
+  if (s.includes("16")) return "R16";
+  if (s.includes("QUARTER")) return "QF";
+  if (s.includes("SEMI")) return "SF";
+  if (s.includes("THIRD") || s.includes("3RD")) return "TP";
+  if (s.includes("FINAL")) return "FINAL";
+  return "GROUP";
+}
+
+function mapFdStatus(status: string): "scheduled" | "live" | "finished" {
+  const s = (status ?? "").toUpperCase();
+  if (s === "FINISHED" || s === "AWARDED") return "finished";
+  if (s === "IN_PLAY" || s === "PAUSED" || s === "LIVE") return "live";
+  return "scheduled";
+}
+
+function fdTeamRef(name: string | null, tla: string | null): NormalizedTeamRef | undefined {
+  if (!name) return undefined;
+  const ref = resolveTeamRef(name);
+  if (!ref) return undefined;
+  // Bei unbekanntem Team das offizielle TLA als Code bevorzugen.
+  if (tla && ref.name === name) return { code: tla, name };
+  return ref as NormalizedTeamRef;
+}
+
+function normalizeFootballData(matches: FDMatch[]): NormalizedMatch[] {
+  return matches.map((m) => {
+    const phase = mapFdStage(m.stage);
+    const groupLetter = m.group ? /([A-L])\s*$/.exec(m.group)?.[1] : undefined;
+    const status = mapFdStatus(m.status);
+    const hasResult = status === "finished" && m.homeGoals != null && m.awayGoals != null;
+    const label = phase === "GROUP" && groupLetter ? `Gruppe ${groupLetter}` : PHASE_LABEL[phase];
+    return {
+      externalId: `fd-${m.id}`,
+      phase,
+      group: phase === "GROUP" ? groupLetter : undefined,
+      roundLabel: label,
+      kickoff: m.utcDate,
+      home: fdTeamRef(m.homeName, m.homeTla),
+      away: fdTeamRef(m.awayName, m.awayTla),
+      status,
+      homeGoals: hasResult ? m.homeGoals : null,
+      awayGoals: hasResult ? m.awayGoals : null,
+    } satisfies NormalizedMatch;
+  });
+}
+
 function normalizeApiFootball(fixtures: ApiFixture[]): NormalizedMatch[] {
   return fixtures.map((f) => {
     const { phase, group, label } = mapApiRound(f.round);
@@ -174,7 +237,17 @@ function normalizeApiFootball(fixtures: ApiFixture[]): NormalizedMatch[] {
  * eingebauten Datensatz zurück (für ein robustes MVP-Erlebnis).
  */
 export async function fetchSchedule(): Promise<SyncResult> {
-  // 1) API-Football (autoritativ + live) – wenn Key gesetzt ist.
+  // 1) football-data.org (kostenlos, WM im Free-Tier) – wenn Token gesetzt.
+  if (hasFootballData()) {
+    try {
+      const matches = normalizeFootballData(await fetchWorldCupMatches());
+      if (matches.length > 0) return { source: "football-data", matches };
+    } catch {
+      // weiter zur nächsten Quelle
+    }
+  }
+
+  // 2) API-Football (autoritativ + live) – wenn Key gesetzt ist (Saison 2026 = Bezahlplan).
   if (hasApiFootball()) {
     try {
       const fixtures = await fetchFixtures();

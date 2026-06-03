@@ -1,12 +1,7 @@
 import { db } from "./db";
-import {
-  fetchTopScorers,
-  fetchFixtures,
-  fetchFixtureGoals,
-  hasApiFootball,
-  ApiFootballError,
-} from "./api-football";
+import { fetchTopScorers, fetchFixtures, fetchFixtureGoals, hasApiFootball } from "./api-football";
 import { lookupTeam } from "./team-map";
+import { hasFootballData, fetchWorldCupScorers } from "./football-data";
 
 // API-Football nutzt teils andere Namen für Nationalteams -> auf unsere Keys mappen.
 const TEAM_ALIASES: Record<string, string> = {
@@ -22,7 +17,8 @@ const TEAM_ALIASES: Record<string, string> = {
   "DR Congo": "DR Congo",
 };
 
-async function teamIdByApiName(name: string, codeIndex: Map<string, string>): Promise<string | null> {
+async function teamIdByApiName(name: string | null, codeIndex: Map<string, string>): Promise<string | null> {
+  if (!name) return null;
   const info = lookupTeam(TEAM_ALIASES[name] ?? name);
   if (!info) return null;
   return codeIndex.get(info.code) ?? null;
@@ -44,11 +40,12 @@ export interface ScorerSyncSummary {
  * Markiert den/die Spieler mit den meisten Toren als Torschützenkönig.
  */
 export async function syncTopScorers(): Promise<ScorerSyncSummary> {
-  if (!hasApiFootball()) {
-    return { ok: false, message: "Kein APIFOOTBALL_KEY gesetzt – Torschützen können nicht live geladen werden." };
+  if (!hasFootballData() && !hasApiFootball()) {
+    return { ok: false, message: "Keine Datenquelle gesetzt (FOOTBALLDATA_TOKEN oder APIFOOTBALL_KEY)." };
   }
   try {
-    const scorers = await fetchTopScorers();
+    // bevorzugt football-data (Free-Tier mit WM), sonst API-Football
+    const scorers = hasFootballData() ? await fetchWorldCupScorers() : await fetchTopScorers();
     const codeIndex = await loadCodeIndex();
 
     for (const s of scorers) {
@@ -69,7 +66,7 @@ export async function syncTopScorers(): Promise<ScorerSyncSummary> {
 
     return { ok: true, message: `${scorers.length} Torschützen aktualisiert.`, players: scorers.length };
   } catch (e) {
-    const msg = e instanceof ApiFootballError ? e.message : "Unbekannter Fehler beim Abruf.";
+    const msg = e instanceof Error ? e.message : "Unbekannter Fehler beim Abruf.";
     return { ok: false, message: msg };
   }
 }
@@ -135,7 +132,7 @@ export async function syncMatchGoals(): Promise<ScorerSyncSummary> {
 
     return { ok: true, message: `${goalCount} Tore aus Live-Daten erfasst.` };
   } catch (e) {
-    const msg = e instanceof ApiFootballError ? e.message : "Unbekannter Fehler beim Abruf.";
+    const msg = e instanceof Error ? e.message : "Unbekannter Fehler beim Abruf.";
     return { ok: false, message: msg };
   }
 }

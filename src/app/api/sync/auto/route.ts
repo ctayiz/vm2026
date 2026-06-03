@@ -5,6 +5,7 @@ import { syncSchedule } from "@/lib/sync-service";
 import { syncTopScorers, syncMatchGoals } from "@/lib/stats-service";
 import { rescoreAll, rescoreTournamentBets } from "@/lib/scoring-service";
 import { hasApiFootball } from "@/lib/api-football";
+import { hasFootballData } from "@/lib/football-data";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -31,9 +32,9 @@ export async function POST() {
     did.push("schedule");
   }
 
-  if (hasApiFootball() && (await shouldRun("lastStatsSync", STATS_MS))) {
+  if ((hasFootballData() || hasApiFootball()) && (await shouldRun("lastStatsSync", STATS_MS))) {
     await syncTopScorers();
-    await syncMatchGoals();
+    if (hasApiFootball()) await syncMatchGoals(); // Tor-Events nur via API-Football
     await rescoreTournamentBets();
     did.push("stats");
   }
