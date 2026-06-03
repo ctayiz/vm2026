@@ -5,7 +5,6 @@ import { getLocale, getDictionary } from "@/lib/i18n-server";
 import { KickoffCountdown } from "@/components/kickoff-countdown";
 import { FlagTicker } from "@/components/flag-ticker";
 import { I18nProvider } from "@/components/i18n-provider";
-import { LanguageToggle } from "@/components/language-toggle";
 
 export default async function AuthLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
@@ -33,11 +32,6 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
           <div className="blob left-[-10%] top-[-10%] h-72 w-72 animate-blob bg-primary/40" />
           <div className="blob right-[-5%] top-[20%] h-80 w-80 animate-blob bg-sky-500/30 [animation-delay:4s]" />
           <div className="blob bottom-[-10%] left-[30%] h-72 w-72 animate-blob bg-emerald-500/25 [animation-delay:8s]" />
-        </div>
-
-        {/* Sprachumschalter oben rechts */}
-        <div className="absolute right-4 top-4 z-10">
-          <LanguageToggle />
         </div>
 
         <div className="container grid min-h-dvh items-center gap-10 py-10 lg:grid-cols-2 lg:gap-16">

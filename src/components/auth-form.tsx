@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useFormState, useFormStatus } from "react-dom";
 import { loginAction, registerAction, type ActionState } from "@/server/auth-actions";
 import { useT } from "@/components/i18n-provider";
+import { LanguageToggle } from "@/components/language-toggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,10 +27,17 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
   return (
     <Card className="glass shadow-2xl shadow-primary/10">
       <CardHeader>
-        <CardTitle className="text-lg">{mode === "login" ? t.auth.signInTitle : t.auth.signUpTitle}</CardTitle>
-        <p className="text-sm text-muted-foreground">
-          {mode === "login" ? t.auth.welcomeBack : t.auth.quickStart}
-        </p>
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <CardTitle className="text-lg">
+              {mode === "login" ? t.auth.signInTitle : t.auth.signUpTitle}
+            </CardTitle>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {mode === "login" ? t.auth.welcomeBack : t.auth.quickStart}
+            </p>
+          </div>
+          <LanguageToggle />
+        </div>
       </CardHeader>
       <form action={formAction}>
         <CardContent className="space-y-3">
