@@ -4,18 +4,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CalendarDays, ListChecks, Trophy, BarChart3, Shield, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const ITEMS = [
-  { href: "/spielplan", label: "Spielplan", icon: CalendarDays },
-  { href: "/meine-tipps", label: "Meine Tipps", icon: ListChecks },
-  { href: "/turnier-tipps", label: "Turnier", icon: Sparkles },
-  { href: "/ranking", label: "Ranking", icon: Trophy },
-  { href: "/statistiken", label: "Statistiken", icon: BarChart3 },
-];
+import { useT } from "@/components/i18n-provider";
 
 export function Nav({ isAdmin }: { isAdmin: boolean }) {
   const pathname = usePathname();
-  const items = isAdmin ? [...ITEMS, { href: "/admin", label: "Admin", icon: Shield }] : ITEMS;
+  const t = useT();
+  const ITEMS = [
+    { href: "/spielplan", label: t.nav.schedule, icon: CalendarDays },
+    { href: "/meine-tipps", label: t.nav.myTips, icon: ListChecks },
+    { href: "/turnier-tipps", label: t.nav.tournament, icon: Sparkles },
+    { href: "/ranking", label: t.nav.ranking, icon: Trophy },
+    { href: "/statistiken", label: t.nav.stats, icon: BarChart3 },
+  ];
+  const items = isAdmin ? [...ITEMS, { href: "/admin", label: t.nav.admin, icon: Shield }] : ITEMS;
 
   return (
     <>

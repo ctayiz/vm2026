@@ -18,6 +18,7 @@ import { CountUp } from "@/components/count-up";
 import { AccuracyRing } from "@/components/accuracy-ring";
 import { cn } from "@/lib/utils";
 import type { Prediction } from "@/lib/constants";
+import { getDictionary } from "@/lib/i18n-server";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +53,7 @@ function Stat({
 
 export default async function StatistikenPage() {
   const user = await requireUser();
+  const t = getDictionary();
   const [stats, matches, topScorers, teamStats] = await Promise.all([
     getUserStats(user.id),
     getMatches(user.id),
@@ -88,36 +90,36 @@ export default async function StatistikenPage() {
   const achievements = [
     {
       id: "serie",
-      label: "Seriensieger",
-      desc: best >= 3 ? `${best} richtige Tipps in Folge` : "3 richtige Tipps in Folge",
+      label: t.stats.ach.serie,
+      desc: t.stats.ach.serieDesc(best),
       icon: Flame,
       earned: best >= 3,
     },
     {
       id: "treffsicher",
-      label: "Treffsicher",
-      desc: "≥ 60 % Quote bei mind. 5 Tipps",
+      label: t.stats.ach.treffsicher,
+      desc: t.stats.ach.treffsicherDesc,
       icon: Target,
       earned: stats.scoredCount >= 5 && stats.accuracy >= 0.6,
     },
     {
       id: "remis",
-      label: "Unentschieden-König",
-      desc: "2 richtige Remis-Tipps",
+      label: t.stats.ach.remis,
+      desc: t.stats.ach.remisDesc,
       icon: Scale,
       earned: dist.DRAW.correct >= 2,
     },
     {
       id: "scharf",
-      label: "Scharfschütze",
-      desc: "≥ 80 % Quote bei mind. 10 Tipps",
+      label: t.stats.ach.scharf,
+      desc: t.stats.ach.scharfDesc,
       icon: Crosshair,
       earned: stats.scoredCount >= 10 && stats.accuracy >= 0.8,
     },
     {
       id: "sammler",
-      label: "Punktesammler",
-      desc: "15+ Gesamtpunkte",
+      label: t.stats.ach.sammler,
+      desc: t.stats.ach.sammlerDesc,
       icon: Trophy,
       earned: stats.totalPoints >= 15,
     },
@@ -126,13 +128,13 @@ export default async function StatistikenPage() {
 
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-bold">Statistiken</h1>
+      <h1 className="text-2xl font-bold">{t.stats.title}</h1>
 
       <Tabs defaultValue="bilanz">
         <TabsList>
-          <TabsTrigger value="bilanz">Meine Bilanz</TabsTrigger>
-          <TabsTrigger value="torschuetzen">Torschützen</TabsTrigger>
-          <TabsTrigger value="teams">Teams</TabsTrigger>
+          <TabsTrigger value="bilanz">{t.stats.tabBilanz}</TabsTrigger>
+          <TabsTrigger value="torschuetzen">{t.stats.tabScorers}</TabsTrigger>
+          <TabsTrigger value="teams">{t.stats.tabTeams}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="bilanz" className="space-y-6">
@@ -143,16 +145,13 @@ export default async function StatistikenPage() {
           <AccuracyRing value={stats.accuracy} />
           <div className="flex-1 text-center sm:text-left">
             <h1 className="text-2xl font-bold sm:text-3xl">
-              Deine <span className="text-gradient">Bilanz</span>
+              <span className="text-gradient">{t.stats.balance}</span>
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Rang{" "}
-              <span className="font-semibold text-foreground">{stats.rank ? `#${stats.rank}` : "—"}</span> von{" "}
-              {stats.totalPlayers} · {stats.correctCount}/{stats.scoredCount} richtig
+              {t.stats.balanceSub(stats.rank ? `#${stats.rank}` : "—", stats.totalPlayers, stats.correctCount, stats.scoredCount)}
               {stats.bonusPoints > 0 && (
                 <>
-                  {" "}
-                  · <span className="font-semibold text-amber-300">+{stats.bonusPoints} Bonus</span>
+                  {" "}· <span className="font-semibold text-amber-300">{t.stats.bonus(stats.bonusPoints)}</span>
                 </>
               )}
             </p>
@@ -160,16 +159,16 @@ export default async function StatistikenPage() {
             {/* Formkurve */}
             <div className="mt-3">
               <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                Formkurve (zuletzt)
+                {t.stats.formTitle}
               </div>
               <div className="mt-1 flex items-center justify-center gap-1.5 sm:justify-start">
                 {form.length === 0 ? (
-                  <span className="text-sm text-muted-foreground">noch keine gewerteten Tipps</span>
+                  <span className="text-sm text-muted-foreground">{t.stats.noScored}</span>
                 ) : (
                   form.map((ok, i) => (
                     <span
                       key={i}
-                      title={ok ? "richtig" : "falsch"}
+                      title={ok ? t.ranking.correct : "✗"}
                       className={cn(
                         "flex size-6 items-center justify-center rounded-md text-[10px] font-bold",
                         ok ? "bg-primary/20 text-primary" : "bg-secondary text-muted-foreground",
@@ -187,23 +186,23 @@ export default async function StatistikenPage() {
 
       {/* KENNZAHLEN */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat icon={Trophy} label="Gesamtpunkte" value={<CountUp value={stats.totalPoints} />} index={0} />
+        <Stat icon={Trophy} label={t.stats.totalPoints} value={<CountUp value={stats.totalPoints} />} index={0} />
         <Stat
           icon={Target}
-          label="Platzierung"
+          label={t.stats.placement}
           value={stats.rank ? `#${stats.rank}` : "—"}
-          sub={`von ${stats.totalPlayers}`}
+          sub={`${t.common.of} ${stats.totalPlayers}`}
           index={1}
         />
         <Stat
           icon={CheckCircle2}
-          label="Richtige Tipps"
+          label={t.stats.correctTips}
           value={`${stats.correctCount}/${stats.scoredCount}`}
           index={2}
         />
         <Stat
           icon={ListChecks}
-          label="Abgegeben"
+          label={t.stats.submitted}
           value={<CountUp value={stats.predictedCount} />}
           index={3}
         />
@@ -213,7 +212,7 @@ export default async function StatistikenPage() {
       <Card className="glass">
         <CardHeader>
           <CardTitle className="flex items-center justify-between text-base">
-            <span>Auszeichnungen</span>
+            <span>{t.stats.awards}</span>
             <span className="text-sm font-normal text-muted-foreground">
               {earnedCount}/{achievements.length}
             </span>
@@ -258,15 +257,15 @@ export default async function StatistikenPage() {
       {/* VERTEILUNG */}
       <Card className="glass">
         <CardHeader>
-          <CardTitle className="text-base">Tipp-Verteilung (gewertet)</CardTitle>
+          <CardTitle className="text-base">{t.stats.distribution}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {(
             [
-              ["HOME_WIN", "Heimsieg"],
-              ["DRAW", "Unentschieden"],
-              ["AWAY_WIN", "Auswärtssieg"],
-            ] as const
+              ["HOME_WIN", t.outcome.home],
+              ["DRAW", t.outcome.draw],
+              ["AWAY_WIN", t.outcome.away],
+            ] as [Prediction, string][]
           ).map(([key, label], i) => {
             const d = dist[key];
             const pct = d.total > 0 ? Math.round((d.correct / d.total) * 100) : 0;
@@ -275,7 +274,7 @@ export default async function StatistikenPage() {
                 <div className="mb-1 flex justify-between text-sm">
                   <span className="font-medium">{label}</span>
                   <span className="text-muted-foreground">
-                    {d.correct}/{d.total} richtig · {pct}%
+                    {t.stats.distRight(d.correct, d.total, pct)}
                   </span>
                 </div>
                 <div className="h-2.5 overflow-hidden rounded-full bg-secondary">
@@ -288,7 +287,7 @@ export default async function StatistikenPage() {
             );
           })}
           {stats.scoredCount === 0 && (
-            <p className="text-sm text-muted-foreground">Noch keine gewerteten Tipps.</p>
+            <p className="text-sm text-muted-foreground">{t.stats.noScoredTips}</p>
           )}
         </CardContent>
       </Card>
@@ -296,7 +295,7 @@ export default async function StatistikenPage() {
 
         <TabsContent value="torschuetzen" className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            Aktuelle Torschützenliste (Live-Daten via API-Football).
+            {t.stats.scorersInfo}
           </p>
           <TopScorerList
             scorers={topScorers.map((p) => ({
@@ -312,7 +311,7 @@ export default async function StatistikenPage() {
 
         <TabsContent value="teams" className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            Tabelle aus allen abgeschlossenen Spielen (Tore, Tordifferenz, Form).
+            {t.stats.teamsInfo}
           </p>
           <TeamTable rows={teamStats} />
         </TabsContent>

@@ -9,11 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { LogOut, Star } from "lucide-react";
 import { MAX_FAVORITES } from "@/lib/constants";
+import { getDictionary } from "@/lib/i18n-server";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProfilPage() {
   const user = await requireUser();
+  const t = getDictionary();
   const [teams, favorites] = await Promise.all([
     db.team.findMany({
       orderBy: [{ group: "asc" }, { name: "asc" }],
@@ -25,15 +27,15 @@ export default async function ProfilPage() {
   return (
     <div className="mx-auto max-w-lg space-y-5">
       <div>
-        <h1 className="text-2xl font-bold">Profil</h1>
+        <h1 className="text-2xl font-bold">{t.profile.title}</h1>
         <p className="text-sm text-muted-foreground">{user.email}</p>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between text-base">
-            Konto
-            {isAdmin(user) && <Badge variant="warning">Admin</Badge>}
+            {t.profile.account}
+            {isAdmin(user) && <Badge variant="warning">{t.profile.admin}</Badge>}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -45,10 +47,10 @@ export default async function ProfilPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Star className="size-4 fill-amber-300 text-amber-300" />
-            Lieblingsländer
+            {t.favorites.pickerTitle}
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            Wähle bis zu {MAX_FAVORITES} Favoriten. Sie werden im Spielplan oben hervorgehoben.
+            {t.favorites.pickerSub(MAX_FAVORITES)}
           </p>
         </CardHeader>
         <CardContent>

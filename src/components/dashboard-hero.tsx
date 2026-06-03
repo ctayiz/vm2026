@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Trophy, Target, ListChecks, ArrowRight } from "lucide-react";
 import { CountUp } from "@/components/count-up";
+import { getDictionary } from "@/lib/i18n-server";
 import { cn } from "@/lib/utils";
 
 function Chip({
@@ -57,18 +58,17 @@ export function DashboardHero({
   totalPlayers: number;
   openCount: number;
 }) {
+  const t = getDictionary();
   return (
     <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-card to-card p-5 sm:p-6">
       <div className="blob right-[-20%] top-[-60%] h-48 w-48 animate-blob bg-primary/30" />
       <div className="relative space-y-4">
         <div>
           <h1 className="text-2xl font-bold sm:text-3xl">
-            Hallo, <span className="text-gradient">{name}</span> 👋
+            {t.dashboard.hello} <span className="text-gradient">{name}</span> 👋
           </h1>
           <p className="text-sm text-muted-foreground">
-            {openCount > 0
-              ? `Du hast ${openCount} offene${openCount === 1 ? "s" : ""} Spiel${openCount === 1 ? "" : "e"} zum Tippen.`
-              : "Alles getippt – jetzt heißt es Daumen drücken!"}
+            {openCount > 0 ? t.dashboard.openTipsMsg(openCount) : t.dashboard.allTipped}
           </p>
         </div>
 
@@ -76,15 +76,15 @@ export function DashboardHero({
           <Chip
             icon={Trophy}
             value={rank ? `#${rank}` : "—"}
-            label={`Rang · von ${totalPlayers}`}
+            label={t.dashboard.rankSub(totalPlayers)}
             href="/ranking"
             highlight={rank === 1}
           />
-          <Chip icon={Target} value={<CountUp value={points} />} label="Punkte" href="/statistiken" />
+          <Chip icon={Target} value={<CountUp value={points} />} label={t.ranking.points} href="/statistiken" />
           <Chip
             icon={ListChecks}
             value={openCount}
-            label="Offene Tipps"
+            label={t.dashboard.openTips}
             href="/spielplan?filter=offen"
             highlight={openCount > 0}
           />

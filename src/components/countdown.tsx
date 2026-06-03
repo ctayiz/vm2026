@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Clock, Lock } from "lucide-react";
 import { formatCountdown } from "@/lib/format";
+import { useT } from "@/components/i18n-provider";
 import { cn } from "@/lib/utils";
 
 /**
@@ -11,6 +12,7 @@ import { cn } from "@/lib/utils";
  * eigentliche Sperre – dies ist nur Anzeige).
  */
 export function Countdown({ lockTimeIso }: { lockTimeIso: string }) {
+  const t = useT();
   const lockTime = new Date(lockTimeIso).getTime();
   const [now, setNow] = useState<number>(() => Date.now());
 
@@ -33,7 +35,7 @@ export function Countdown({ lockTimeIso }: { lockTimeIso: string }) {
       )}
     >
       {locked ? <Lock className="size-3" /> : <Clock className="size-3" />}
-      {locked ? "Tipp-Schluss" : formatCountdown(ms)}
+      {locked ? t.countdown.deadline : formatCountdown(ms)}
     </span>
   );
 }

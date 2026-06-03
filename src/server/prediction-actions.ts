@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import { getDictionary } from "@/lib/i18n-server";
 import { predictionSchema } from "@/lib/validation";
 import { isPickLocked } from "@/lib/lock";
 
@@ -20,24 +21,25 @@ export async function submitPredictionAction(
   formData: FormData,
 ): Promise<PredictionState> {
   const user = await requireUser();
+  const t = getDictionary();
 
   const parsed = predictionSchema.safeParse({
     matchId: formData.get("matchId"),
     prediction: formData.get("prediction"),
   });
   if (!parsed.success) {
-    return { ok: false, error: "Ungültiger Tipp." };
+    return { ok: false, error: t.msg.invalidTip };
   }
   const { matchId, prediction } = parsed.data;
 
   const match = await db.match.findUnique({ where: { id: matchId } });
   if (!match) {
-    return { ok: false, error: "Spiel nicht gefunden." };
+    return { ok: false, error: t.msg.matchNotFound };
   }
 
   // Lock-Prüfung mit Server-Zeit (nicht manipulierbar durch Client).
   if (isPickLocked(match.kickoff)) {
-    return { ok: false, error: "Tipp-Schluss erreicht – dieser Tipp ist gesperrt." };
+    return { ok: false, error: t.msg.lockReached };
   }
 
   await db.prediction.upsert({
@@ -61,19 +63,20 @@ export type JokerState = { ok: boolean; error?: string; active?: boolean };
  */
 export async function toggleJokerAction(_prev: JokerState, formData: FormData): Promise<JokerState> {
   const user = await requireUser();
+  const t = getDictionary();
   const matchId = String(formData.get("matchId") ?? "");
-  if (!matchId) return { ok: false, error: "Kein Spiel angegeben." };
+  if (!matchId) return { ok: false, error: t.msg.matchNotFound };
 
   const match = await db.match.findUnique({ where: { id: matchId } });
-  if (!match) return { ok: false, error: "Spiel nicht gefunden." };
+  if (!match) return { ok: false, error: t.msg.matchNotFound };
   if (isPickLocked(match.kickoff)) {
-    return { ok: false, error: "Spiel ist gesperrt – Joker nicht änderbar." };
+    return { ok: false, error: t.msg.jokerLocked };
   }
 
   const own = await db.prediction.findUnique({
     where: { userId_matchId: { userId: user.id, matchId } },
   });
-  if (!own) return { ok: false, error: "Bitte zuerst einen Tipp abgeben." };
+  if (!own) return { ok: false, error: t.msg.jokerTipFirst };
 
   // bereits Joker -> entfernen
   if (own.isJoker) {
@@ -90,7 +93,7 @@ export async function toggleJokerAction(_prev: JokerState, formData: FormData): 
   });
   const lockedJoker = phaseJokers.find((p) => isPickLocked(p.match.kickoff));
   if (lockedJoker) {
-    return { ok: false, error: "Joker in dieser Phase bereits vergeben (Spiel gesperrt)." };
+    return { ok: false, error: t.msg.jokerPhaseTaken };
   }
 
   // offenen Joker derselben Phase verschieben (entfernen) + hier setzen

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useT } from "@/components/i18n-provider";
 
 // Anpfiff WM 2026: Eröffnungsspiel 11.06.2026, 13:00 Uhr Ortszeit (Mexiko-Stadt) = 19:00 UTC.
 const KICKOFF = Date.UTC(2026, 5, 11, 19, 0, 0);
@@ -17,6 +18,7 @@ function box(value: number, label: string) {
 }
 
 export function KickoffCountdown() {
+  const t = useT();
   const [now, setNow] = useState<number | null>(null);
 
   useEffect(() => {
@@ -35,7 +37,7 @@ export function KickoffCountdown() {
     return (
       <div className="glass inline-flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-primary">
         <span className="size-2 animate-glow-pulse rounded-full bg-primary" />
-        Das Turnier läuft – viel Erfolg beim Tippen! ⚽
+        {t.countdown.running}
       </div>
     );
   }
@@ -48,13 +50,13 @@ export function KickoffCountdown() {
 
   return (
     <div className="flex items-center gap-2 sm:gap-3">
-      {box(d, "Tage")}
+      {box(d, t.countdown.days)}
       <span className="pb-5 text-2xl font-bold text-muted-foreground">:</span>
-      {box(h, "Std")}
+      {box(h, t.countdown.hours)}
       <span className="pb-5 text-2xl font-bold text-muted-foreground">:</span>
-      {box(m, "Min")}
+      {box(m, t.countdown.min)}
       <span className="pb-5 text-2xl font-bold text-muted-foreground">:</span>
-      {box(s, "Sek")}
+      {box(s, t.countdown.sec)}
     </div>
   );
 }

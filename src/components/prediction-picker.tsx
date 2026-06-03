@@ -6,6 +6,7 @@ import { Check, Lock } from "lucide-react";
 import { submitPredictionAction, type PredictionState } from "@/server/prediction-actions";
 import type { Prediction } from "@/lib/constants";
 import { burstConfetti } from "@/lib/confetti";
+import { useT } from "@/components/i18n-provider";
 import { cn } from "@/lib/utils";
 
 const OPTIONS: { value: Prediction; label: string }[] = [
@@ -65,6 +66,7 @@ export function PredictionPicker({
   awayShort: string;
   compact?: boolean;
 }) {
+  const t = useT();
   const [state, formAction] = useFormState<PredictionState, FormData>(submitPredictionAction, {
     ok: false,
   });
@@ -77,8 +79,8 @@ export function PredictionPicker({
     if (state.ok) {
       setJustSaved(true);
       burstConfetti();
-      const t = setTimeout(() => setJustSaved(false), 1600);
-      return () => clearTimeout(t);
+      const timer = setTimeout(() => setJustSaved(false), 1600);
+      return () => clearTimeout(timer);
     }
   }, [state]);
 
@@ -95,29 +97,29 @@ export function PredictionPicker({
         // schlanke Rückmeldung im Mini-Modus
         justSaved ? (
           <p className="flex animate-pop-in items-center gap-1 text-[10px] font-medium text-primary">
-            <Check className="size-3" /> gespeichert
+            <Check className="size-3" /> {t.common.saved}
           </p>
         ) : state.error ? (
           <p className="text-[10px] text-red-300">{state.error}</p>
         ) : locked ? (
           <p className="flex items-center gap-1 text-[10px] text-muted-foreground">
-            <Lock className="size-3" /> gesperrt
+            <Lock className="size-3" /> {t.match.tipLocked}
           </p>
         ) : null
       ) : locked ? (
         <p className="flex items-center gap-1 text-xs text-muted-foreground">
-          <Lock className="size-3" /> Tipp gesperrt
+          <Lock className="size-3" /> {t.match.tipLocked}
         </p>
       ) : justSaved ? (
         <p className="flex animate-pop-in items-center gap-1 text-xs font-medium text-primary">
-          <Check className="size-3" /> Tipp gespeichert!
+          <Check className="size-3" /> {t.match.tipSaved}
         </p>
       ) : state.error ? (
         <p className="text-xs text-red-300">{state.error}</p>
       ) : current ? (
-        <p className="text-xs text-muted-foreground">Dein Tipp ist gespeichert – änderbar bis Tipp-Schluss.</p>
+        <p className="text-xs text-muted-foreground">{t.match.tipHint}</p>
       ) : (
-        <p className="text-xs text-muted-foreground">Tipp abgeben: {homeShort} / Unentschieden / {awayShort}</p>
+        <p className="text-xs text-muted-foreground">{t.match.tipPlace(homeShort, awayShort)}</p>
       )}
     </form>
   );

@@ -17,16 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { flagEmoji } from "@/lib/flags";
 import { cn } from "@/lib/utils";
-
-const REACH_OPTIONS: { value: string; label: string }[] = [
-  { value: "", label: "— offen" },
-  { value: "GROUP", label: "Gruppe (raus)" },
-  { value: "R32", label: "Letzte 32" },
-  { value: "R16", label: "Achtelfinale" },
-  { value: "QF", label: "Viertelfinale" },
-  { value: "SF", label: "Halbfinale" },
-  { value: "FINAL", label: "Finale" },
-];
+import { useT } from "@/components/i18n-provider";
 
 export function TeamProgressRow({
   teamId,
@@ -43,6 +34,16 @@ export function TeamProgressRow({
   reachedPhase: string | null;
   isChampion: boolean;
 }) {
+  const t = useT();
+  const REACH_OPTIONS = [
+    { value: "", label: t.admin.reach.open },
+    { value: "GROUP", label: t.admin.reach.group },
+    { value: "R32", label: t.admin.reach.r32 },
+    { value: "R16", label: t.admin.reach.r16 },
+    { value: "QF", label: t.admin.reach.qf },
+    { value: "SF", label: t.admin.reach.sf },
+    { value: "FINAL", label: t.admin.reach.final },
+  ];
   const [pending, start] = useTransition();
   const [phase, setPhase] = useState(reachedPhase ?? "");
 
@@ -82,7 +83,7 @@ export function TeamProgressRow({
         type="button"
         disabled={pending}
         onClick={() => save(isChampion ? phase : "FINAL", !isChampion)}
-        aria-label="Als Weltmeister markieren"
+        aria-label={t.admin.champion}
         className={cn(
           "flex size-9 items-center justify-center rounded-md border transition-colors",
           isChampion
@@ -97,6 +98,7 @@ export function TeamProgressRow({
 }
 
 export function SyncButton() {
+  const t = useT();
   const [msg, setMsg] = useState<string | null>(null);
   const [pending, start] = useTransition();
   return (
@@ -105,7 +107,7 @@ export function SyncButton() {
         onClick={() => start(async () => setMsg((await syncScheduleAction()).message ?? null))}
         disabled={pending}
       >
-        <RefreshCw className={pending ? "animate-spin" : ""} /> Spielplan synchronisieren
+        <RefreshCw className={pending ? "animate-spin" : ""} /> {t.admin.syncSchedule}
       </Button>
       {msg && <p className="text-xs text-muted-foreground">{msg}</p>}
     </div>
@@ -113,6 +115,7 @@ export function SyncButton() {
 }
 
 export function SyncStatsButton() {
+  const t = useT();
   const [msg, setMsg] = useState<string | null>(null);
   const [pending, start] = useTransition();
   return (
@@ -127,7 +130,7 @@ export function SyncStatsButton() {
         }
         disabled={pending}
       >
-        <Goal className={pending ? "animate-spin" : ""} /> Live-Daten (Torschützen)
+        <Goal className={pending ? "animate-spin" : ""} /> {t.admin.syncStats}
       </Button>
       {msg && <p className="max-w-xs text-xs text-muted-foreground">{msg}</p>}
     </div>
@@ -135,6 +138,7 @@ export function SyncStatsButton() {
 }
 
 export function RecomputeButton() {
+  const t = useT();
   const [msg, setMsg] = useState<string | null>(null);
   const [pending, start] = useTransition();
   return (
@@ -144,7 +148,7 @@ export function RecomputeButton() {
         onClick={() => start(async () => setMsg((await recomputeAllAction()).message ?? null))}
         disabled={pending}
       >
-        <Calculator /> Punkte neu berechnen
+        <Calculator /> {t.admin.recompute}
       </Button>
       {msg && <p className="text-xs text-muted-foreground">{msg}</p>}
     </div>
@@ -209,6 +213,7 @@ export function UserRowActions({
   blocked: boolean;
   displayName: string;
 }) {
+  const t = useT();
   const [pending, start] = useTransition();
 
   const block = () => {
@@ -220,7 +225,7 @@ export function UserRowActions({
   };
 
   const del = () => {
-    if (!confirm(`Nutzer „${displayName}" wirklich löschen? Alle Tipps gehen verloren.`)) return;
+    if (!confirm(t.admin.confirmDelete(displayName))) return;
     const fd = new FormData();
     fd.set("userId", userId);
     start(async () => {
@@ -231,7 +236,7 @@ export function UserRowActions({
   return (
     <div className="flex items-center gap-1">
       <Button variant="ghost" size="sm" onClick={block} disabled={pending}>
-        <Ban className="size-4" /> {blocked ? "Entsperren" : "Sperren"}
+        <Ban className="size-4" /> {blocked ? t.admin.unblock : t.admin.block}
       </Button>
       <Button variant="ghost" size="icon" onClick={del} disabled={pending} aria-label="Löschen">
         <Trash2 className="size-4 text-red-300" />

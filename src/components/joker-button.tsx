@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Zap } from "lucide-react";
 import { toggleJokerAction } from "@/server/prediction-actions";
 import { burstConfetti } from "@/lib/confetti";
+import { useT } from "@/components/i18n-provider";
 import { cn } from "@/lib/utils";
 
 /**
@@ -20,6 +21,7 @@ export function JokerButton({
   active: boolean;
   phaseLocked: boolean;
 }) {
+  const t = useT();
   const [pending, start] = useTransition();
   const [isActive, setIsActive] = useState(active);
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +50,7 @@ export function JokerButton({
         onClick={onClick}
         disabled={disabled}
         aria-pressed={isActive}
-        title={phaseLocked && !isActive ? "Joker in dieser Phase bereits vergeben" : "Joker = doppelte Punkte"}
+        title={phaseLocked && !isActive ? t.joker.lockedHint : t.joker.title}
         className={cn(
           "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-40",
           isActive
@@ -57,7 +59,7 @@ export function JokerButton({
         )}
       >
         <Zap className={cn("size-3.5", isActive && "fill-amber-300")} />
-        {isActive ? "Joker aktiv · 2×" : "Joker"}
+        {isActive ? t.joker.active : t.joker.set}
       </button>
       {error && <span className="text-[10px] text-red-300">{error}</span>}
     </div>

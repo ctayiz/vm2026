@@ -3,6 +3,7 @@ import { Flag } from "@/components/flag";
 import { Countdown } from "@/components/countdown";
 import { PredictionPicker } from "@/components/prediction-picker";
 import { dayLabel, formatTime } from "@/lib/format";
+import { getLocale, getDictionary } from "@/lib/i18n-server";
 import { getLockTime, isPickLocked } from "@/lib/lock";
 import { PHASE_META, type Phase } from "@/lib/constants";
 import { MapPin, Sparkles } from "lucide-react";
@@ -11,10 +12,12 @@ import { cn } from "@/lib/utils";
 
 function side(team: { name: string; code: string; flagCode: string | null } | null, ph: string | null) {
   if (team) return { name: team.name, code: team.code, flagCode: team.flagCode, real: true };
-  return { name: ph ?? "offen", code: "?", flagCode: null, real: false };
+  return { name: ph ?? "—", code: "?", flagCode: null, real: false };
 }
 
 export function FeaturedMatch({ match }: { match: MatchWithPrediction }) {
+  const t = getDictionary();
+  const locale = getLocale();
   const phase = match.phase as Phase;
   const home = side(match.homeTeam, match.homePlaceholder);
   const away = side(match.awayTeam, match.awayPlaceholder);
@@ -29,10 +32,10 @@ export function FeaturedMatch({ match }: { match: MatchWithPrediction }) {
       <div className="relative rounded-2xl px-5 py-5 sm:px-6">
         <div className="mb-4 flex items-center justify-between">
           <Badge variant="default" className="gap-1">
-            <Sparkles className="size-3" /> Nächstes Spiel
+            <Sparkles className="size-3" /> {t.match.next}
           </Badge>
           <span className="text-xs font-medium text-muted-foreground">
-            {dayLabel(match.kickoff)} · {formatTime(match.kickoff)}
+            {dayLabel(match.kickoff, locale)} · {formatTime(match.kickoff, locale)}
           </span>
         </div>
 
@@ -50,7 +53,7 @@ export function FeaturedMatch({ match }: { match: MatchWithPrediction }) {
 
           {/* Mitte */}
           <div className="flex flex-col items-center gap-1">
-            <span className="text-xl font-black text-muted-foreground">VS</span>
+            <span className="text-xl font-black text-muted-foreground">{t.match.vsShort}</span>
             <Countdown lockTimeIso={lockTimeIso} />
           </div>
 
@@ -82,8 +85,8 @@ export function FeaturedMatch({ match }: { match: MatchWithPrediction }) {
             matchId={match.id}
             initialPrediction={match.myPrediction}
             locked={locked}
-            homeShort={home.real ? home.code : "Heim"}
-            awayShort={away.real ? away.code : "Gast"}
+            homeShort={home.real ? home.code : t.match.home}
+            awayShort={away.real ? away.code : t.match.away}
           />
         </div>
       </div>

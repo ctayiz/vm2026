@@ -3,6 +3,7 @@ import { UserAvatar } from "@/components/user-avatar";
 import { CountUp } from "@/components/count-up";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { getDictionary } from "@/lib/i18n-server";
 import type { LeaderboardRow } from "@/lib/ranking";
 
 const STYLE: Record<
@@ -33,6 +34,7 @@ const STYLE: Record<
 };
 
 function Place({ row, isMe }: { row: LeaderboardRow; isMe: boolean }) {
+  const t = getDictionary();
   const place = (row.rank <= 3 ? row.rank : 3) as 1 | 2 | 3;
   const s = STYLE[place];
   return (
@@ -52,13 +54,13 @@ function Place({ row, isMe }: { row: LeaderboardRow; isMe: boolean }) {
       <div className="text-center">
         <div className="flex items-center justify-center gap-1">
           <span className="max-w-[5.5rem] truncate text-sm font-semibold">{row.displayName}</span>
-          {isMe && <Badge variant="default">Du</Badge>}
+          {isMe && <Badge variant="default">{t.ranking.you}</Badge>}
         </div>
         <div className="text-lg font-bold tabular-nums text-primary">
           <CountUp value={row.totalPoints} />
         </div>
         <div className="text-[10px] uppercase text-muted-foreground">
-          {row.correctCount} richtig · {Math.round(row.accuracy * 100)}%
+          {row.correctCount} {t.ranking.correct} · {Math.round(row.accuracy * 100)}%
         </div>
       </div>
 

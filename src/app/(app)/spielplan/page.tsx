@@ -17,18 +17,11 @@ import { Flag } from "@/components/flag";
 import { dayKey, dayLabel } from "@/lib/format";
 import { isPickLocked, msUntilLock } from "@/lib/lock";
 import { PHASE_META, type Phase } from "@/lib/constants";
+import { getLocale, getDictionary } from "@/lib/i18n-server";
 import { CalendarDays, Star, AlarmClock } from "lucide-react";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
-
-const FILTERS = [
-  { value: "alle", label: "Alle Spiele" },
-  { value: "favoriten", label: "⭐ Favoriten" },
-  { value: "offen", label: "Meine offenen Tipps" },
-  { value: "gruppe", label: "Gruppenphase" },
-  { value: "ko", label: "K.-o.-Phase" },
-];
 
 function applyFilter(matches: MatchWithPrediction[], filter: string, favoriteCodes: string[]) {
   switch (filter) {
@@ -64,6 +57,15 @@ export default async function SpielplanPage({
   searchParams: { filter?: string; team?: string };
 }) {
   const user = await requireUser();
+  const t = getDictionary();
+  const locale = getLocale();
+  const FILTERS = [
+    { value: "alle", label: t.schedule.fAll },
+    { value: "favoriten", label: t.schedule.fFav },
+    { value: "offen", label: t.schedule.fOpen },
+    { value: "gruppe", label: t.schedule.fGroup },
+    { value: "ko", label: t.schedule.fKo },
+  ];
   const [all, stats, teams, favoriteTeams] = await Promise.all([
     getMatches(user.id),
     getUserStats(user.id),
@@ -128,9 +130,8 @@ export default async function SpielplanPage({
         >
           <AlarmClock className="size-4 text-amber-300" />
           <span>
-            <span className="font-semibold text-amber-300">Tipp-Schluss bald!</span> {closingSoon}{" "}
-            {closingSoon === 1 ? "Spiel schließt" : "Spiele schließen"} in der nächsten Stunde – jetzt
-            tippen.
+            <span className="font-semibold text-amber-300">{t.schedule.closingSoonTitle}</span>{" "}
+            {t.schedule.closingSoon(closingSoon)}
           </span>
         </Link>
       )}
@@ -144,8 +145,7 @@ export default async function SpielplanPage({
         >
           <Star className="size-4 text-amber-300" />
           <span>
-            Wähle bis zu 3 <span className="font-semibold">Lieblingsländer</span> – sie bekommen hier
-            oben mehr Fokus.
+            {t.schedule.favPrompt1} <span className="font-semibold">{t.schedule.favPromptWord}</span> {t.schedule.favPrompt2}
           </span>
         </Link>
       )}
@@ -159,8 +159,8 @@ export default async function SpielplanPage({
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <CalendarDays className="size-5 text-primary" />
-          <h2 className="text-lg font-bold">Spielplan</h2>
-          <span className="text-sm text-muted-foreground">· {all.length} Spiele (Europe/Berlin)</span>
+          <h2 className="text-lg font-bold">{t.schedule.title}</h2>
+          <span className="text-sm text-muted-foreground">· {t.schedule.countInfo(all.length)}</span>
         </div>
         <FilterBar options={FILTERS} />
         <TeamFilter teams={teams as TeamFilterOption[]} />
@@ -170,8 +170,7 @@ export default async function SpielplanPage({
         <div className="flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-4 py-2.5 text-sm">
           <Flag code={selectedTeam.flagCode} className="text-xl" />
           <span>
-            Spiele von <span className="font-semibold">{selectedTeam.name}</span> · {matches.length}{" "}
-            {matches.length === 1 ? "Spiel" : "Spiele"}
+            {t.schedule.matchesOf} <span className="font-semibold">{selectedTeam.name}</span> · {t.schedule.matchCount(matches.length)}
           </span>
         </div>
       )}
@@ -179,20 +178,20 @@ export default async function SpielplanPage({
       {days.length === 0 ? (
         <p className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
           {selectedTeam
-            ? `Keine Spiele für ${selectedTeam.name} in dieser Ansicht. K.-o.-Spiele erscheinen erst, sobald die Teams feststehen.`
+            ? t.schedule.emptyTeam(selectedTeam.name)
             : filter === "offen"
-              ? "Keine offenen Tipps – du hast für alle anstehenden Spiele getippt. Stark!"
+              ? t.schedule.emptyOpen
               : filter === "favoriten"
                 ? favoriteCodes.length === 0
-                  ? "Du hast noch keine Lieblingsländer gewählt – im Profil festlegen."
-                  : "Keine Spiele deiner Favoriten in dieser Ansicht."
-                : "Keine Spiele gefunden. Bitte als Admin den Spielplan synchronisieren."}
+                  ? t.schedule.emptyFavNone
+                  : t.schedule.emptyFav
+                : t.schedule.emptyDefault}
         </p>
       ) : (
         days.map(([k, dayMatches]) => (
           <section key={k} className="space-y-3">
             <h2 className="sticky top-14 z-10 -mx-1 bg-background/80 px-1 py-1 text-sm font-semibold uppercase tracking-wide text-muted-foreground backdrop-blur">
-              {dayLabel(dayMatches[0].kickoff)}
+              {dayLabel(dayMatches[0].kickoff, locale)}
             </h2>
             <div className="grid gap-3 sm:grid-cols-2">
               {dayMatches.map((m, i) => (

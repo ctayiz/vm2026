@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import { getDictionary } from "@/lib/i18n-server";
 import { MAX_FAVORITES } from "@/lib/constants";
 
 export type FavoriteState = { ok: boolean; error?: string; favorites?: string[] };
@@ -16,8 +17,9 @@ export async function toggleFavoriteAction(
   formData: FormData,
 ): Promise<FavoriteState> {
   const user = await requireUser();
+  const t = getDictionary();
   const teamId = String(formData.get("teamId") ?? "");
-  if (!teamId) return { ok: false, error: "Kein Team angegeben." };
+  if (!teamId) return { ok: false, error: t.msg.noTeamGiven };
 
   const existing = await db.favorite.findUnique({
     where: { userId_teamId: { userId: user.id, teamId } },
@@ -28,10 +30,10 @@ export async function toggleFavoriteAction(
   } else {
     const count = await db.favorite.count({ where: { userId: user.id } });
     if (count >= MAX_FAVORITES) {
-      return { ok: false, error: `Maximal ${MAX_FAVORITES} Favoriten möglich.` };
+      return { ok: false, error: t.msg.favMax(MAX_FAVORITES) };
     }
     if (!(await db.team.findUnique({ where: { id: teamId } }))) {
-      return { ok: false, error: "Team nicht gefunden." };
+      return { ok: false, error: t.msg.teamNotFound };
     }
     await db.favorite.create({ data: { userId: user.id, teamId, position: count } });
   }

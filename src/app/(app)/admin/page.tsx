@@ -14,11 +14,14 @@ import {
 } from "@/components/admin/admin-actions-ui";
 import { formatDateTime } from "@/lib/format";
 import { PHASE_META, type Phase } from "@/lib/constants";
+import { getLocale, getDictionary } from "@/lib/i18n-server";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
   const admin = await requireAdmin();
+  const t = getDictionary();
+  const locale = getLocale();
 
   const [matches, users, finishedCount] = await Promise.all([
     db.match.findMany({
@@ -45,9 +48,9 @@ export default async function AdminPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold">Admin</h1>
+        <h1 className="text-2xl font-bold">{t.admin.title}</h1>
         <p className="text-sm text-muted-foreground">
-          {matches.length} Spiele · {finishedCount} abgeschlossen · {users.length} Nutzer
+          {t.admin.overview(matches.length, finishedCount, users.length)}
         </p>
       </div>
 
@@ -59,15 +62,15 @@ export default async function AdminPage() {
 
       <Tabs defaultValue="ergebnisse">
         <TabsList>
-          <TabsTrigger value="ergebnisse">Ergebnisse</TabsTrigger>
-          <TabsTrigger value="turnier">Turnier</TabsTrigger>
-          <TabsTrigger value="nutzer">Nutzer</TabsTrigger>
+          <TabsTrigger value="ergebnisse">{t.admin.tabResults}</TabsTrigger>
+          <TabsTrigger value="turnier">{t.admin.tabTournament}</TabsTrigger>
+          <TabsTrigger value="nutzer">{t.admin.tabUsers}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="ergebnisse">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Ergebnisse eintragen / korrigieren</CardTitle>
+              <CardTitle className="text-base">{t.admin.resultsTitle}</CardTitle>
             </CardHeader>
             <CardContent className="divide-y divide-border/60 p-0">
               {matches.map((m) => (
@@ -76,14 +79,14 @@ export default async function AdminPage() {
                     <div className="flex items-center gap-2 text-sm font-medium">
                       <Flag code={m.homeTeam?.flagCode} />
                       <span className="truncate">{m.homeTeam?.name ?? m.homePlaceholder ?? "offen"}</span>
-                      <span className="text-muted-foreground">vs</span>
+                      <span className="text-muted-foreground">{t.common.vs}</span>
                       <span className="truncate">{m.awayTeam?.name ?? m.awayPlaceholder ?? "offen"}</span>
                       <Flag code={m.awayTeam?.flagCode} />
                     </div>
                     <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
                       <Badge variant="outline">{PHASE_META[m.phase as Phase]?.short}</Badge>
-                      <span>{formatDateTime(m.kickoff)}</span>
-                      {m.status === "finished" && <Badge variant="success">abgeschlossen</Badge>}
+                      <span>{formatDateTime(m.kickoff, locale)}</span>
+                      {m.status === "finished" && <Badge variant="success">{t.admin.finishedBadge}</Badge>}
                     </div>
                   </div>
                   <ResultForm matchId={m.id} homeGoals={m.homeGoals} awayGoals={m.awayGoals} />
@@ -96,10 +99,9 @@ export default async function AdminPage() {
         <TabsContent value="turnier">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Turnier-Fortschritt der Teams</CardTitle>
+              <CardTitle className="text-base">{t.admin.progressTitle}</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Setze pro Team die tiefste erreichte Runde und markiere den Weltmeister 👑. Danach
-                werden die Turnier-Tipps automatisch neu bewertet.
+                {t.admin.progressHint}
               </p>
             </CardHeader>
             <CardContent className="divide-y divide-border/60 p-0">
@@ -116,7 +118,7 @@ export default async function AdminPage() {
               ))}
               {teams.length === 0 && (
                 <p className="px-4 py-6 text-sm text-muted-foreground">
-                  Noch keine Teams – bitte zuerst den Spielplan synchronisieren.
+                  {t.admin.noTeams}
                 </p>
               )}
             </CardContent>
@@ -126,7 +128,7 @@ export default async function AdminPage() {
         <TabsContent value="nutzer">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Nutzerübersicht</CardTitle>
+              <CardTitle className="text-base">{t.admin.usersTitle}</CardTitle>
             </CardHeader>
             <CardContent className="divide-y divide-border/60 p-0">
               {users.map((u) => (
@@ -134,11 +136,11 @@ export default async function AdminPage() {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="truncate font-medium">{u.displayName}</span>
-                      {u.role === "ADMIN" && <Badge variant="warning">Admin</Badge>}
-                      {u.blocked && <Badge variant="destructive">gesperrt</Badge>}
+                      {u.role === "ADMIN" && <Badge variant="warning">{t.profile.admin}</Badge>}
+                      {u.blocked && <Badge variant="destructive">{t.admin.blocked}</Badge>}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {u.email} · {u._count.predictions} Tipps
+                      {u.email} · {u._count.predictions} {t.admin.tips}
                     </div>
                   </div>
                   {u.id !== admin.id && (

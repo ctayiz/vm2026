@@ -7,11 +7,14 @@ import {
 } from "@/components/tournament-bet-card";
 import { Lock, Sparkles } from "lucide-react";
 import { formatDateTime } from "@/lib/format";
+import { getLocale, getDictionary } from "@/lib/i18n-server";
 
 export const dynamic = "force-dynamic";
 
 export default async function TurnierTippsPage() {
   const user = await requireUser();
+  const t = getDictionary();
+  const locale = getLocale();
   const { questions, teams, players, lock } = await getTournamentData(user.id);
 
   const teamOptions: TeamOption[] = teams.map((t) => ({
@@ -38,15 +41,13 @@ export default async function TurnierTippsPage() {
         <div className="blob right-[-15%] top-[-50%] h-48 w-48 animate-blob bg-amber-400/25" />
         <div className="relative space-y-2">
           <div className="flex items-center gap-2 text-sm font-semibold text-amber-300">
-            <Sparkles className="size-4" /> Bonuspunkte
+            <Sparkles className="size-4" /> {t.tournament.bonus}
           </div>
           <h1 className="text-2xl font-bold sm:text-3xl">
-            Turnier-<span className="text-gradient">Tipps</span>
+            {t.tournament.title1}<span className="text-gradient">{t.tournament.title2}</span>
           </h1>
           <p className="max-w-lg text-sm text-muted-foreground">
-            Tippe das große Bild: Wer kommt wie weit, wer wird Weltmeister? Bis zu{" "}
-            <span className="font-semibold text-foreground">{maxPoints} Bonuspunkte</span> fürs ganze
-            Turnier – zusätzlich zu den Spiel-Tipps.
+            {t.tournament.intro1} <span className="font-semibold text-foreground">{maxPoints} {t.tournament.bonus}</span> {t.tournament.intro2}
           </p>
         </div>
       </div>
@@ -61,11 +62,11 @@ export default async function TurnierTippsPage() {
       >
         <Lock className="size-4 shrink-0" />
         {lock.locked ? (
-          <span>Turnier-Tipps sind gesperrt – das Turnier hat begonnen.</span>
+          <span>{t.tournament.lockedMsg}</span>
         ) : (
           <span>
-            Tipps änderbar bis zum Anpfiff
-            {lock.lockTime ? <> am {formatDateTime(lock.lockTime)}</> : null}.
+            {t.tournament.openMsg}
+            {lock.lockTime ? <> {t.tournament.openMsgAt} {formatDateTime(lock.lockTime, locale)}</> : null}.
           </span>
         )}
       </div>
@@ -104,7 +105,7 @@ export default async function TurnierTippsPage() {
 
       {teamOptions.length === 0 && (
         <p className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-          Noch keine Teams vorhanden – bitte als Admin den Spielplan synchronisieren.
+          {t.tournament.noTeams}
         </p>
       )}
     </div>

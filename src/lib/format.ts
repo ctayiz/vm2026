@@ -1,20 +1,36 @@
-// Datums-/Zeit-Formatierung in deutscher Zeitzone (Europe/Berlin).
+// Datums-/Zeit-Formatierung in deutscher Zeitzone (Europe/Berlin), sprachabhängig.
+
+import type { Locale } from "./i18n";
 
 const TZ = "Europe/Berlin";
 
-const dateFmt = new Intl.DateTimeFormat("de-DE", {
-  timeZone: TZ,
-  weekday: "short",
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric",
-});
+const intl = (locale: Locale) => (locale === "tr" ? "tr-TR" : "de-DE");
 
-const timeFmt = new Intl.DateTimeFormat("de-DE", {
-  timeZone: TZ,
-  hour: "2-digit",
-  minute: "2-digit",
-});
+const WORDS: Record<Locale, { today: string; tomorrow: string; uhr: string }> = {
+  de: { today: "Heute", tomorrow: "Morgen", uhr: " Uhr" },
+  tr: { today: "Bugün", tomorrow: "Yarın", uhr: "" },
+};
+
+function dateFmt(locale: Locale) {
+  return new Intl.DateTimeFormat(intl(locale), {
+    timeZone: TZ,
+    weekday: "short",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+function timeFmt(locale: Locale) {
+  return new Intl.DateTimeFormat(intl(locale), { timeZone: TZ, hour: "2-digit", minute: "2-digit" });
+}
+function dayLabelFmt(locale: Locale) {
+  return new Intl.DateTimeFormat(intl(locale), {
+    timeZone: TZ,
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+  });
+}
 
 const dayKeyFmt = new Intl.DateTimeFormat("de-DE", {
   timeZone: TZ,
@@ -23,45 +39,37 @@ const dayKeyFmt = new Intl.DateTimeFormat("de-DE", {
   day: "2-digit",
 });
 
-const dayLabelFmt = new Intl.DateTimeFormat("de-DE", {
-  timeZone: TZ,
-  weekday: "long",
-  day: "2-digit",
-  month: "long",
-});
-
-export function formatDate(d: Date): string {
-  return dateFmt.format(d);
+export function formatDate(d: Date, locale: Locale = "de"): string {
+  return dateFmt(locale).format(d);
 }
 
-export function formatTime(d: Date): string {
-  return `${timeFmt.format(d)} Uhr`;
+export function formatTime(d: Date, locale: Locale = "de"): string {
+  return `${timeFmt(locale).format(d)}${WORDS[locale].uhr}`;
 }
 
-export function formatDateTime(d: Date): string {
-  return `${dateFmt.format(d)}, ${timeFmt.format(d)} Uhr`;
+export function formatDateTime(d: Date, locale: Locale = "de"): string {
+  return `${dateFmt(locale).format(d)}, ${formatTime(d, locale)}`;
 }
 
 /** Stabiler Tages-Schlüssel (YYYY-MM-DD) in Berliner Zeit, zum Gruppieren. */
 export function dayKey(d: Date): string {
-  // de-DE liefert TT.MM.JJJJ -> in ISO-artigen Key drehen
   const parts = dayKeyFmt.formatToParts(d);
   const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
   return `${get("year")}-${get("month")}-${get("day")}`;
 }
 
 /** Menschenlesbares Tages-Label mit Heute/Morgen-Erkennung. */
-export function dayLabel(d: Date, now: Date = new Date()): string {
+export function dayLabel(d: Date, locale: Locale = "de", now: Date = new Date()): string {
   const k = dayKey(d);
-  if (k === dayKey(now)) return "Heute";
+  if (k === dayKey(now)) return WORDS[locale].today;
   const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-  if (k === dayKey(tomorrow)) return "Morgen";
-  return dayLabelFmt.format(d);
+  if (k === dayKey(tomorrow)) return WORDS[locale].tomorrow;
+  return dayLabelFmt(locale).format(d);
 }
 
-/** ms -> "2T 4h", "3h 12m", "12m 30s", "00:45" für Countdown. */
-export function formatCountdown(ms: number): string {
-  if (ms <= 0) return "Tipp-Schluss";
+/** ms -> Countdown-String. */
+export function formatCountdown(ms: number, deadlineLabel = "Tipp-Schluss"): string {
+  if (ms <= 0) return deadlineLabel;
   const totalSec = Math.floor(ms / 1000);
   const d = Math.floor(totalSec / 86400);
   const h = Math.floor((totalSec % 86400) / 3600);

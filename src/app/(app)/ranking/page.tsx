@@ -7,6 +7,7 @@ import { Crown, Medal } from "lucide-react";
 import { CountUp } from "@/components/count-up";
 import { RankCelebration } from "@/components/rank-celebration";
 import { Podium } from "@/components/podium";
+import { getDictionary } from "@/lib/i18n-server";
 import { cn } from "@/lib/utils";
 import type { LeaderboardRow } from "@/lib/ranking";
 
@@ -33,6 +34,7 @@ function Formkurve({ points }: { points: number[] }) {
 const rankColor = ["text-amber-300", "text-slate-300", "text-orange-400"];
 
 function Row({ row, isMe, index }: { row: LeaderboardRow; isMe: boolean; index: number }) {
+  const t = getDictionary();
   const top3 = row.rank <= 3;
   const isLeader = row.rank === 1;
   return (
@@ -68,11 +70,11 @@ function Row({ row, isMe, index }: { row: LeaderboardRow; isMe: boolean; index: 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className="truncate font-semibold">{row.displayName}</span>
-            {isMe && <Badge variant="default">Du</Badge>}
+            {isMe && <Badge variant="default">{t.ranking.you}</Badge>}
           </div>
           <div className="mt-0.5 flex items-center gap-3 text-xs text-muted-foreground">
-            <span>{row.correctCount} richtig</span>
-            <span>{Math.round(row.accuracy * 100)}% Quote</span>
+            <span>{row.correctCount} {t.ranking.correct}</span>
+            <span>{Math.round(row.accuracy * 100)}% {t.ranking.quote}</span>
             <Formkurve points={row.recentPoints} />
           </div>
         </div>
@@ -81,7 +83,7 @@ function Row({ row, isMe, index }: { row: LeaderboardRow; isMe: boolean; index: 
           <div className={cn("text-lg font-bold tabular-nums text-primary", isLeader && "text-glow")}>
             <CountUp value={row.totalPoints} />
           </div>
-          <div className="text-[10px] uppercase text-muted-foreground">Punkte</div>
+          <div className="text-[10px] uppercase text-muted-foreground">{t.ranking.points}</div>
         </div>
       </CardContent>
     </Card>
@@ -90,6 +92,7 @@ function Row({ row, isMe, index }: { row: LeaderboardRow; isMe: boolean; index: 
 
 export default async function RankingPage() {
   const user = await requireUser();
+  const t = getDictionary();
   const board = await getLeaderboard();
   const myRow = board.find((r) => r.userId === user.id);
   const iAmLeader = myRow?.rank === 1 && myRow.totalPoints > 0;
@@ -101,9 +104,9 @@ export default async function RankingPage() {
     <div className="space-y-5">
       <RankCelebration active={!!iAmLeader} />
       <div>
-        <h1 className="text-2xl font-bold">Ranking</h1>
+        <h1 className="text-2xl font-bold">{t.ranking.title}</h1>
         <p className="text-sm text-muted-foreground">
-          {board.length} Mitspieler · 3 Punkte je richtigem Tipp (1X2)
+          {t.ranking.subtitle(board.length)}
         </p>
       </div>
 
@@ -119,7 +122,7 @@ export default async function RankingPage() {
 
       {board.length === 0 && (
         <p className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-          Noch keine Mitspieler.
+          {t.ranking.empty}
         </p>
       )}
     </div>

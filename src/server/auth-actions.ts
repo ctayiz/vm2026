@@ -7,11 +7,13 @@ import { hashPassword, verifyPassword } from "@/lib/password";
 import { setSessionCookie, clearSessionCookie } from "@/lib/session";
 import { registerSchema, loginSchema, profileSchema } from "@/lib/validation";
 import { requireUser } from "@/lib/auth";
+import { getDictionary } from "@/lib/i18n-server";
 import { AVATAR_PRESETS, presetToken } from "@/lib/avatars";
 
 export type ActionState = { ok: boolean; error?: string };
 
 export async function registerAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const t = getDictionary();
   const parsed = registerSchema.safeParse({
     email: formData.get("email"),
     displayName: formData.get("displayName"),
@@ -19,19 +21,19 @@ export async function registerAction(_prev: ActionState, formData: FormData): Pr
     inviteCode: formData.get("inviteCode") ?? undefined,
   });
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Ungültige Eingabe." };
+    return { ok: false, error: parsed.error.issues[0]?.message ?? t.msg.invalidInput };
   }
   const { email, displayName, password, inviteCode } = parsed.data;
 
   // Optionaler Einladungscode
   const required = process.env.INVITE_CODE?.trim();
   if (required && inviteCode?.trim() !== required) {
-    return { ok: false, error: "Ungültiger Einladungscode." };
+    return { ok: false, error: t.msg.invalidInvite };
   }
 
   const existing = await db.user.findUnique({ where: { email } });
   if (existing) {
-    return { ok: false, error: "Diese E-Mail ist bereits registriert." };
+    return { ok: false, error: t.msg.emailTaken };
   }
 
   // Erster Nutzer oder ADMIN_EMAIL -> Admin
@@ -56,22 +58,23 @@ export async function registerAction(_prev: ActionState, formData: FormData): Pr
 }
 
 export async function loginAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const t = getDictionary();
   const parsed = loginSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
   });
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Ungültige Eingabe." };
+    return { ok: false, error: parsed.error.issues[0]?.message ?? t.msg.invalidInput };
   }
   const { email, password } = parsed.data;
 
   const user = await db.user.findUnique({ where: { email } });
   // Konstante Antwort, um keine Existenz preiszugeben.
   if (!user || !(await verifyPassword(password, user.passwordHash))) {
-    return { ok: false, error: "E-Mail oder Passwort ist falsch." };
+    return { ok: false, error: t.msg.wrongCredentials };
   }
   if (user.blocked) {
-    return { ok: false, error: "Dieser Account wurde gesperrt." };
+    return { ok: false, error: t.msg.accountBlocked };
   }
 
   await setSessionCookie(user.id);
@@ -85,12 +88,13 @@ export async function logoutAction() {
 
 export async function updateProfileAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const user = await requireUser();
+  const t = getDictionary();
   const parsed = profileSchema.safeParse({
     displayName: formData.get("displayName"),
     avatarUrl: formData.get("avatarUrl") ?? "",
   });
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Ungültige Eingabe." };
+    return { ok: false, error: parsed.error.issues[0]?.message ?? t.msg.invalidInput };
   }
   await db.user.update({
     where: { id: user.id },

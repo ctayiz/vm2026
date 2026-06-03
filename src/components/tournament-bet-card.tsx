@@ -6,6 +6,7 @@ import { submitTournamentBetAction } from "@/server/tournament-actions";
 import { burstConfetti } from "@/lib/confetti";
 import { flagEmoji } from "@/lib/flags";
 import { cn } from "@/lib/utils";
+import { useT } from "@/components/i18n-provider";
 
 export interface TeamOption {
   id: string;
@@ -48,6 +49,7 @@ export function TournamentBetCard({
   players: PlayerOption[];
   index: number;
 }) {
+  const t = useT();
   const isPlayer = question.pick === "PLAYER";
   const [pending, start] = useTransition();
   const [picked, setPicked] = useState(
@@ -59,16 +61,16 @@ export function TournamentBetCard({
   // Optionen nach Gruppe (Teams) bzw. Team (Spieler) bündeln
   const optgroups = new Map<string, { value: string; label: string }[]>();
   if (isPlayer) {
-    for (const p of players) {
-      const g = p.teamName || "Weitere";
+    for (const pl of players) {
+      const g = pl.teamName || t.favorites.other;
       if (!optgroups.has(g)) optgroups.set(g, []);
-      optgroups.get(g)!.push({ value: p.id, label: `${p.name} · ${p.goals} Tore` });
+      optgroups.get(g)!.push({ value: pl.id, label: `${pl.name} · ${pl.goals} ${t.scorers.goals}` });
     }
   } else {
-    for (const t of teams) {
-      const g = t.group ? `Gruppe ${t.group}` : "Weitere";
+    for (const tm of teams) {
+      const g = tm.group ? t.favorites.group(tm.group) : t.favorites.other;
       if (!optgroups.has(g)) optgroups.set(g, []);
-      optgroups.get(g)!.push({ value: t.id, label: t.name });
+      optgroups.get(g)!.push({ value: tm.id, label: tm.name });
     }
   }
 
@@ -94,18 +96,18 @@ export function TournamentBetCard({
     if (question.status === "fulfilled")
       return (
         <span className="inline-flex items-center gap-1 rounded-full bg-primary/20 px-2 py-0.5 text-xs font-semibold text-primary">
-          <Check className="size-3" /> +{question.earnedPoints} Punkte
+          <Check className="size-3" /> {t.tournament.fulfilled(question.earnedPoints ?? 0)}
         </span>
       );
     if (question.status === "missed")
       return (
         <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-xs text-muted-foreground">
-          verpasst
+          {t.tournament.missed}
         </span>
       );
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-secondary/60 px-2 py-0.5 text-xs text-muted-foreground">
-        <CircleHelp className="size-3" /> offen
+        <CircleHelp className="size-3" /> {t.tournament.open}
       </span>
     );
   };
@@ -129,7 +131,7 @@ export function TournamentBetCard({
           <p className="mt-0.5 text-xs text-muted-foreground">{question.hint}</p>
         </div>
         <span className="shrink-0 rounded-lg bg-gradient-to-br from-amber-300 to-yellow-600 px-2 py-1 text-sm font-bold text-background">
-          {question.points} P
+          {question.points} {t.common.pts}
         </span>
       </div>
 
@@ -142,15 +144,14 @@ export function TournamentBetCard({
                 {question.pickedLabel}
               </>
             ) : (
-              <span className="text-muted-foreground">kein Tipp abgegeben</span>
+              <span className="text-muted-foreground">{t.tournament.noTip}</span>
             )}
           </span>
           {statusBadge()}
         </div>
       ) : noPlayers ? (
         <p className="rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">
-          Noch keine Spielerdaten – sobald die Torschützen geladen sind (Admin → Live-Daten), kannst du
-          hier tippen.
+          {t.tournament.noPlayers}
         </p>
       ) : (
         <div className="space-y-2">
@@ -161,7 +162,7 @@ export function TournamentBetCard({
             className="h-11 w-full rounded-lg border border-input bg-background/60 px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
           >
             <option value="" disabled>
-              {isPlayer ? "Spieler wählen …" : "Team wählen …"}
+              {isPlayer ? t.tournament.pickPlayer : t.tournament.pickTeam}
             </option>
             {[...optgroups.entries()].map(([label, opts]) => (
               <optgroup key={label} label={label}>
@@ -176,12 +177,12 @@ export function TournamentBetCard({
           <div className="flex h-4 items-center gap-2 text-xs">
             {saved ? (
               <span className="flex animate-pop-in items-center gap-1 text-primary">
-                <Check className="size-3" /> gespeichert
+                <Check className="size-3" /> {t.common.saved}
               </span>
             ) : error ? (
               <span className="text-red-300">{error}</span>
             ) : (
-              <span className="text-muted-foreground">Änderbar bis Anpfiff des ersten Spiels.</span>
+              <span className="text-muted-foreground">{t.tournament.changeable}</span>
             )}
           </div>
         </div>

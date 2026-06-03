@@ -10,12 +10,14 @@ import { Label } from "@/components/ui/label";
 import { UserAvatar } from "@/components/user-avatar";
 import { AVATAR_PRESETS, presetToken, getPresetFromValue } from "@/lib/avatars";
 import { cn } from "@/lib/utils";
+import { useT } from "@/components/i18n-provider";
 
 function SubmitButton() {
+  const t = useT();
   const { pending } = useFormStatus();
   return (
     <Button type="submit" disabled={pending}>
-      {pending ? "Speichern …" : "Speichern"}
+      {pending ? t.common.saving : t.common.save}
     </Button>
   );
 }
@@ -27,6 +29,7 @@ export function ProfileForm({
   displayName: string;
   avatarUrl: string | null;
 }) {
+  const t = useT();
   const [state, formAction] = useFormState<ActionState, FormData>(updateProfileAction, { ok: false });
 
   const [name, setName] = useState(initialName);
@@ -44,13 +47,13 @@ export function ProfileForm({
       <div className="flex items-center gap-3">
         <UserAvatar value={finalValue} name={name || "?"} size="lg" />
         <div>
-          <div className="font-semibold">{name || "Dein Name"}</div>
-          <div className="text-xs text-muted-foreground">So sehen dich andere im Ranking.</div>
+          <div className="font-semibold">{name || t.profile.yourName}</div>
+          <div className="text-xs text-muted-foreground">{t.profile.seenBy}</div>
         </div>
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="displayName">Anzeigename</Label>
+        <Label htmlFor="displayName">{t.profile.displayName}</Label>
         <Input
           id="displayName"
           name="displayName"
@@ -62,7 +65,7 @@ export function ProfileForm({
 
       {/* Standard-Avatare */}
       <div className="space-y-2">
-        <Label>Avatar auswählen</Label>
+        <Label>{t.profile.chooseAvatar}</Label>
         <div className="grid grid-cols-6 gap-2 sm:grid-cols-8">
           {AVATAR_PRESETS.map((p) => {
             const token = presetToken(p.id);
@@ -98,14 +101,14 @@ export function ProfileForm({
             onClick={() => setSelected("")}
             className="text-xs text-muted-foreground hover:text-foreground hover:underline"
           >
-            Auswahl entfernen (Initialen anzeigen)
+            {t.profile.removeSelection}
           </button>
         )}
       </div>
 
       {/* Optional: eigene Bild-URL (hat Vorrang) */}
       <div className="space-y-1.5">
-        <Label htmlFor="customUrl">Eigene Bild-URL (optional)</Label>
+        <Label htmlFor="customUrl">{t.profile.avatarUrl}</Label>
         <Input
           id="customUrl"
           type="url"
@@ -114,7 +117,7 @@ export function ProfileForm({
           placeholder="https://…"
         />
         <p className="text-[11px] text-muted-foreground">
-          Wenn ausgefüllt, wird die URL statt des Standard-Avatars verwendet.
+          {t.profile.avatarHint}
         </p>
       </div>
 
@@ -122,7 +125,7 @@ export function ProfileForm({
       <input type="hidden" name="avatarUrl" value={finalValue} />
 
       {state.error && <p className="text-sm text-red-300">{state.error}</p>}
-      {state.ok && <p className="text-sm text-primary">Profil gespeichert.</p>}
+      {state.ok && <p className="text-sm text-primary">{t.profile.saved}</p>}
       <SubmitButton />
     </form>
   );

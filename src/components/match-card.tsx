@@ -8,6 +8,7 @@ import { formatTime } from "@/lib/format";
 import { getLockTime, isPickLocked } from "@/lib/lock";
 import { outcomeFromGoals } from "@/lib/scoring";
 import { PHASE_META, type Phase, type Prediction } from "@/lib/constants";
+import { getLocale, getDictionary } from "@/lib/i18n-server";
 import { MapPin, Trophy, Goal, Star, Zap } from "lucide-react";
 import type { MatchWithPrediction } from "@/lib/queries";
 import { cn } from "@/lib/utils";
@@ -17,14 +18,8 @@ function teamDisplay(
   placeholder: string | null,
 ) {
   if (team) return { name: team.name, code: team.code, flagCode: team.flagCode, isReal: true };
-  return { name: placeholder ?? "offen", code: "?", flagCode: null, isReal: false };
+  return { name: placeholder ?? "—", code: "?", flagCode: null, isReal: false };
 }
-
-const PRED_LABEL: Record<Prediction, string> = {
-  HOME_WIN: "Heimsieg",
-  DRAW: "Unentschieden",
-  AWAY_WIN: "Auswärtssieg",
-};
 
 export function MatchCard({
   match,
@@ -39,6 +34,13 @@ export function MatchCard({
   joker?: boolean; // Joker-Feature für diese Karte aktiv
   phaseJokerLocked?: boolean; // Joker dieser Phase bereits auf gesperrtem Spiel
 }) {
+  const t = getDictionary();
+  const locale = getLocale();
+  const PRED_LABEL: Record<Prediction, string> = {
+    HOME_WIN: t.outcome.home,
+    DRAW: t.outcome.draw,
+    AWAY_WIN: t.outcome.away,
+  };
   const phase = match.phase as Phase;
   const home = teamDisplay(match.homeTeam, match.homePlaceholder);
   const away = teamDisplay(match.awayTeam, match.awayPlaceholder);
@@ -65,7 +67,7 @@ export function MatchCard({
           {PHASE_META[phase]?.knockout && <Trophy className="size-3 text-amber-300" />}
           {match.roundLabel ?? PHASE_META[phase]?.label}
         </span>
-        <span>{formatTime(match.kickoff)}</span>
+        <span>{formatTime(match.kickoff, locale)}</span>
       </div>
 
       <div className="px-4 py-3">
@@ -86,7 +88,7 @@ export function MatchCard({
                 {match.homeGoals} : {match.awayGoals}
               </span>
             ) : (
-              <span className="text-xs font-medium text-muted-foreground">vs</span>
+              <span className="text-xs font-medium text-muted-foreground">{t.common.vs}</span>
             )}
           </div>
 
@@ -131,20 +133,20 @@ export function MatchCard({
             <span className="flex items-center gap-1.5 text-muted-foreground">
               {match.myPrediction ? (
                 <>
-                  Dein Tipp: <span className="font-medium text-foreground">{PRED_LABEL[match.myPrediction]}</span>
+                  {t.match.yourTip}{" "}<span className="font-medium text-foreground">{PRED_LABEL[match.myPrediction]}</span>
                 </>
               ) : (
-                "Kein Tipp abgegeben"
+                t.match.noTip
               )}
               {match.myJoker && (
-                <span className="inline-flex items-center gap-0.5 text-amber-300" title="Joker · doppelte Punkte">
+                <span className="inline-flex items-center gap-0.5 text-amber-300" title={t.joker.title}>
                   <Zap className="size-3 fill-amber-300" />
                 </span>
               )}
             </span>
             {match.myPrediction && (
               <Badge variant={correct ? "success" : "destructive"}>
-                {correct ? `+${match.myPoints ?? 0} Punkte` : "0 Punkte"}
+                {correct ? t.match.plusPoints(match.myPoints ?? 0) : t.match.zeroPoints}
               </Badge>
             )}
           </div>
@@ -154,8 +156,8 @@ export function MatchCard({
               matchId={match.id}
               initialPrediction={match.myPrediction}
               locked={locked}
-              homeShort={home.isReal ? home.code : "Heim"}
-              awayShort={away.isReal ? away.code : "Gast"}
+              homeShort={home.isReal ? home.code : t.match.home}
+              awayShort={away.isReal ? away.code : t.match.away}
             />
             {joker && !locked && match.myPrediction && (
               <JokerButton matchId={match.id} active={match.myJoker} phaseLocked={phaseJokerLocked} />

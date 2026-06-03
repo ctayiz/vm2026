@@ -5,6 +5,7 @@ import { Star } from "lucide-react";
 import { toggleFavoriteAction } from "@/server/favorite-actions";
 import { flagEmoji } from "@/lib/flags";
 import { MAX_FAVORITES } from "@/lib/constants";
+import { useT } from "@/components/i18n-provider";
 import { cn } from "@/lib/utils";
 
 export interface FavTeam {
@@ -22,6 +23,7 @@ export function FavoritesPicker({
   teams: FavTeam[];
   initialIds: string[];
 }) {
+  const t = useT();
   const [selected, setSelected] = useState<string[]>(initialIds);
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +33,7 @@ export function FavoritesPicker({
   const toggle = (teamId: string) => {
     setError(null);
     if (!selected.includes(teamId) && full) {
-      setError(`Maximal ${MAX_FAVORITES} Favoriten – bitte erst einen entfernen.`);
+      setError(t.favorites.maxReached(MAX_FAVORITES));
       return;
     }
     // optimistisch
@@ -46,17 +48,17 @@ export function FavoritesPicker({
   };
 
   const groups = new Map<string, FavTeam[]>();
-  for (const t of teams) {
-    const g = t.group ? `Gruppe ${t.group}` : "Weitere";
+  for (const team of teams) {
+    const g = team.group ? t.favorites.group(team.group) : t.favorites.other;
     if (!groups.has(g)) groups.set(g, []);
-    groups.get(g)!.push(t);
+    groups.get(g)!.push(team);
   }
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <span className="text-sm text-muted-foreground">
-          {selected.length}/{MAX_FAVORITES} gewählt
+          {t.favorites.chosen(selected.length, MAX_FAVORITES)}
         </span>
         {error && <span className="text-xs text-red-300">{error}</span>}
       </div>
@@ -66,14 +68,14 @@ export function FavoritesPicker({
           <div key={label}>
             <div className="mb-1 text-[11px] uppercase tracking-wide text-muted-foreground">{label}</div>
             <div className="flex flex-wrap gap-2">
-              {ts.map((t) => {
-                const active = selected.includes(t.id);
+              {ts.map((team) => {
+                const active = selected.includes(team.id);
                 const disabled = pending || (!active && full);
                 return (
                   <button
-                    key={t.id}
+                    key={team.id}
                     type="button"
-                    onClick={() => toggle(t.id)}
+                    onClick={() => toggle(team.id)}
                     disabled={disabled}
                     aria-pressed={active}
                     className={cn(
@@ -84,8 +86,8 @@ export function FavoritesPicker({
                       disabled && !active && "opacity-40",
                     )}
                   >
-                    <span className="text-base">{flagEmoji(t.flagCode)}</span>
-                    {t.name}
+                    <span className="text-base">{flagEmoji(team.flagCode)}</span>
+                    {team.name}
                     {active && <Star className="size-3.5 fill-amber-300 text-amber-300" />}
                   </button>
                 );

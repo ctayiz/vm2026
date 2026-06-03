@@ -1,6 +1,7 @@
 import { Crown } from "lucide-react";
 import { Flag } from "@/components/flag";
 import { cn } from "@/lib/utils";
+import { getDictionary } from "@/lib/i18n-server";
 
 export interface ScorerRow {
   id: string;
@@ -12,11 +13,11 @@ export interface ScorerRow {
 }
 
 export function TopScorerList({ scorers }: { scorers: ScorerRow[] }) {
+  const t = getDictionary();
   if (scorers.length === 0) {
     return (
       <p className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-        Noch keine Torschützen. Sobald Live-Daten geladen sind (Admin → Live-Daten), erscheint hier
-        die Torschützenliste.
+        {t.scorers.empty}
       </p>
     );
   }
@@ -46,7 +47,7 @@ export function TopScorerList({ scorers }: { scorers: ScorerRow[] }) {
           <div className="text-right">
             <div className="text-lg font-bold tabular-nums text-primary">{s.goals}</div>
             <div className="text-[10px] uppercase text-muted-foreground">
-              Tore{s.assists > 0 ? ` · ${s.assists} Vorl.` : ""}
+              {t.scorers.goals}{s.assists > 0 ? t.scorers.assistsSuffix(s.assists) : ""}
             </div>
           </div>
         </div>

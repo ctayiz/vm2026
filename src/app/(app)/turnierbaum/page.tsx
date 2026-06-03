@@ -2,6 +2,7 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Flag } from "@/components/flag";
 import { formatDate } from "@/lib/format";
+import { getLocale, getDictionary } from "@/lib/i18n-server";
 import { outcomeFromGoals } from "@/lib/scoring";
 import { PHASE_META, type Phase } from "@/lib/constants";
 import { Network } from "lucide-react";
@@ -48,6 +49,8 @@ function Side({
 }
 
 function MatchBox({ m }: { m: BracketMatch }) {
+  const t = getDictionary();
+  const locale = getLocale();
   const finished = m.status === "finished" && m.homeGoals != null && m.awayGoals != null;
   const outcome = finished ? outcomeFromGoals(m.homeGoals!, m.awayGoals!) : null;
   return (
@@ -66,7 +69,7 @@ function MatchBox({ m }: { m: BracketMatch }) {
         winner={outcome === "AWAY_WIN"}
       />
       <div className="border-t border-border/50 px-2 py-1 text-[10px] text-muted-foreground">
-        {finished ? "beendet" : formatDate(m.kickoff)}
+        {finished ? t.bracket.finished : formatDate(m.kickoff, locale)}
       </div>
     </div>
   );
@@ -74,6 +77,7 @@ function MatchBox({ m }: { m: BracketMatch }) {
 
 export default async function TurnierbaumPage() {
   await requireUser();
+  const t = getDictionary();
   const matches = (await db.match.findMany({
     where: { phase: { in: ["R32", "R16", "QF", "SF", "TP", "FINAL"] } },
     orderBy: { kickoff: "asc" },
@@ -87,10 +91,10 @@ export default async function TurnierbaumPage() {
     <div className="space-y-5">
       <div className="flex items-center gap-2">
         <Network className="size-5 text-primary" />
-        <h1 className="text-2xl font-bold">Turnierbaum</h1>
+        <h1 className="text-2xl font-bold">{t.bracket.title}</h1>
       </div>
       <p className="text-sm text-muted-foreground">
-        Der Weg ins Finale – Runde der letzten 32 bis zum Titel. Horizontal scrollbar.
+        {t.bracket.subtitle}
       </p>
 
       <div className="overflow-x-auto pb-4">

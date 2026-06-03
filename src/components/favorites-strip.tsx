@@ -3,6 +3,7 @@ import { Star } from "lucide-react";
 import { Flag } from "@/components/flag";
 import { PredictionPicker } from "@/components/prediction-picker";
 import { formatTime, dayLabel } from "@/lib/format";
+import { getLocale, getDictionary } from "@/lib/i18n-server";
 import { isPickLocked } from "@/lib/lock";
 import { cn } from "@/lib/utils";
 import type { MatchWithPrediction } from "@/lib/queries";
@@ -41,12 +42,14 @@ function ResultLine({ code, match }: { code: string; match: MatchWithPrediction 
 }
 
 export function FavoritesStrip({ items }: { items: FavoriteOverview[] }) {
+  const t = getDictionary();
+  const locale = getLocale();
   return (
     <section className="space-y-2">
       <div className="flex items-center gap-2">
         <Star className="size-4 fill-amber-300 text-amber-300" />
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          Deine Favoriten
+          {t.favorites.title}
         </h2>
       </div>
       <div className="grid gap-2 sm:grid-cols-3">
@@ -76,17 +79,17 @@ export function FavoritesStrip({ items }: { items: FavoriteOverview[] }) {
               {f.last ? (
                 <ResultLine code={f.code} match={f.last} />
               ) : (
-                <span className="text-xs text-muted-foreground">noch kein Ergebnis</span>
+                <span className="text-xs text-muted-foreground">{t.favorites.noResult}</span>
               )}
 
               {next ? (
                 <div className="mt-0.5 space-y-1">
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <span>nächstes: vs</span>
+                    <span>{t.favorites.next}</span>
                     <Flag code={oppOfNext?.flagCode} className="text-sm" />
                     <span className="truncate">{oppOfNext?.code ?? "offen"}</span>
                     <span className="ml-auto whitespace-nowrap">
-                      {dayLabel(next.kickoff)} {formatTime(next.kickoff).replace(" Uhr", "")}
+                      {dayLabel(next.kickoff, locale)} {formatTime(next.kickoff, locale)}
                     </span>
                   </div>
                   <PredictionPicker
@@ -99,7 +102,7 @@ export function FavoritesStrip({ items }: { items: FavoriteOverview[] }) {
                   />
                 </div>
               ) : (
-                <span className="text-xs text-muted-foreground">kein nächstes Spiel</span>
+                <span className="text-xs text-muted-foreground">{t.favorites.noNext}</span>
               )}
             </div>
           );
