@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { getDictionary } from "@/lib/i18n-server";
@@ -48,8 +47,10 @@ export async function submitPredictionAction(
     create: { userId: user.id, matchId, prediction },
   });
 
-  revalidatePath("/spielplan");
-  revalidatePath("/meine-tipps");
+  // KEIN revalidatePath hier: das würde die ganze Spielplan-Seite serverseitig
+  // neu rendern (inkl. Leaderboard) und die Bestätigung um Sekunden verzögern.
+  // Die Auswahl wird im UI optimistisch angezeigt; beim nächsten Seitenaufruf
+  // (force-dynamic) sind die Daten ohnehin frisch.
   return { ok: true, prediction };
 }
 
@@ -81,8 +82,6 @@ export async function toggleJokerAction(_prev: JokerState, formData: FormData): 
   // bereits Joker -> entfernen
   if (own.isJoker) {
     await db.prediction.update({ where: { id: own.id }, data: { isJoker: false } });
-    revalidatePath("/spielplan");
-    revalidatePath("/meine-tipps");
     return { ok: true, active: false };
   }
 
@@ -105,7 +104,5 @@ export async function toggleJokerAction(_prev: JokerState, formData: FormData): 
     db.prediction.update({ where: { id: own.id }, data: { isJoker: true } }),
   ]);
 
-  revalidatePath("/spielplan");
-  revalidatePath("/meine-tipps");
   return { ok: true, active: true };
 }
