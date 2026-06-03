@@ -39,6 +39,28 @@ export interface SyncSummary {
  */
 export async function syncSchedule(): Promise<SyncSummary> {
   const result = await fetchSchedule();
+  const authoritative = result.source === "football-data" || result.source === "api-football";
+
+  // Schutz: Eine Fallback-Quelle (OpenFootball/builtin) darf bereits vorhandene
+  // autoritative Daten NICHT überschreiben/löschen. Verhindert, dass z. B. ein
+  // Sync ohne FOOTBALLDATA_TOKEN auf Vercel die echten Daten kaputt macht.
+  if (!authoritative) {
+    const existingAuth = await db.match.count({
+      where: { OR: [{ externalId: { startsWith: "fd-" } }, { externalId: { startsWith: "af-" } }] },
+    });
+    if (existingAuth > 0) {
+      return {
+        source: result.source,
+        note: "Übersprungen: autoritative Daten vorhanden – Fallback-Quelle ignoriert (FOOTBALLDATA_TOKEN auf dem Server setzen!).",
+        teams: 0,
+        created: 0,
+        updated: 0,
+        removed: 0,
+        total: result.matches.length,
+      };
+    }
+  }
+
   const teamIds = new Set<string>();
   const syncedExternalIds = new Set<string>();
   let created = 0;
