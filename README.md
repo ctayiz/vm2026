@@ -33,7 +33,9 @@ einfach (siehe unten). „RLS“ wird durch zentrale Guards (`requireUser`,
 
 ## Schnellstart
 
-Voraussetzung: Node ≥ 18.
+Voraussetzung: Node ≥ 18 und eine **PostgreSQL-Datenbank** (lokal & Prod gleich).
+Am einfachsten ein kostenloses Cloud-Postgres bei **[Neon](https://neon.tech)** anlegen
+und die Connection-URL kopieren.
 
 ```bash
 # 1. Abhängigkeiten
@@ -41,10 +43,11 @@ npm install
 
 # 2. Env vorbereiten
 cp .env.example .env
+#   DATABASE_URL = deine Postgres-URL (z. B. von Neon, mit ?sslmode=require)
 #   AUTH_SECRET setzen:  openssl rand -base64 32
 #   ADMIN_EMAIL auf deine E-Mail setzen (wird automatisch Admin)
 
-# 3. Datenbank anlegen + echten WM-2026-Spielplan laden
+# 3. Schema anwenden + echten WM-2026-Spielplan laden
 npm run db:push
 npm run db:seed
 
@@ -188,18 +191,32 @@ Tiebreaker, Spielplan-Generator (104 Spiele, alle Phasen).
 
 ## Deployment (Vercel + Postgres)
 
-1. In `prisma/schema.prisma` `provider = "postgresql"` setzen.
-2. Postgres bereitstellen (Vercel Postgres, Neon oder Supabase) und
-   `DATABASE_URL` als Env-Var hinterlegen; ebenso `AUTH_SECRET`, `ADMIN_EMAIL`,
-   ggf. `INVITE_CODE`, `WORLDCUP_JSON_URL`/`APIFOOTBALL_KEY`.
-3. Migration/Schema anwenden: `npx prisma migrate deploy` (oder `db push`),
-   danach einmalig `npm run db:seed` bzw. `npm run sync`.
-4. Deployen. Der Auto-Sync läuft nutzungsgesteuert (kein Cron nötig, auch auf
-   dem Vercel-Hobby-Plan). Optional zusätzlich ein externer Cron auf
-   `/api/cron/sync?secret=<CRON_SECRET>` (z. B. cron-job.org) oder Vercel Pro.
+> SQLite funktioniert auf Vercel **nicht** (read-only/ephemeres Dateisystem).
+> Deshalb läuft die App auf PostgreSQL.
 
-> Für versionierte Migrationen statt `db push`:
-> `npx prisma migrate dev --name init` (legt `prisma/migrations/` an).
+1. **Postgres bereitstellen** – am einfachsten **Vercel Postgres** (im Projekt
+   unter *Storage → Create Database*) oder **Neon**. Connection-URL kopieren.
+2. **Env-Variablen in Vercel** setzen (Project → Settings → Environment Variables),
+   für *Production* (und *Preview*):
+   - `DATABASE_URL` = deine Postgres-URL
+     *(bei Vercel Postgres: den Wert von `POSTGRES_PRISMA_URL` verwenden)*
+   - `AUTH_SECRET` = langes Zufalls-Secret (`openssl rand -base64 32`)
+   - `ADMIN_EMAIL` = deine E-Mail (wird automatisch Admin)
+   - optional: `INVITE_CODE`, `APIFOOTBALL_KEY`, `CRON_SECRET`
+3. **Schema + Daten in die DB schreiben** – einmalig lokal gegen die Prod-DB
+   ausführen (DATABASE_URL temporär in der lokalen `.env` auf die Prod-URL setzen
+   oder inline übergeben):
+   ```bash
+   DATABASE_URL="postgresql://…" npx prisma db push
+   DATABASE_URL="postgresql://…" npm run db:seed
+   ```
+4. **Deployen** (Push auf GitHub → Vercel baut automatisch). Der Build führt
+   `prisma generate` aus; die DB wird zur Laufzeit über `DATABASE_URL` erreicht.
+5. Auto-Sync läuft nutzungsgesteuert (kein Cron nötig, Hobby-tauglich). Optional
+   externer Cron auf `/api/cron/sync?secret=<CRON_SECRET>`.
+
+> Tipp: Nach „Save" der Env-Variablen einmal **Redeploy** auslösen, damit sie
+> greifen.
 
 ---
 

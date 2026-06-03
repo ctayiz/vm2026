@@ -1,18 +1,18 @@
 // WM 2026 Tippspiel – Datenmodell
 //
-// Hinweis: Provider ist auf SQLite gesetzt (Dev, kein externer Dienst nötig).
-// Für Produktion (Postgres / Supabase) einfach provider auf "postgresql"
-// stellen und DATABASE_URL anpassen. Das restliche Schema ist kompatibel.
+// Provider: PostgreSQL (lokal & Produktion identisch – nötig für Vercel, da
+// Serverless kein persistentes Dateisystem hat). DATABASE_URL kommt von einem
+// gehosteten Postgres (Vercel Postgres, Neon oder Supabase).
 //
-// Enums werden in SQLite nicht unterstützt -> wir nutzen String-Felder mit
-// dokumentierten, in TypeScript (src/lib/constants.ts) zentral definierten Werten.
+// Statt DB-Enums nutzen wir String-Felder mit dokumentierten, in TypeScript
+// (src/lib/constants.ts) zentral definierten Werten – bleibt damit portabel.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
