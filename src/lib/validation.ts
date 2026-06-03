@@ -16,7 +16,8 @@ export const registerSchema = z.object({
 });
 
 export const loginSchema = z.object({
-  email: z.string().trim().toLowerCase().email("Bitte gültige E-Mail-Adresse angeben."),
+  // E-Mail ODER Anzeigename
+  identifier: z.string().trim().min(1, "Bitte E-Mail oder Anzeigename angeben."),
   password: z.string().min(1, "Bitte Passwort eingeben."),
 });
 

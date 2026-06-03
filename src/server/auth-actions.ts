@@ -35,6 +35,14 @@ export async function registerAction(_prev: ActionState, formData: FormData): Pr
   if (existing) {
     return { ok: false, error: t.msg.emailTaken };
   }
+  // Anzeigename muss eindeutig sein (Login per Name möglich), case-insensitiv.
+  const nameTaken = await db.user.findFirst({
+    where: { displayName: { equals: displayName, mode: "insensitive" } },
+    select: { id: true },
+  });
+  if (nameTaken) {
+    return { ok: false, error: t.msg.nameTaken };
+  }
 
   // Erster Nutzer oder ADMIN_EMAIL -> Admin
   const userCount = await db.user.count();
@@ -60,15 +68,23 @@ export async function registerAction(_prev: ActionState, formData: FormData): Pr
 export async function loginAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const t = getDictionary();
   const parsed = loginSchema.safeParse({
-    email: formData.get("email"),
+    identifier: formData.get("identifier"),
     password: formData.get("password"),
   });
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? t.msg.invalidInput };
   }
-  const { email, password } = parsed.data;
+  const { identifier, password } = parsed.data;
 
-  const user = await db.user.findUnique({ where: { email } });
+  // Login per E-Mail (klein geschrieben) ODER Anzeigename (case-insensitiv).
+  const user = await db.user.findFirst({
+    where: {
+      OR: [
+        { email: identifier.toLowerCase() },
+        { displayName: { equals: identifier, mode: "insensitive" } },
+      ],
+    },
+  });
   // Konstante Antwort, um keine Existenz preiszugeben.
   if (!user || !(await verifyPassword(password, user.passwordHash))) {
     return { ok: false, error: t.msg.wrongCredentials };
@@ -96,6 +112,19 @@ export async function updateProfileAction(_prev: ActionState, formData: FormData
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? t.msg.invalidInput };
   }
+
+  // Anzeigename darf nicht von einem ANDEREN Nutzer belegt sein.
+  const nameTaken = await db.user.findFirst({
+    where: {
+      displayName: { equals: parsed.data.displayName, mode: "insensitive" },
+      NOT: { id: user.id },
+    },
+    select: { id: true },
+  });
+  if (nameTaken) {
+    return { ok: false, error: t.msg.nameTaken };
+  }
+
   await db.user.update({
     where: { id: user.id },
     data: {

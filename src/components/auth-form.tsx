@@ -39,10 +39,17 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
               <Input id="displayName" name="displayName" placeholder={t.auth.displayNamePh} required />
             </div>
           )}
-          <div className="space-y-1.5">
-            <Label htmlFor="email">{t.auth.email}</Label>
-            <Input id="email" name="email" type="email" placeholder="du@example.com" required />
-          </div>
+          {mode === "login" ? (
+            <div className="space-y-1.5">
+              <Label htmlFor="identifier">{t.auth.identifier}</Label>
+              <Input id="identifier" name="identifier" type="text" placeholder={t.auth.identifierPh} required />
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              <Label htmlFor="email">{t.auth.email}</Label>
+              <Input id="email" name="email" type="email" placeholder="du@example.com" required />
+            </div>
+          )}
           <div className="space-y-1.5">
             <Label htmlFor="password">{t.auth.password}</Label>
             <Input
