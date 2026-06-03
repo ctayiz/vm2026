@@ -1,14 +1,16 @@
-// Spielplan-Datenquelle – bewusst gekapselt, damit später leicht austauschbar.
+// Spielplan-Datenquelle – bewusst gekapselt, damit leicht austauschbar.
 //
-// Reihenfolge:
-//   1. API-Football / API-Sports  (wenn APIFOOTBALL_KEY gesetzt) – Stub, erweiterbar
-//   2. OpenFootball JSON          (WORLDCUP_JSON_URL)
-//   3. Eingebauter Offline-Datensatz (buildSchedule) als garantierter Fallback
+// Reihenfolge (erste verfügbare gewinnt):
+//   1. API-Football / API-Sports  (wenn APIFOOTBALL_KEY gesetzt) – AUTORITATIV + LIVE
+//      echte Auslosung, Anstoßzeiten, Ergebnisse, Status.
+//   2. OpenFootball JSON          (WORLDCUP_JSON_URL) – Community, ggf. PROVISORISCH
+//   3. Eingebauter Offline-Datensatz (buildSchedule) – nur Notfall-Fallback
 //
 // Alle Quellen liefern denselben normalisierten Typ `NormalizedMatch`.
 
 import { buildSchedule, type NormalizedMatch, type NormalizedTeamRef } from "./worldcup-data";
-import { lookupTeam, translatePlaceholder } from "./team-map";
+import { lookupTeam, resolveTeamRef, translatePlaceholder } from "./team-map";
+import { hasApiFootball, fetchFixtures, type ApiFixture } from "./api-football";
 import type { Phase } from "./constants";
 
 export interface SyncResult {
@@ -119,15 +121,71 @@ function normalizeOpenFootball(json: any): NormalizedMatch[] {
 
 export { normalizeOpenFootball };
 
+// --- API-Football (autoritativ, live) --------------------------------------
+
+/** API-Football-Rundenbezeichnung -> Phase + Gruppe (falls Gruppenphase). */
+function mapApiRound(round: string): { phase: Phase; group?: string; label: string } {
+  const s = (round ?? "").toLowerCase();
+  const groupMatch = /group\s+([a-l])/i.exec(round ?? "");
+  if (s.includes("group") || groupMatch) {
+    const g = groupMatch?.[1]?.toUpperCase();
+    return { phase: "GROUP", group: g, label: g ? `Gruppe ${g}` : "Gruppenphase" };
+  }
+  if (s.includes("3rd") || s.includes("third")) return { phase: "TP", label: "Spiel um Platz 3" };
+  if (s.includes("final") && !s.includes("semi") && !s.includes("quarter"))
+    return { phase: "FINAL", label: "Finale" };
+  if (s.includes("semi")) return { phase: "SF", label: "Halbfinale" };
+  if (s.includes("quarter")) return { phase: "QF", label: "Viertelfinale" };
+  if (s.includes("16")) return { phase: "R16", label: "Achtelfinale" };
+  if (s.includes("32")) return { phase: "R32", label: "Runde der letzten 32" };
+  return { phase: "R16", label: round || "K.-o.-Phase" };
+}
+
+function mapApiStatus(short: string): "scheduled" | "live" | "finished" {
+  if (["FT", "AET", "PEN", "WO", "AWD"].includes(short)) return "finished";
+  if (["1H", "2H", "HT", "ET", "BT", "P", "LIVE", "INT", "SUSP"].includes(short)) return "live";
+  return "scheduled";
+}
+
+function normalizeApiFootball(fixtures: ApiFixture[]): NormalizedMatch[] {
+  return fixtures.map((f) => {
+    const { phase, group, label } = mapApiRound(f.round);
+    const status = mapApiStatus(f.status);
+    const hasResult = status === "finished" && f.homeGoals != null && f.awayGoals != null;
+    return {
+      externalId: `af-${f.fixtureId}`,
+      phase,
+      group,
+      roundLabel: label,
+      kickoff: f.date, // API-Football liefert ISO inkl. Offset
+      venue: f.venue ?? undefined,
+      city: f.city ?? undefined,
+      home: resolveTeamRef(f.homeName) as NormalizedTeamRef | undefined,
+      away: resolveTeamRef(f.awayName) as NormalizedTeamRef | undefined,
+      status,
+      homeGoals: hasResult ? f.homeGoals : null,
+      awayGoals: hasResult ? f.awayGoals : null,
+    } satisfies NormalizedMatch;
+  });
+}
+
 /**
  * Lädt den Spielplan. Wirft NICHT bei Netzwerkfehlern, sondern fällt auf den
  * eingebauten Datensatz zurück (für ein robustes MVP-Erlebnis).
  */
 export async function fetchSchedule(): Promise<SyncResult> {
-  // 1) API-Football – Platzhalter für späteren Ausbau.
-  if (process.env.APIFOOTBALL_KEY) {
-    // Hier würde der API-Football-Client implementiert (siehe README, Abschnitt
-    // "Datenquelle austauschen"). Vorerst absichtlich nicht aktiv -> nächste Quelle.
+  // 1) API-Football (autoritativ + live) – wenn Key gesetzt ist.
+  if (hasApiFootball()) {
+    try {
+      const fixtures = await fetchFixtures();
+      const matches = normalizeApiFootball(fixtures);
+      if (matches.length > 0) {
+        return { source: "api-football", matches };
+      }
+    } catch (e) {
+      // bei API-Fehler/Limit: auf nächste Quelle ausweichen
+      // (Meldung wird im Sync-Ergebnis als note geführt)
+    }
   }
 
   // 2) OpenFootball JSON
@@ -139,7 +197,11 @@ export async function fetchSchedule(): Promise<SyncResult> {
         const json = await res.json();
         const matches = normalizeOpenFootball(json);
         if (matches.length > 0) {
-          return { source: "openfootball", matches };
+          return {
+            source: "openfootball",
+            matches,
+            note: "Achtung: OpenFootball ist eine Community-Quelle und für 2026 evtl. provisorisch (vorläufige Auslosung, keine Live-Ergebnisse). Für echte/aktuelle Daten APIFOOTBALL_KEY setzen.",
+          };
         }
       }
     } catch {

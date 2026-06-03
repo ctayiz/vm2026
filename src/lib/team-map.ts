@@ -59,10 +59,40 @@ export const TEAM_MAP: Record<string, TeamInfo> = {
   Uzbekistan: { code: "UZB", name: "Usbekistan", flagCode: "uz" },
 };
 
+// API-Football/andere Quellen nutzen teils abweichende Namen für Nationalteams.
+export const TEAM_ALIASES: Record<string, string> = {
+  "Korea Republic": "South Korea",
+  "United States": "USA",
+  "USA ": "USA",
+  "IR Iran": "Iran",
+  "Cote d'Ivoire": "Ivory Coast",
+  "Côte d'Ivoire": "Ivory Coast",
+  Czechia: "Czech Republic",
+  Turkiye: "Turkey",
+  Türkiye: "Turkey",
+  "Cabo Verde": "Cape Verde",
+};
+
 /** Englischen Namen -> TeamInfo, falls echtes Team (kein Platzhalter). */
 export function lookupTeam(name: string | undefined | null): TeamInfo | null {
   if (!name) return null;
-  return TEAM_MAP[name.trim()] ?? null;
+  const key = name.trim();
+  return TEAM_MAP[key] ?? TEAM_MAP[TEAM_ALIASES[key] ?? ""] ?? null;
+}
+
+/**
+ * Beliebiges Team (auch unbekannte) auf eine Team-Referenz bringen:
+ * bekannt -> deutscher Name + Code + Flagge; sonst Fallback mit Originalnamen.
+ */
+export function resolveTeamRef(
+  name: string | undefined | null,
+): { code: string; name: string; flagCode?: string } | undefined {
+  if (!name || !name.trim()) return undefined;
+  const info = lookupTeam(name);
+  if (info) return { code: info.code, name: info.name, flagCode: info.flagCode };
+  // Unbekanntes Team trotzdem aufnehmen (Originalname, Code aus den ersten 3 Buchstaben)
+  const clean = name.trim();
+  return { code: clean.slice(0, 3).toUpperCase(), name: clean };
 }
 
 /**

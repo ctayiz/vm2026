@@ -17,7 +17,7 @@ export async function syncScheduleAction(): Promise<AdminState> {
   revalidatePath("/admin");
   return {
     ok: true,
-    message: `Quelle: ${s.source} · ${s.created} neu, ${s.updated} aktualisiert (gesamt ${s.total}).${s.note ? " " + s.note : ""}`,
+    message: `Quelle: ${s.source} · ${s.created} neu, ${s.updated} aktualisiert${s.removed ? `, ${s.removed} veraltete entfernt` : ""} (gesamt ${s.total}).${s.note ? " " + s.note : ""}`,
   };
 }
 

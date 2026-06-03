@@ -26,6 +26,7 @@ export interface SyncSummary {
   teams: number;
   created: number;
   updated: number;
+  removed: number;
   total: number;
 }
 
@@ -39,10 +40,13 @@ export interface SyncSummary {
 export async function syncSchedule(): Promise<SyncSummary> {
   const result = await fetchSchedule();
   const teamIds = new Set<string>();
+  const syncedExternalIds = new Set<string>();
   let created = 0;
   let updated = 0;
+  let removed = 0;
 
   for (const m of result.matches) {
+    syncedExternalIds.add(m.externalId);
     const homeTeamId = m.home ? await upsertTeam(m.home, m.group) : null;
     const awayTeamId = m.away ? await upsertTeam(m.away, m.group) : null;
     if (homeTeamId) teamIds.add(homeTeamId);
@@ -94,12 +98,23 @@ export async function syncSchedule(): Promise<SyncSummary> {
     }
   }
 
+  // Veraltete Spiele aus einer ANDEREN Quelle entfernen (z. B. nach Wechsel
+  // OpenFootball -> API-Football). Nur wenn der Import vollständig wirkt
+  // (>= 50 Spiele), um bei einem partiellen Abruf nicht versehentlich zu löschen.
+  if (result.matches.length >= 50) {
+    const del = await db.match.deleteMany({
+      where: { externalId: { notIn: [...syncedExternalIds] } },
+    });
+    removed = del.count;
+  }
+
   return {
     source: result.source,
     note: result.note,
     teams: teamIds.size,
     created,
     updated,
+    removed,
     total: result.matches.length,
   };
 }

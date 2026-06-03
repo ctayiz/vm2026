@@ -68,20 +68,26 @@ export async function fetchTopScorers(): Promise<ApiTopScorer[]> {
 export interface ApiFixture {
   fixtureId: number;
   date: string;
+  round: string; // z. B. "Group A - 1", "Round of 16", "Final"
+  venue: string | null;
+  city: string | null;
   homeName: string;
   awayName: string;
   homeGoals: number | null;
   awayGoals: number | null;
-  status: string;
+  status: string; // API-Football short status (NS, FT, 1H, …)
 }
 
-/** Alle Fixtures der Liga/Saison (für ID-Matching mit unseren Spielen). */
+/** Alle Fixtures der Liga/Saison (Spielplan + Live-Ergebnisse). */
 export async function fetchFixtures(): Promise<ApiFixture[]> {
   const { league, season } = requireConfig();
   const rows: any[] = await call("/fixtures", { league, season });
   return rows.map((r) => ({
     fixtureId: r.fixture?.id,
     date: r.fixture?.date,
+    round: r.league?.round ?? "",
+    venue: r.fixture?.venue?.name ?? null,
+    city: r.fixture?.venue?.city ?? null,
     homeName: r.teams?.home?.name ?? "",
     awayName: r.teams?.away?.name ?? "",
     homeGoals: r.goals?.home ?? null,

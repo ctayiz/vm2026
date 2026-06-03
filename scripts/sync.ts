@@ -8,7 +8,9 @@ async function main() {
   const summary = await syncSchedule();
   console.log(`Quelle: ${summary.source}`);
   if (summary.note) console.log(`Hinweis: ${summary.note}`);
-  console.log(`Teams: ${summary.teams} · Neu: ${summary.created} · Aktualisiert: ${summary.updated} · Gesamt: ${summary.total}`);
+  console.log(
+    `Teams: ${summary.teams} · Neu: ${summary.created} · Aktualisiert: ${summary.updated} · Entfernt: ${summary.removed} · Gesamt: ${summary.total}`,
+  );
 
   // Falls die Quelle Ergebnisse mitbringt: direkt neu auswerten.
   const r = await rescoreAll();
