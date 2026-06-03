@@ -4,6 +4,7 @@ import { requireUser, isAdmin } from "@/lib/auth";
 import { logoutAction } from "@/server/auth-actions";
 import { Nav } from "@/components/nav";
 import { UserAvatar } from "@/components/user-avatar";
+import { AutoSync } from "@/components/auto-sync";
 import { Button } from "@/components/ui/button";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -12,6 +13,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-dvh flex-col">
+      <AutoSync />
       <header className="sticky top-0 z-40 border-b border-border bg-card/80 backdrop-blur">
         <div className="container flex h-14 items-center justify-between gap-4">
           <Link href="/spielplan" className="flex items-center gap-2 font-bold">

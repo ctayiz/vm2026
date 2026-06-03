@@ -116,11 +116,15 @@ npm run dev
   (max. 1 pro Phase). Anzeige auf der Spielkarte (⚡), Auswertung automatisch.
 - **Turnierbaum** – K.-o.-Baum von der Runde der letzten 32 bis zum Finale
   (Header-Icon ⌗ → `/turnierbaum`), horizontal scrollbar, mit Ergebnissen.
-- **Auto-Sync (Cron) + Tipp-Erinnerung** – Endpunkt `GET /api/cron/sync`
-  aktualisiert Spielplan, Ergebnisse, Torschützen und rechnet alles neu
-  (per `vercel.json` stündlich; via `CRON_SECRET` abgesichert). Dazu ein
-  Hinweis-Banner im Spielplan „Tipp-Schluss bald", wenn ungetippte Spiele in
-  der nächsten Stunde schließen.
+- **Auto-Sync (ohne Cron, Hobby-tauglich) + Tipp-Erinnerung** – beim Öffnen der
+  App stößt der Browser 1×/Session einen Hintergrund-Sync an (`POST /api/sync/auto`).
+  Die eigentliche Drosselung passiert serverseitig: Spielplan max. alle 15 Min,
+  API-Football-Statistiken max. alle 60 Min (schont das Free-Tier-Limit). So
+  bleibt alles aktuell, **ohne dass ein Cron-Job nötig ist**. Zusätzlich gibt es
+  den Endpunkt `GET /api/cron/sync` (via `CRON_SECRET` abgesichert) – für alle,
+  die doch einen externen Cron (z. B. cron-job.org) oder Vercel Pro nutzen.
+  Dazu ein Hinweis-Banner im Spielplan „Tipp-Schluss bald", wenn ungetippte
+  Spiele in der nächsten Stunde schließen.
 - **Ranking** – Leaderboard mit Top-3-Hervorhebung, eigener Markierung,
   Punkten / richtigen Tipps / Quote / Formkurve. Tiebreaker: Punkte → richtige
   Tipps → Quote → Registrierungsdatum → alphabetisch.
@@ -190,7 +194,9 @@ Tiebreaker, Spielplan-Generator (104 Spiele, alle Phasen).
    ggf. `INVITE_CODE`, `WORLDCUP_JSON_URL`/`APIFOOTBALL_KEY`.
 3. Migration/Schema anwenden: `npx prisma migrate deploy` (oder `db push`),
    danach einmalig `npm run db:seed` bzw. `npm run sync`.
-4. Deployen. Cron für automatischen Sync optional via Vercel Cron + Route Handler.
+4. Deployen. Der Auto-Sync läuft nutzungsgesteuert (kein Cron nötig, auch auf
+   dem Vercel-Hobby-Plan). Optional zusätzlich ein externer Cron auf
+   `/api/cron/sync?secret=<CRON_SECRET>` (z. B. cron-job.org) oder Vercel Pro.
 
 > Für versionierte Migrationen statt `db push`:
 > `npx prisma migrate dev --name init` (legt `prisma/migrations/` an).
