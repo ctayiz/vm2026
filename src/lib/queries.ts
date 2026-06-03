@@ -8,7 +8,8 @@ import { pickLastAndNext } from "./favorites";
 /** Leaderboard für alle (eingeloggten) Nutzer berechnen (inkl. Turnier-Bonus). */
 export async function getLeaderboard(): Promise<LeaderboardRow[]> {
   const users = await db.user.findMany({
-    where: { blocked: false },
+    // Admins nehmen nicht am Ranking teil (Organisator, nicht Mitspieler)
+    where: { blocked: false, role: { not: "ADMIN" } },
     select: {
       id: true,
       displayName: true,
