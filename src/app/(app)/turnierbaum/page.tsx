@@ -11,7 +11,6 @@ import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-// Spalten-Reihenfolge des Baums (Spiel um Platz 3 wird separat dargestellt)
 const COLUMNS: Phase[] = ["R32", "R16", "QF", "SF", "FINAL"];
 
 type BracketMatch = {
@@ -41,13 +40,13 @@ function Side({
   champion?: boolean;
 }) {
   return (
-    <div className={cn("flex items-center gap-2 px-2.5 py-2", winner && "font-semibold text-foreground")}>
-      <Flag code={team?.flagCode} className="text-base" />
+    <div className={cn("flex items-center gap-1.5 px-2 py-1.5", winner && "font-semibold text-foreground")}>
+      <Flag code={team?.flagCode} className="text-sm" />
       <span className={cn("flex-1 truncate text-xs", !team && "italic text-muted-foreground")}>
         {team?.name ?? placeholder ?? "—"}
       </span>
-      {champion && winner && <Crown className="size-3.5 text-amber-300" />}
-      <span className="text-xs tabular-nums text-muted-foreground">{goals ?? "–"}</span>
+      {champion && winner && <Crown className="size-3 text-amber-300" />}
+      <span className="text-[11px] tabular-nums text-muted-foreground">{goals ?? "–"}</span>
     </div>
   );
 }
@@ -60,30 +59,18 @@ function MatchBox({ m, featured }: { m: BracketMatch; featured?: boolean }) {
   return (
     <div
       className={cn(
-        "card-hover relative shrink-0 overflow-hidden rounded-xl border",
+        "card-hover relative w-full overflow-hidden rounded-lg border",
         featured
-          ? "w-52 border-amber-400/50 bg-gradient-to-br from-amber-400/10 via-card to-card shadow-lg shadow-amber-500/10"
-          : "glass w-48 border-border",
+          ? "border-amber-400/50 bg-gradient-to-br from-amber-400/10 via-card to-card shadow-lg shadow-amber-500/10"
+          : "glass border-border",
       )}
     >
       {featured && <span className="shimmer-gold pointer-events-none absolute inset-0 opacity-60" />}
       <div className="relative">
-        <Side
-          team={m.homeTeam}
-          placeholder={m.homePlaceholder}
-          goals={m.homeGoals}
-          winner={outcome === "HOME_WIN"}
-          champion={featured}
-        />
+        <Side team={m.homeTeam} placeholder={m.homePlaceholder} goals={m.homeGoals} winner={outcome === "HOME_WIN"} champion={featured} />
         <div className="border-t border-border/50" />
-        <Side
-          team={m.awayTeam}
-          placeholder={m.awayPlaceholder}
-          goals={m.awayGoals}
-          winner={outcome === "AWAY_WIN"}
-          champion={featured}
-        />
-        <div className="border-t border-border/50 px-2.5 py-1 text-[10px] text-muted-foreground">
+        <Side team={m.awayTeam} placeholder={m.awayPlaceholder} goals={m.awayGoals} winner={outcome === "AWAY_WIN"} champion={featured} />
+        <div className="border-t border-border/40 px-2 py-0.5 text-[9px] text-muted-foreground">
           {finished ? t.bracket.finished : formatDate(m.kickoff, locale)}
         </div>
       </div>
@@ -91,18 +78,49 @@ function MatchBox({ m, featured }: { m: BracketMatch; featured?: boolean }) {
   );
 }
 
-function ColumnHeader({ phase, count }: { phase: Phase; count: number }) {
+function RoundHeader({ phase, count }: { phase: Phase; count: number }) {
   const isFinal = phase === "FINAL";
   return (
     <div
       className={cn(
-        "flex items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-wide",
+        "flex items-center justify-center gap-1.5 rounded-lg px-2 py-1 text-center text-[11px] font-semibold uppercase tracking-wide",
         isFinal ? "bg-amber-400/15 text-amber-300" : "text-muted-foreground",
       )}
     >
-      {isFinal && <Trophy className="size-3.5" />}
+      {isFinal && <Trophy className="size-3" />}
       {PHASE_META[phase].label}
       <span className="text-muted-foreground/60">({count})</span>
+    </div>
+  );
+}
+
+/**
+ * Verbindungsspalte (Desktop): pro Spiel der NÄCHSTEN Runde ein „}"-Elbow mit
+ * Pfeilspitze – verbindet die zwei Sieger der Vorrunde mit dem Folgespiel.
+ */
+function Connectors({ nextCount, gold }: { nextCount: number; gold?: boolean }) {
+  const color = gold ? "text-amber-300/70" : "text-muted-foreground/40";
+  return (
+    <div className="flex w-5 shrink-0 flex-col justify-around sm:w-6">
+      {Array.from({ length: nextCount }).map((_, i) => (
+        <div key={i} className={cn("relative flex flex-1 items-center justify-end", color)}>
+          <svg
+            className="absolute inset-0 h-full w-full"
+            viewBox="0 0 24 100"
+            preserveAspectRatio="none"
+            aria-hidden
+          >
+            <path
+              d="M0 25 H12 V75 H0 M12 50 H21"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              vectorEffect="non-scaling-stroke"
+            />
+          </svg>
+          <ChevronRight className="relative size-3" />
+        </div>
+      ))}
     </div>
   );
 }
@@ -136,37 +154,56 @@ export default async function TurnierbaumPage() {
         </div>
       </div>
 
-      {/* Baum mit Pfeilen zwischen den Runden */}
-      <div className="overflow-x-auto pb-4">
-        <div className="flex min-w-max items-stretch gap-2 sm:gap-3">
-          {cols.map((c, i) => (
-            <Fragment key={c.phase}>
-              <div className="flex flex-col gap-3">
-                <ColumnHeader phase={c.phase} count={c.matches.length} />
-                <div className="flex flex-1 flex-col justify-around gap-3">
-                  {c.matches.map((m) => (
-                    <MatchBox key={m.id} m={m} featured={c.phase === "FINAL"} />
-                  ))}
-                </div>
+      {/* DESKTOP: echter Baum mit Verbindungspfeilen – passt in die Breite */}
+      <div className="hidden md:flex md:items-stretch">
+        {cols.map((c, i) => (
+          <Fragment key={c.phase}>
+            <div className="flex min-w-0 flex-1 flex-col gap-2">
+              <RoundHeader phase={c.phase} count={c.matches.length} />
+              <div className="flex flex-1 flex-col justify-around gap-2">
+                {c.matches.map((m) => (
+                  <MatchBox key={m.id} m={m} featured={c.phase === "FINAL"} />
+                ))}
               </div>
-
-              {i < cols.length - 1 && (
-                <div className="flex items-center px-0.5 text-muted-foreground/40">
-                  <ChevronRight className="size-6" />
-                </div>
-              )}
-            </Fragment>
-          ))}
-        </div>
+            </div>
+            {i < cols.length - 1 && (
+              <Connectors nextCount={cols[i + 1].matches.length} gold={cols[i + 1].phase === "FINAL"} />
+            )}
+          </Fragment>
+        ))}
       </div>
 
-      {/* Spiel um Platz 3 */}
+      {/* MOBIL: Runden untereinander (kein Querscrollen) */}
+      <div className="space-y-4 md:hidden">
+        {cols.map((c) => (
+          <section key={c.phase} className="space-y-2">
+            <RoundHeader phase={c.phase} count={c.matches.length} />
+            <div className="space-y-2">
+              {c.matches.map((m) => (
+                <MatchBox key={m.id} m={m} featured={c.phase === "FINAL"} />
+              ))}
+            </div>
+          </section>
+        ))}
+        {thirdPlace.length > 0 && (
+          <section className="space-y-2">
+            <RoundHeader phase={"TP" as Phase} count={thirdPlace.length} />
+            <div className="space-y-2">
+              {thirdPlace.map((m) => (
+                <MatchBox key={m.id} m={m} />
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
+
+      {/* Spiel um Platz 3 (Desktop) */}
       {thirdPlace.length > 0 && (
-        <div className="space-y-2">
+        <div className="hidden space-y-2 md:block">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
             {PHASE_META["TP"].label}
           </h2>
-          <div className="flex flex-wrap gap-3">
+          <div className="max-w-xs">
             {thirdPlace.map((m) => (
               <MatchBox key={m.id} m={m} />
             ))}
