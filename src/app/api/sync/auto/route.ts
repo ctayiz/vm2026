@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { shouldRun } from "@/lib/app-settings";
 import { syncSchedule } from "@/lib/sync-service";
 import { syncTopScorers, syncMatchGoals } from "@/lib/stats-service";
@@ -10,23 +11,41 @@ import { hasFootballData } from "@/lib/football-data";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-// Drossel-Intervalle: Spielplan günstig (OpenFootball) -> häufiger;
-// API-Football (Free-Tier-Limit) -> seltener.
-const SCHEDULE_MS = 15 * 60 * 1000; // 15 Min
-const STATS_MS = 60 * 60 * 1000; // 60 Min
+// Drossel-Intervalle.
+const SCHEDULE_MS = 15 * 60 * 1000; // normal: 15 Min
+const SCHEDULE_LIVE_MS = 60 * 1000; // Live-Modus: 60 Sek (bleibt unter 10/min)
+const STATS_MS = 60 * 60 * 1000; // Torschützen: 60 Min
 
 /**
- * Nutzungsgesteuerter Auto-Sync (Ersatz für Cron auf dem Hobby-Plan):
- * Wird vom Browser eingeloggter Nutzer im Hintergrund aufgerufen. Dank Throttle
- * läuft echter Sync höchstens alle 15/60 Min – egal wie viele Aufrufe kommen.
+ * Erkennt, ob aktuell ein Spiel läuft: Status "live" ODER Anstoß in den letzten
+ * ~2,5 h und noch nicht beendet (deckt Lag/fehlende Status-Updates ab).
+ */
+async function isLiveWindow(): Promise<boolean> {
+  const now = Date.now();
+  const live = await db.match.count({ where: { status: "live" } });
+  if (live > 0) return true;
+  const recent = await db.match.count({
+    where: {
+      status: { not: "finished" },
+      kickoff: { lte: new Date(now), gte: new Date(now - 2.5 * 60 * 60 * 1000) },
+    },
+  });
+  return recent > 0;
+}
+
+/**
+ * Nutzungsgesteuerter Auto-Sync (Ersatz für Cron auf dem Hobby-Plan).
+ * Im Live-Fenster wird der Spielplan alle 60 Sek aktualisiert (sonst alle 15 Min);
+ * der serverseitige Throttle verhindert dabei zu viele API-Aufrufe.
  */
 export async function POST() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
 
+  const live = await isLiveWindow();
   const did: string[] = [];
 
-  if (await shouldRun("lastScheduleSync", SCHEDULE_MS)) {
+  if (await shouldRun("lastScheduleSync", live ? SCHEDULE_LIVE_MS : SCHEDULE_MS)) {
     await syncSchedule();
     await rescoreAll();
     did.push("schedule");
@@ -39,5 +58,6 @@ export async function POST() {
     did.push("stats");
   }
 
-  return NextResponse.json({ ok: true, did });
+  // `live` signalisiert dem Client, häufiger zu pollen.
+  return NextResponse.json({ ok: true, did, live });
 }

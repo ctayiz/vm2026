@@ -1,26 +1,40 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 /**
- * Stößt beim Öffnen der App (1× pro Browser-Session) einen Hintergrund-Sync an.
- * Ersetzt den Cron auf dem Vercel-Hobby-Plan – die eigentliche Drosselung
- * passiert serverseitig (/api/sync/auto). Blockiert die UI nicht.
+ * Stößt beim Öffnen der App einen Hintergrund-Sync an und – wenn gerade ein
+ * Spiel LÄUFT – pollt es alle 60 Sek weiter (Live-Modus). So aktualisiert sich
+ * der Spielstand in der geöffneten App während des Spiels nahezu live.
+ * Die eigentliche Drosselung passiert serverseitig (/api/sync/auto).
  */
 export function AutoSync() {
   const router = useRouter();
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (sessionStorage.getItem("wm_autosync")) return;
-    sessionStorage.setItem("wm_autosync", "1");
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    fetch("/api/sync/auto", { method: "POST" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
+  useEffect(() => {
+    let cancelled = false;
+
+    const tick = async () => {
+      try {
+        const res = await fetch("/api/sync/auto", { method: "POST" });
+        const data = res.ok ? await res.json() : null;
+        if (cancelled) return;
         if (data?.did?.length) router.refresh(); // nur aktualisieren, wenn etwas synct wurde
-      })
-      .catch(() => {});
+        // Im Live-Fenster alle 60 Sek erneut, sonst nicht weiter pollen.
+        if (data?.live) timer.current = setTimeout(tick, 60_000);
+      } catch {
+        /* ignorieren */
+      }
+    };
+
+    // Erststart kurz verzögert, damit die Seite nicht beim Laden blockiert wird.
+    timer.current = setTimeout(tick, 800);
+    return () => {
+      cancelled = true;
+      if (timer.current) clearTimeout(timer.current);
+    };
   }, [router]);
 
   return null;
