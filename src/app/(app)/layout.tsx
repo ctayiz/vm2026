@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LogOut, BookOpen, Network } from "lucide-react";
+import { LogOut, BookOpen } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { requireUser, isAdmin } from "@/lib/auth";
 import { getLocale, getDictionary } from "@/lib/i18n-server";
@@ -31,11 +31,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
             <div className="flex items-center gap-2">
               <LanguageToggle className="hidden sm:inline-flex" />
-              <Button variant="ghost" size="icon" asChild aria-label={t.nav.bracket}>
-                <Link href="/turnierbaum">
-                  <Network className="size-4" />
-                </Link>
-              </Button>
               <Button variant="ghost" size="icon" asChild aria-label={t.nav.rules}>
                 <Link href="/regeln">
                   <BookOpen className="size-4" />
