@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation";
-import { Trophy, Clock, BarChart3, ShieldCheck } from "lucide-react";
+import { Clock, BarChart3, ShieldCheck } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { getLocale, getDictionary } from "@/lib/i18n-server";
 import { KickoffCountdown } from "@/components/kickoff-countdown";
 import { FlagTicker } from "@/components/flag-ticker";
+import { Logo } from "@/components/logo";
 import { I18nProvider } from "@/components/i18n-provider";
 
 export default async function AuthLayout({ children }: { children: React.ReactNode }) {
@@ -38,9 +39,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
           {/* HERO */}
           <section className="order-1 flex flex-col gap-6">
             <div className="flex items-center gap-2 text-sm font-semibold text-primary">
-              <span className="flex size-9 items-center justify-center rounded-xl bg-primary/15">
-                <Trophy className="size-5" />
-              </span>
+              <Logo className="size-9" />
               {t.auth.badge}
             </div>
 

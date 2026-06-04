@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Trophy, LogOut, BookOpen, Network } from "lucide-react";
+import { LogOut, BookOpen, Network } from "lucide-react";
+import { Logo } from "@/components/logo";
 import { requireUser, isAdmin } from "@/lib/auth";
 import { getLocale, getDictionary } from "@/lib/i18n-server";
 import { logoutAction } from "@/server/auth-actions";
@@ -23,7 +24,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <header className="sticky top-0 z-40 border-b border-border bg-card/80 backdrop-blur">
           <div className="container flex h-14 items-center justify-between gap-4">
             <Link href="/spielplan" className="flex items-center gap-2 font-bold">
-              <Trophy className="size-5 text-primary" />
+              <Logo className="size-7" />
               <span className="hidden sm:inline">{t.common.appName}</span>
               <span className="sm:hidden">{t.common.appShort}</span>
             </Link>
