@@ -2,6 +2,7 @@ import { requireUser, isAdmin } from "@/lib/auth";
 import { logoutAction } from "@/server/auth-actions";
 import { ProfileForm } from "@/components/profile-form";
 import { FavoritesPicker, type FavTeam } from "@/components/favorites-picker";
+import { ChangePasswordForm } from "@/components/change-password-form";
 import { getFavoriteTeams } from "@/lib/queries";
 import { db } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -55,6 +56,15 @@ export default async function ProfilPage() {
         </CardHeader>
         <CardContent>
           <FavoritesPicker teams={teams as FavTeam[]} initialIds={favorites.map((t) => t.id)} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">{t.profile.pwTitle}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ChangePasswordForm />
         </CardContent>
       </Card>
 

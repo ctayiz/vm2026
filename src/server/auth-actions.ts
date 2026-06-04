@@ -2,10 +2,12 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { db } from "@/lib/db";
+import { rateLimit } from "@/lib/rate-limit";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { setSessionCookie, clearSessionCookie } from "@/lib/session";
-import { registerSchema, loginSchema, profileSchema } from "@/lib/validation";
+import { registerSchema, loginSchema, profileSchema, passwordChangeSchema } from "@/lib/validation";
 import { requireUser } from "@/lib/auth";
 import { getDictionary } from "@/lib/i18n-server";
 import { AVATAR_PRESETS, presetToken } from "@/lib/avatars";
@@ -67,6 +69,13 @@ export async function registerAction(_prev: ActionState, formData: FormData): Pr
 
 export async function loginAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const t = getDictionary();
+
+  // Brute-Force-Bremse: max. 10 Login-Versuche / 5 Min pro IP.
+  const ip = headers().get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  if (!rateLimit(`login:${ip}`, 10, 5 * 60 * 1000)) {
+    return { ok: false, error: t.msg.tooManyAttempts };
+  }
+
   const parsed = loginSchema.safeParse({
     identifier: formData.get("identifier"),
     password: formData.get("password"),
@@ -100,6 +109,29 @@ export async function loginAction(_prev: ActionState, formData: FormData): Promi
 export async function logoutAction() {
   clearSessionCookie();
   redirect("/login");
+}
+
+export async function changePasswordAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const sessionUser = await requireUser();
+  const t = getDictionary();
+  const parsed = passwordChangeSchema.safeParse({
+    currentPassword: formData.get("currentPassword"),
+    newPassword: formData.get("newPassword"),
+  });
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? t.msg.invalidInput };
+  }
+
+  const user = await db.user.findUnique({ where: { id: sessionUser.id } });
+  if (!user || !(await verifyPassword(parsed.data.currentPassword, user.passwordHash))) {
+    return { ok: false, error: t.msg.wrongCurrentPassword };
+  }
+
+  await db.user.update({
+    where: { id: user.id },
+    data: { passwordHash: await hashPassword(parsed.data.newPassword) },
+  });
+  return { ok: true };
 }
 
 export async function updateProfileAction(_prev: ActionState, formData: FormData): Promise<ActionState> {

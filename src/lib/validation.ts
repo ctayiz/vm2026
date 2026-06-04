@@ -48,6 +48,11 @@ export const teamProgressSchema = z.object({
   isChampion: z.coerce.boolean().optional(),
 });
 
+export const passwordChangeSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(8, "Neues Passwort muss mindestens 8 Zeichen haben.").max(100),
+});
+
 export const profileSchema = z.object({
   displayName: z.string().trim().min(2).max(30),
   // leer, Standard-Avatar ("preset:<id>") oder eigene http(s)-URL

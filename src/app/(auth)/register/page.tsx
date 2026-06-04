@@ -1,5 +1,6 @@
 import { AuthForm } from "@/components/auth-form";
 
 export default function RegisterPage() {
-  return <AuthForm mode="register" />;
+  const inviteRequired = !!process.env.INVITE_CODE?.trim();
+  return <AuthForm mode="register" inviteRequired={inviteRequired} />;
 }

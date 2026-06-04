@@ -19,7 +19,13 @@ function SubmitButton({ label, pendingLabel }: { label: string; pendingLabel: st
   );
 }
 
-export function AuthForm({ mode }: { mode: "login" | "register" }) {
+export function AuthForm({
+  mode,
+  inviteRequired = false,
+}: {
+  mode: "login" | "register";
+  inviteRequired?: boolean;
+}) {
   const t = useT();
   const action = mode === "login" ? loginAction : registerAction;
   const [state, formAction] = useFormState<ActionState, FormData>(action, { ok: false });
@@ -72,7 +78,15 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
           {mode === "register" && (
             <div className="space-y-1.5">
               <Label htmlFor="inviteCode">{t.auth.inviteCode}</Label>
-              <Input id="inviteCode" name="inviteCode" placeholder={t.auth.inviteCodePh} />
+              <Input
+                id="inviteCode"
+                name="inviteCode"
+                placeholder={t.auth.inviteCodePh}
+                required={inviteRequired}
+              />
+              {inviteRequired && (
+                <p className="text-[11px] text-muted-foreground">{t.auth.inviteRequiredHint}</p>
+              )}
             </div>
           )}
 
