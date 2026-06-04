@@ -23,10 +23,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <AutoSync />
         <header className="sticky top-0 z-40 border-b border-border bg-card/80 backdrop-blur">
           <div className="container flex h-14 items-center justify-between gap-4">
-            <Link href="/spielplan" className="flex items-center gap-2 font-bold">
-              <Logo className="size-7" />
-              <span className="hidden sm:inline">{t.common.appName}</span>
-              <span className="sm:hidden">{t.common.appShort}</span>
+            <Link href="/spielplan" className="flex items-center text-foreground">
+              <Logo className="h-7" />
             </Link>
 
             <Nav isAdmin={admin} />

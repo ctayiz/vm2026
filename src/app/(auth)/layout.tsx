@@ -38,9 +38,8 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
         <div className="container grid min-h-dvh items-center gap-10 py-10 lg:grid-cols-2 lg:gap-16">
           {/* HERO */}
           <section className="order-1 flex flex-col gap-6">
-            <div className="flex items-center gap-2 text-sm font-semibold text-primary">
-              <Logo className="size-9" />
-              {t.auth.badge}
+            <div className="flex items-center text-foreground">
+              <Logo className="h-9" />
             </div>
 
             <div className="space-y-3">

@@ -7,7 +7,5 @@
   </defs>
   <rect x="0" y="0" width="100" height="100" rx="26" fill="url(#wmg)"/>
   <rect x="0" y="0" width="100" height="50" rx="26" fill="#ffffff" opacity="0.10"/>
-  <text x="50" y="53" text-anchor="middle" dominant-baseline="central"
-        font-family="'Segoe UI', system-ui, -apple-system, Helvetica, Arial, sans-serif"
-        font-size="56" font-weight="800" letter-spacing="-3" fill="#ffffff">26</text>
+  <path d="M50,24 L74.66,41.91 L65.24,70.89 L34.76,70.89 L25.34,41.91 Z" fill="#ffffff"/>
 </svg>

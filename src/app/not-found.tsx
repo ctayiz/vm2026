@@ -7,7 +7,7 @@ export default function NotFound() {
   const t = getDictionary();
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center gap-4 px-6 text-center">
-      <Logo className="size-12" />
+      <Logo className="h-10 text-foreground" />
       <div>
         <h1 className="text-2xl font-bold">404 · {t.notFound.title}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{t.notFound.text}</p>
