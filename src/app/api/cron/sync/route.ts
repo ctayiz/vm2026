@@ -1,24 +1,21 @@
 import { NextResponse } from "next/server";
-import { syncSchedule } from "@/lib/sync-service";
-import { syncTopScorers, syncMatchGoals } from "@/lib/stats-service";
-import { rescoreAll } from "@/lib/scoring-service";
+import { runScheduledSync } from "@/lib/auto-sync";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 /**
- * Automatischer Sync-Endpunkt (für Cron):
- *   Spielplan + Ergebnisse + Torschützen laden, dann alles neu auswerten.
+ * Externer Cron-Endpunkt (z. B. cron-job.org jede Minute).
+ *   Nutzt dieselbe gedrosselte Logik wie der Auto-Sync: echte API-Aufrufe nur
+ *   alle 60s (Live) bzw. 15min (sonst) – so ist ein Minuten-Ping unbedenklich.
  *
  * Absicherung: erfordert CRON_SECRET. Aufruf mit
  *   - Header "Authorization: Bearer <CRON_SECRET>" (so ruft Vercel Cron auf), oder
  *   - Query "?secret=<CRON_SECRET>".
- * Ist kein CRON_SECRET gesetzt, ist der Endpunkt gesperrt (sicher per Default).
- * Der reguläre Auto-Sync läuft ohnehin über /api/sync/auto (nur eingeloggt).
+ * Ohne gesetztes CRON_SECRET ist der Endpunkt gesperrt (sicher per Default).
  */
 function authorized(req: Request): boolean {
   const secret = process.env.CRON_SECRET;
-  // Sicher per Default: ohne gesetztes CRON_SECRET ist der Endpunkt gesperrt.
   if (!secret) return false;
   const auth = req.headers.get("authorization");
   const q = new URL(req.url).searchParams.get("secret");
@@ -29,19 +26,6 @@ export async function GET(req: Request) {
   if (!authorized(req)) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
-
-  const startedAt = new Date().toISOString();
-  const schedule = await syncSchedule();
-  const scorers = await syncTopScorers();
-  const goals = await syncMatchGoals();
-  const scoring = await rescoreAll();
-
-  return NextResponse.json({
-    ok: true,
-    startedAt,
-    schedule: { source: schedule.source, created: schedule.created, updated: schedule.updated },
-    scorers: { ok: scorers.ok, message: scorers.message },
-    goals: { ok: goals.ok, message: goals.message },
-    scoring,
-  });
+  const { did, live } = await runScheduledSync();
+  return NextResponse.json({ ok: true, did, live, at: new Date().toISOString() });
 }
