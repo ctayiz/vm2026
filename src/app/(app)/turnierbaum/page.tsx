@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Flag } from "@/components/flag";
@@ -5,7 +6,7 @@ import { formatDate } from "@/lib/format";
 import { getLocale, getDictionary } from "@/lib/i18n-server";
 import { outcomeFromGoals } from "@/lib/scoring";
 import { PHASE_META, type Phase } from "@/lib/constants";
-import { Network } from "lucide-react";
+import { Network, ChevronRight, Crown, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -31,46 +32,77 @@ function Side({
   placeholder,
   goals,
   winner,
+  champion,
 }: {
   team: BracketMatch["homeTeam"];
   placeholder: string | null;
   goals: number | null;
   winner: boolean;
+  champion?: boolean;
 }) {
   return (
-    <div className={cn("flex items-center gap-2 px-2 py-1.5", winner && "font-semibold text-foreground")}>
+    <div className={cn("flex items-center gap-2 px-2.5 py-2", winner && "font-semibold text-foreground")}>
       <Flag code={team?.flagCode} className="text-base" />
       <span className={cn("flex-1 truncate text-xs", !team && "italic text-muted-foreground")}>
-        {team?.name ?? placeholder ?? "offen"}
+        {team?.name ?? placeholder ?? "—"}
       </span>
+      {champion && winner && <Crown className="size-3.5 text-amber-300" />}
       <span className="text-xs tabular-nums text-muted-foreground">{goals ?? "–"}</span>
     </div>
   );
 }
 
-function MatchBox({ m }: { m: BracketMatch }) {
+function MatchBox({ m, featured }: { m: BracketMatch; featured?: boolean }) {
   const t = getDictionary();
   const locale = getLocale();
   const finished = m.status === "finished" && m.homeGoals != null && m.awayGoals != null;
   const outcome = finished ? outcomeFromGoals(m.homeGoals!, m.awayGoals!) : null;
   return (
-    <div className="w-48 shrink-0 overflow-hidden rounded-lg border border-border bg-card">
-      <Side
-        team={m.homeTeam}
-        placeholder={m.homePlaceholder}
-        goals={m.homeGoals}
-        winner={outcome === "HOME_WIN"}
-      />
-      <div className="border-t border-border/50" />
-      <Side
-        team={m.awayTeam}
-        placeholder={m.awayPlaceholder}
-        goals={m.awayGoals}
-        winner={outcome === "AWAY_WIN"}
-      />
-      <div className="border-t border-border/50 px-2 py-1 text-[10px] text-muted-foreground">
-        {finished ? t.bracket.finished : formatDate(m.kickoff, locale)}
+    <div
+      className={cn(
+        "card-hover relative shrink-0 overflow-hidden rounded-xl border",
+        featured
+          ? "w-52 border-amber-400/50 bg-gradient-to-br from-amber-400/10 via-card to-card shadow-lg shadow-amber-500/10"
+          : "glass w-48 border-border",
+      )}
+    >
+      {featured && <span className="shimmer-gold pointer-events-none absolute inset-0 opacity-60" />}
+      <div className="relative">
+        <Side
+          team={m.homeTeam}
+          placeholder={m.homePlaceholder}
+          goals={m.homeGoals}
+          winner={outcome === "HOME_WIN"}
+          champion={featured}
+        />
+        <div className="border-t border-border/50" />
+        <Side
+          team={m.awayTeam}
+          placeholder={m.awayPlaceholder}
+          goals={m.awayGoals}
+          winner={outcome === "AWAY_WIN"}
+          champion={featured}
+        />
+        <div className="border-t border-border/50 px-2.5 py-1 text-[10px] text-muted-foreground">
+          {finished ? t.bracket.finished : formatDate(m.kickoff, locale)}
+        </div>
       </div>
+    </div>
+  );
+}
+
+function ColumnHeader({ phase, count }: { phase: Phase; count: number }) {
+  const isFinal = phase === "FINAL";
+  return (
+    <div
+      className={cn(
+        "flex items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-wide",
+        isFinal ? "bg-amber-400/15 text-amber-300" : "text-muted-foreground",
+      )}
+    >
+      {isFinal && <Trophy className="size-3.5" />}
+      {PHASE_META[phase].label}
+      <span className="text-muted-foreground/60">({count})</span>
     </div>
   );
 }
@@ -85,48 +117,60 @@ export default async function TurnierbaumPage() {
   })) as unknown as BracketMatch[];
 
   const byPhase = (p: Phase) => matches.filter((m) => m.phase === p);
+  const cols = COLUMNS.map((p) => ({ phase: p, matches: byPhase(p) })).filter((c) => c.matches.length > 0);
   const thirdPlace = byPhase("TP" as Phase);
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center gap-2">
-        <Network className="size-5 text-primary" />
-        <h1 className="text-2xl font-bold">{t.bracket.title}</h1>
-      </div>
-      <p className="text-sm text-muted-foreground">
-        {t.bracket.subtitle}
-      </p>
-
-      <div className="overflow-x-auto pb-4">
-        <div className="flex min-w-max gap-4">
-          {COLUMNS.map((phase) => {
-            const col = byPhase(phase);
-            if (col.length === 0) return null;
-            return (
-              <div key={phase} className="flex flex-col gap-3">
-                <div className="sticky top-0 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  {PHASE_META[phase].label}
-                  <span className="ml-1 text-muted-foreground/60">({col.length})</span>
-                </div>
-                <div className="flex flex-1 flex-col justify-around gap-3">
-                  {col.map((m) => (
-                    <MatchBox key={m.id} m={m} />
-                  ))}
-                </div>
-              </div>
-            );
-          })}
+      {/* HERO */}
+      <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-card to-card p-5 sm:p-6">
+        <div className="blob right-[-15%] top-[-60%] h-40 w-40 animate-blob bg-primary/25" />
+        <div className="relative flex items-center gap-3">
+          <span className="flex size-10 items-center justify-center rounded-xl bg-primary/15">
+            <Network className="size-5 text-primary" />
+          </span>
+          <div>
+            <h1 className="text-2xl font-bold">{t.bracket.title}</h1>
+            <p className="text-sm text-muted-foreground">{t.bracket.subtitle}</p>
+          </div>
         </div>
       </div>
 
+      {/* Baum mit Pfeilen zwischen den Runden */}
+      <div className="overflow-x-auto pb-4">
+        <div className="flex min-w-max items-stretch gap-2 sm:gap-3">
+          {cols.map((c, i) => (
+            <Fragment key={c.phase}>
+              <div className="flex flex-col gap-3">
+                <ColumnHeader phase={c.phase} count={c.matches.length} />
+                <div className="flex flex-1 flex-col justify-around gap-3">
+                  {c.matches.map((m) => (
+                    <MatchBox key={m.id} m={m} featured={c.phase === "FINAL"} />
+                  ))}
+                </div>
+              </div>
+
+              {i < cols.length - 1 && (
+                <div className="flex items-center px-0.5 text-muted-foreground/40">
+                  <ChevronRight className="size-6" />
+                </div>
+              )}
+            </Fragment>
+          ))}
+        </div>
+      </div>
+
+      {/* Spiel um Platz 3 */}
       {thirdPlace.length > 0 && (
         <div className="space-y-2">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
             {PHASE_META["TP"].label}
           </h2>
-          {thirdPlace.map((m) => (
-            <MatchBox key={m.id} m={m} />
-          ))}
+          <div className="flex flex-wrap gap-3">
+            {thirdPlace.map((m) => (
+              <MatchBox key={m.id} m={m} />
+            ))}
+          </div>
         </div>
       )}
     </div>
