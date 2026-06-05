@@ -15,10 +15,11 @@ export function ShareButtons() {
     setCanShare(typeof navigator !== "undefined" && typeof navigator.share === "function");
   }, []);
 
-  const text = t.auth.shareText;
-  const waHref = `https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`;
-  const mailHref = `mailto:?subject=${encodeURIComponent(t.auth.shareSubject)}&body=${encodeURIComponent(
-    `${text}\n${url}`,
+  const text = t.auth.shareText || "WM 2026 Tippspiel ⚽";
+  const subject = t.auth.shareSubject || "WM 2026 Tippspiel";
+  const waHref = `https://wa.me/?text=${encodeURIComponent(`${text} ${url}`.trim())}`;
+  const mailHref = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
+    `${text}\n${url}`.trim(),
   )}`;
 
   const nativeShare = () => {

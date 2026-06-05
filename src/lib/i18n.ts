@@ -73,8 +73,8 @@ const de = {
     feat3: "Fair: fremde Tipps bleiben geheim",
     share: "Teilen",
     shareMail: "E-Mail",
-    shareSubject: "WM 2026 Tippspiel",
-    shareText: "Mach mit beim WM 2026 Tippspiel ⚽",
+    shareSubject: "Komm ins WM 2026 Tippspiel ⚽",
+    shareText: "⚽ Tritt im WM 2026 Tippspiel gegen mich an – wer tippt besser? 🏆 Jetzt mitmachen:",
   },
   countdown: {
     days: "Tage",
@@ -430,8 +430,8 @@ const tr: Dictionary = {
     feat3: "Adil: başkalarının tahminleri gizli kalır",
     share: "Paylaş",
     shareMail: "E-posta",
-    shareSubject: "WM 2026 Tahmin Oyunu",
-    shareText: "WM 2026 tahmin oyununa katıl ⚽",
+    shareSubject: "WM 2026 Tahmin Oyunu'na gel ⚽",
+    shareText: "⚽ WM 2026 Tahmin Oyunu'nda bana karşı yarış – kim daha iyi tahmin eder? 🏆 Hemen katıl:",
   },
   countdown: {
     days: "Gün",
