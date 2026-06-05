@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { CalendarDays, Trophy, Shield, Sparkles, User, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useT } from "@/components/i18n-provider";
+import { BracketIcon } from "@/components/bracket-icon";
 
 type SubItem = { href: string; label: string };
 type Item =
@@ -34,8 +35,7 @@ export function Nav({ isAdmin }: { isAdmin: boolean }) {
         { href: "/meine-tipps", label: t.nav.myTips },
       ],
     },
-    // Turnierbaum: bewusst ohne Symbol (nur Text)
-    { kind: "link", href: "/turnierbaum", label: t.nav.bracket },
+    { kind: "link", href: "/turnierbaum", label: t.nav.bracket, icon: BracketIcon },
     ...(isAdmin ? [{ kind: "link" as const, href: "/admin", label: t.nav.admin, icon: Shield }] : []),
   ];
 
