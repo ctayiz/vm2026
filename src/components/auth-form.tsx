@@ -43,7 +43,7 @@ export function AuthForm({
               {mode === "login" ? t.auth.welcomeBack : t.auth.quickStart}
             </p>
           </div>
-          <LanguageToggle />
+          <LanguageToggle variant="flags" />
         </div>
       </CardHeader>
       <form action={formAction}>
