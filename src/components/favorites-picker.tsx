@@ -25,7 +25,7 @@ export function FavoritesPicker({
 }) {
   const t = useT();
   const [selected, setSelected] = useState<string[]>(initialIds);
-  const [pending, start] = useTransition();
+  const [, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
   const full = selected.length >= MAX_FAVORITES;
@@ -70,7 +70,9 @@ export function FavoritesPicker({
             <div className="flex flex-wrap gap-2">
               {ts.map((team) => {
                 const active = selected.includes(team.id);
-                const disabled = pending || (!active && full);
+                // NICHT bei laufendem Speichern (pending) sperren – sonst lässt sich
+                // der nächste (z. B. 3.) Favorit währenddessen nicht anklicken.
+                const disabled = !active && full;
                 return (
                   <button
                     key={team.id}

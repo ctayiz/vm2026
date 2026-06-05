@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { getDictionary } from "@/lib/i18n-server";
@@ -43,7 +42,8 @@ export async function toggleFavoriteAction(
     select: { teamId: true },
   });
 
-  revalidatePath("/profil");
-  revalidatePath("/spielplan");
+  // Kein revalidatePath: der Picker aktualisiert seinen Zustand selbst, und ein
+  // Re-Render würde das Speichern verzögern. /spielplan ist force-dynamic und
+  // zeigt die Favoriten beim nächsten Aufruf ohnehin frisch.
   return { ok: true, favorites: favorites.map((f) => f.teamId) };
 }
