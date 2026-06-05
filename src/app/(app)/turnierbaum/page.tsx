@@ -6,7 +6,8 @@ import { formatDate } from "@/lib/format";
 import { getLocale, getDictionary } from "@/lib/i18n-server";
 import { outcomeFromGoals } from "@/lib/scoring";
 import { PHASE_META, type Phase } from "@/lib/constants";
-import { Network, ChevronRight, Crown, Trophy } from "lucide-react";
+import { ChevronRight, Crown, Trophy } from "lucide-react";
+import { BracketIcon } from "@/components/bracket-icon";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -145,7 +146,7 @@ export default async function TurnierbaumPage() {
         <div className="blob right-[-15%] top-[-60%] h-40 w-40 animate-blob bg-primary/25" />
         <div className="relative flex items-center gap-3">
           <span className="flex size-10 items-center justify-center rounded-xl bg-primary/15">
-            <Network className="size-5 text-primary" />
+            <BracketIcon className="size-5 text-primary" />
           </span>
           <div>
             <h1 className="text-2xl font-bold">{t.bracket.title}</h1>
