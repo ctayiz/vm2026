@@ -37,13 +37,25 @@
   * {
     @apply border-border;
   }
+  /* Schutz gegen horizontales Überlaufen: nichts darf die Seite seitlich
+     verschieben/scrollen lassen. clip lässt sticky/fixed intakt. */
+  html {
+    overflow-x: clip;
+  }
   body {
     @apply bg-background text-foreground;
+    overflow-x: clip;
     background-image:
       radial-gradient(1200px 600px at 80% -10%, hsl(152 76% 44% / 0.12), transparent),
       radial-gradient(900px 500px at -10% 0%, hsl(217 90% 60% / 0.1), transparent);
     background-attachment: fixed;
     -webkit-font-smoothing: antialiased;
+  }
+  /* Medien nie breiter als ihr Container */
+  img,
+  svg,
+  video {
+    max-width: 100%;
   }
 }
 
@@ -58,6 +70,15 @@
 }
 
 @layer components {
+  /* horizontal scrollbar ohne sichtbare Leiste (z. B. Tab-Leisten auf Mobile) */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
   /* sanftes Anheben + Glow beim Hover über Karten */
   .card-hover {
     @apply transition-all duration-300;

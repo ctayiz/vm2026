@@ -10,6 +10,8 @@ const config: Config = {
       screens: { "2xl": "1100px" },
     },
     extend: {
+      // zusätzlicher Breakpoint für kleine Handys (Standard-sm beginnt erst bei 640px)
+      screens: { xs: "400px" },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

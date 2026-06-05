@@ -33,13 +33,13 @@ function Chip({
       >
         <Icon className="size-4" />
       </span>
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <div className="text-lg font-bold leading-none tabular-nums">{value}</div>
         <div className="mt-0.5 truncate text-[11px] uppercase tracking-wide text-muted-foreground">
           {label}
         </div>
       </div>
-      {href && <ArrowRight className="ml-auto size-4 shrink-0 text-muted-foreground" />}
+      {href && <ArrowRight className="size-4 shrink-0 text-muted-foreground" />}
     </div>
   );
   return href ? <Link href={href}>{inner}</Link> : inner;
@@ -72,7 +72,7 @@ export function DashboardHero({
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 xs:grid-cols-2 sm:grid-cols-3">
           <Chip
             icon={Trophy}
             value={rank ? `#${rank}` : "—"}
