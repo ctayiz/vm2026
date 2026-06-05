@@ -233,6 +233,46 @@ function normalizeApiFootball(fixtures: ApiFixture[]): NormalizedMatch[] {
   });
 }
 
+/** OpenFootball laden + normalisieren (oder null bei Fehler/ohne URL). */
+async function fetchOpenFootball(): Promise<NormalizedMatch[] | null> {
+  const url = process.env.WORLDCUP_JSON_URL;
+  if (!url) return null;
+  try {
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) return null;
+    return normalizeOpenFootball(await res.json());
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Reichert K.-o.-Spiele OHNE feststehende Teams mit Bracket-Platzhaltern aus
+ * OpenFootball an (z. B. „Sieger Gruppe A", „Dritter (Gruppe …)", „Sieger Spiel 73").
+ * Zuordnung über die exakte Anstoßzeit (beide Quellen identisch).
+ */
+async function enrichKnockoutPlaceholders(target: NormalizedMatch[]): Promise<void> {
+  const of = await fetchOpenFootball();
+  if (!of) return;
+  const byKickoff = new Map<number, { home?: string; away?: string }>();
+  for (const m of of) {
+    if (m.phase === "GROUP") continue;
+    if (!m.homePlaceholder && !m.awayPlaceholder) continue;
+    byKickoff.set(new Date(m.kickoff).getTime(), {
+      home: m.homePlaceholder,
+      away: m.awayPlaceholder,
+    });
+  }
+  for (const m of target) {
+    if (m.phase === "GROUP" || m.home || m.away) continue; // Teams stehen schon fest
+    const p = byKickoff.get(new Date(m.kickoff).getTime());
+    if (p) {
+      m.homePlaceholder = p.home;
+      m.awayPlaceholder = p.away;
+    }
+  }
+}
+
 /**
  * Lädt den Spielplan. Wirft NICHT bei Netzwerkfehlern, sondern fällt auf den
  * eingebauten Datensatz zurück (für ein robustes MVP-Erlebnis).
@@ -242,7 +282,10 @@ export async function fetchSchedule(): Promise<SyncResult> {
   if (hasFootballData()) {
     try {
       const matches = normalizeFootballData(await fetchWorldCupMatches());
-      if (matches.length > 0) return { source: "football-data", matches };
+      if (matches.length > 0) {
+        await enrichKnockoutPlaceholders(matches); // Bracket-Platzhalter ergänzen
+        return { source: "football-data", matches };
+      }
     } catch {
       // weiter zur nächsten Quelle
     }
