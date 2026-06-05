@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Crown, Medal } from "lucide-react";
 import { CountUp } from "@/components/count-up";
 import { RankCelebration } from "@/components/rank-celebration";
+import { RankDelta } from "@/components/rank-delta";
 import { Podium } from "@/components/podium";
 import { getDictionary } from "@/lib/i18n-server";
 import { cn } from "@/lib/utils";
@@ -48,7 +49,7 @@ function Row({ row, isMe, index }: { row: LeaderboardRow; isMe: boolean; index: 
     >
       {isLeader && <span className="shimmer-gold pointer-events-none absolute inset-0" />}
       <CardContent className="relative flex items-center gap-3 py-3">
-        <div className="flex w-7 shrink-0 justify-center">
+        <div className="flex w-7 shrink-0 flex-col items-center justify-center gap-0.5">
           {top3 ? (
             row.rank === 1 ? (
               <Crown className={cn("size-5 animate-float", rankColor[0])} />
@@ -58,6 +59,7 @@ function Row({ row, isMe, index }: { row: LeaderboardRow; isMe: boolean; index: 
           ) : (
             <span className="text-sm font-bold text-muted-foreground tabular-nums">{row.rank}</span>
           )}
+          <RankDelta delta={row.rankDelta} />
         </div>
 
         <UserAvatar

@@ -4,6 +4,14 @@ import { buildLeaderboard, type LeaderboardRow, type UserScoreInput } from "./ra
 import { TOURNAMENT_QUESTIONS, getQuestion, type Prediction } from "./constants";
 import { betStatus } from "./tournament";
 import { pickLastAndNext } from "./favorites";
+import { isPickLocked } from "./lock";
+
+export interface TipDistribution {
+  HOME_WIN: number;
+  DRAW: number;
+  AWAY_WIN: number;
+  total: number;
+}
 
 /** Leaderboard für alle (eingeloggten) Nutzer berechnen (inkl. Turnier-Bonus). */
 export async function getLeaderboard(): Promise<LeaderboardRow[]> {
@@ -22,31 +30,58 @@ export async function getLeaderboard(): Promise<LeaderboardRow[]> {
     },
   });
 
-  const inputs: UserScoreInput[] = users.map((u) => {
-    const scored = u.predictions.filter((p) => p.scored);
-    const recentPoints = [...scored]
-      .sort((a, b) => b.match.kickoff.getTime() - a.match.kickoff.getTime())
-      .slice(0, 5)
-      .map((p) => p.points ?? 0);
+  // Kalendertag (UTC) eines Anpfiffs – zum Abgrenzen "letzter Spieltag".
+  const dayKey = (d: Date) => d.toISOString().slice(0, 10);
 
-    const matchPoints = scored.reduce((s, p) => s + (p.points ?? 0), 0);
-    const bonusPoints = u.tournamentBets.reduce((s, b) => s + (b.points ?? 0), 0);
+  // Letzter Spieltag = jüngster Tag, an dem ein ausgewertetes Spiel lag.
+  let lastDay: string | null = null;
+  for (const u of users) {
+    for (const p of u.predictions) {
+      if (!p.scored) continue;
+      const k = dayKey(p.match.kickoff);
+      if (lastDay === null || k > lastDay) lastDay = k;
+    }
+  }
 
-    return {
-      userId: u.id,
-      displayName: u.displayName,
-      avatarUrl: u.avatarUrl,
-      createdAt: u.createdAt,
-      totalPoints: matchPoints + bonusPoints,
-      bonusPoints,
-      correctCount: scored.filter((p) => (p.points ?? 0) > 0).length,
-      scoredCount: scored.length,
-      predictedCount: u.predictions.length,
-      recentPoints,
-    };
+  const buildInputs = (excludeLastDay: boolean): UserScoreInput[] =>
+    users.map((u) => {
+      const scored = u.predictions.filter(
+        (p) => p.scored && (!excludeLastDay || lastDay === null || dayKey(p.match.kickoff) !== lastDay),
+      );
+      const recentPoints = [...scored]
+        .sort((a, b) => b.match.kickoff.getTime() - a.match.kickoff.getTime())
+        .slice(0, 5)
+        .map((p) => p.points ?? 0);
+
+      const matchPoints = scored.reduce((s, p) => s + (p.points ?? 0), 0);
+      // Bonuspunkte haben kein Datum -> in beide Stände gleich einfließen lassen.
+      const bonusPoints = u.tournamentBets.reduce((s, b) => s + (b.points ?? 0), 0);
+
+      return {
+        userId: u.id,
+        displayName: u.displayName,
+        avatarUrl: u.avatarUrl,
+        createdAt: u.createdAt,
+        totalPoints: matchPoints + bonusPoints,
+        bonusPoints,
+        correctCount: scored.filter((p) => (p.points ?? 0) > 0).length,
+        scoredCount: scored.length,
+        predictedCount: u.predictions.length,
+        recentPoints,
+      };
+    });
+
+  const board = buildLeaderboard(buildInputs(false));
+
+  // Vorheriger Stand (ohne letzten Spieltag) -> Rang-Bewegung ableiten.
+  const prevRankById = new Map(
+    buildLeaderboard(buildInputs(true)).map((r) => [r.userId, r.rank] as const),
+  );
+
+  return board.map((r) => {
+    const prev = prevRankById.get(r.userId);
+    return { ...r, rankDelta: lastDay && prev != null ? prev - r.rank : 0 };
   });
-
-  return buildLeaderboard(inputs);
 }
 
 /** Ist das Turnier beendet? (Finale abgeschlossen bzw. ein Weltmeister gesetzt) */
@@ -214,26 +249,26 @@ export async function getMatches(userId: string) {
     },
   });
 
+  // Tipp-Verteilung der ganzen Gruppe in EINER Abfrage (aggregiert, ohne Namen).
+  // Wird unten nur für bereits gesperrte Spiele angehängt -> kein Vorab-Verraten.
+  const grouped = await db.prediction.groupBy({
+    by: ["matchId", "prediction"],
+    _count: { _all: true },
+  });
+  const distByMatch = new Map<string, TipDistribution>();
+  for (const g of grouped) {
+    const d = distByMatch.get(g.matchId) ?? { HOME_WIN: 0, DRAW: 0, AWAY_WIN: 0, total: 0 };
+    d[g.prediction as Prediction] = g._count._all;
+    d.total += g._count._all;
+    distByMatch.set(g.matchId, d);
+  }
+
   return matches.map((m) => ({
     ...m,
     myPrediction: (m.predictions[0]?.prediction as Prediction | undefined) ?? null,
     myPoints: m.predictions[0]?.points ?? null,
     myScored: m.predictions[0]?.scored ?? false,
     myJoker: m.predictions[0]?.isJoker ?? false,
+    tipDistribution: isPickLocked(m.kickoff) ? distByMatch.get(m.id) ?? null : null,
   }));
-}
-
-/**
- * Verteilung der Tipps für ein Spiel – aber nur nach Tipp-Schluss sichtbar,
- * damit niemand beeinflusst wird. (Aggregiert, keine Klarnamen.)
- */
-export async function getPredictionDistribution(matchId: string) {
-  const grouped = await db.prediction.groupBy({
-    by: ["prediction"],
-    where: { matchId },
-    _count: { prediction: true },
-  });
-  const dist: Record<Prediction, number> = { HOME_WIN: 0, DRAW: 0, AWAY_WIN: 0 };
-  for (const g of grouped) dist[g.prediction as Prediction] = g._count.prediction;
-  return dist;
 }

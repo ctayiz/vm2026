@@ -13,6 +13,8 @@ import {
   Scale,
   Crosshair,
   Lock,
+  Zap,
+  Sparkles,
 } from "lucide-react";
 import { CountUp } from "@/components/count-up";
 import { AccuracyRing } from "@/components/accuracy-ring";
@@ -87,6 +89,24 @@ export default async function StatistikenPage() {
   }
   const form = chrono.slice(-8).map((m) => (m.myPoints ?? 0) > 0);
 
+  // Joker-Treffer: ein gesetzter Joker, der Punkte gebracht hat
+  const jokerHit = scored.some((m) => m.myJoker && (m.myPoints ?? 0) > 0);
+  // Underdog: richtig getippt, obwohl die Gruppe mehrheitlich anders lag
+  const underdogHits = scored.filter((m) => {
+    if (!m.myPrediction || (m.myPoints ?? 0) <= 0) return false;
+    const d = m.tipDistribution;
+    if (!d || d.total < 3) return false;
+    const counts: Record<Prediction, number> = {
+      HOME_WIN: d.HOME_WIN,
+      DRAW: d.DRAW,
+      AWAY_WIN: d.AWAY_WIN,
+    };
+    const top = (Object.keys(counts) as Prediction[]).reduce((a, b) =>
+      counts[b] > counts[a] ? b : a,
+    );
+    return top !== m.myPrediction;
+  }).length;
+
   const achievements = [
     {
       id: "serie",
@@ -122,6 +142,20 @@ export default async function StatistikenPage() {
       desc: t.stats.ach.sammlerDesc,
       icon: Trophy,
       earned: stats.totalPoints >= 15,
+    },
+    {
+      id: "joker",
+      label: t.stats.ach.joker,
+      desc: t.stats.ach.jokerDesc,
+      icon: Zap,
+      earned: jokerHit,
+    },
+    {
+      id: "underdog",
+      label: t.stats.ach.underdog,
+      desc: t.stats.ach.underdogDesc,
+      icon: Sparkles,
+      earned: underdogHits >= 1,
     },
   ];
   const earnedCount = achievements.filter((a) => a.earned).length;

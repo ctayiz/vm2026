@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Zap } from "lucide-react";
 import { toggleJokerAction } from "@/server/prediction-actions";
 import { burstConfetti } from "@/lib/confetti";
+import { jokerHaptic, tapHaptic } from "@/lib/haptics";
 import { useT } from "@/components/i18n-provider";
 import { cn } from "@/lib/utils";
 
@@ -30,13 +31,17 @@ export function JokerButton({
 
   const onClick = () => {
     setError(null);
+    tapHaptic();
     const fd = new FormData();
     fd.set("matchId", matchId);
     start(async () => {
       const res = await toggleJokerAction({ ok: false }, fd);
       if (res.ok) {
         setIsActive(!!res.active);
-        if (res.active) burstConfetti();
+        if (res.active) {
+          burstConfetti();
+          jokerHaptic();
+        }
       } else {
         setError(res.error ?? "Fehler");
       }
@@ -52,7 +57,7 @@ export function JokerButton({
         aria-pressed={isActive}
         title={capReached && !isActive ? t.joker.lockedHint : t.joker.title}
         className={cn(
-          "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-40",
+          "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-40",
           isActive
             ? "border-amber-400/70 bg-amber-400/20 text-amber-300"
             : "border-border bg-secondary/40 text-muted-foreground hover:bg-secondary",

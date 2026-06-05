@@ -132,6 +132,7 @@ const de = {
     tipSaved: "Tipp gespeichert!",
     tipLocked: "Tipp gesperrt",
     next: "Nächstes Spiel",
+    groupTipped: (n: number) => `So tippte die Gruppe (${n})`,
   },
   outcome: { home: "Heimsieg", draw: "Unentschieden", away: "Auswärtssieg" },
   joker: {
@@ -190,6 +191,10 @@ const de = {
       scharfDesc: "≥ 80 % Quote bei mind. 10 Tipps",
       sammler: "Punktesammler",
       sammlerDesc: "15+ Gesamtpunkte",
+      joker: "Joker-Held",
+      jokerDesc: "Joker gezündet & Punkte geholt",
+      underdog: "Underdog-Riecher",
+      underdogDesc: "Richtig getippt gegen die Mehrheit",
     },
   },
   scorers: {
@@ -488,6 +493,7 @@ const tr: Dictionary = {
     tipSaved: "Tahmin kaydedildi!",
     tipLocked: "Tahmin kilitli",
     next: "Sıradaki maç",
+    groupTipped: (n: number) => `Grup böyle tahmin etti (${n})`,
   },
   outcome: { home: "Ev sahibi galip", draw: "Beraberlik", away: "Deplasman galip" },
   joker: {
@@ -546,6 +552,10 @@ const tr: Dictionary = {
       scharfDesc: "En az 10 tahminde ≥ %80 oran",
       sammler: "Puan Avcısı",
       sammlerDesc: "15+ toplam puan",
+      joker: "Joker Kahramanı",
+      jokerDesc: "Joker oynayıp puan kaptın",
+      underdog: "Sürpriz Avcısı",
+      underdogDesc: "Çoğunluğa karşı doğru tahmin",
     },
   },
   scorers: {

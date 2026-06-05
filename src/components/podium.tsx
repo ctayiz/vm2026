@@ -1,6 +1,7 @@
-import { Crown, Medal } from "lucide-react";
+import { Crown } from "lucide-react";
 import { UserAvatar } from "@/components/user-avatar";
 import { CountUp } from "@/components/count-up";
+import { RankDelta } from "@/components/rank-delta";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { getDictionary } from "@/lib/i18n-server";
@@ -56,8 +57,11 @@ function Place({ row, isMe }: { row: LeaderboardRow; isMe: boolean }) {
           <span className="max-w-[5.5rem] truncate text-sm font-semibold">{row.displayName}</span>
           {isMe && <Badge variant="default">{t.ranking.you}</Badge>}
         </div>
-        <div className="text-lg font-bold tabular-nums text-primary">
-          <CountUp value={row.totalPoints} />
+        <div className="flex items-center justify-center gap-1.5">
+          <span className="text-lg font-bold tabular-nums text-primary">
+            <CountUp value={row.totalPoints} />
+          </span>
+          <RankDelta delta={row.rankDelta} />
         </div>
         <div className="text-[10px] uppercase text-muted-foreground">
           {row.correctCount} {t.ranking.correct} · {Math.round(row.accuracy * 100)}%

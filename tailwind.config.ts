@@ -98,6 +98,15 @@ const config: Config = {
           "0%": { transform: "scaleX(0)" },
           "100%": { transform: "scaleX(1)" },
         },
+        "tick-pop": {
+          "0%": { transform: "scale(1)" },
+          "40%": { transform: "scale(1.14)" },
+          "100%": { transform: "scale(1)" },
+        },
+        "count-up": {
+          "0%": { transform: "translateY(0.4em)", opacity: "0" },
+          "100%": { transform: "translateY(0)", opacity: "1" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -112,6 +121,8 @@ const config: Config = {
         blob: "blob 18s ease-in-out infinite",
         "gradient-x": "gradient-x 6s ease infinite",
         "grow-x": "grow-x 0.9s cubic-bezier(0.16, 1, 0.3, 1) both",
+        "tick-pop": "tick-pop 0.4s ease-out",
+        "count-up": "count-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both",
       },
     },
   },

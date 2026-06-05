@@ -19,6 +19,8 @@ export interface UserScoreInput {
 export interface LeaderboardRow extends UserScoreInput {
   rank: number;
   accuracy: number; // 0..1 (correct / scored)
+  // Rang-Bewegung seit dem letzten Spieltag (positiv = aufgestiegen). 0/undefined = keine.
+  rankDelta?: number;
 }
 
 /**
