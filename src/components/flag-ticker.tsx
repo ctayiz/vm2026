@@ -2,7 +2,7 @@ import { flagEmoji } from "@/lib/flags";
 
 // kleine Auswahl quer durch das Teilnehmerfeld
 const CODES = [
-  "de", "br", "ar", "fr", "es", "gb", "pt", "nl", "be", "hr",
+  "tr", "de", "br", "ar", "fr", "es", "gb", "pt", "nl", "be", "hr",
   "mx", "us", "ca", "jp", "kr", "ma", "ch", "uy", "co", "sn",
   "dk", "rs", "pl", "at", "se", "gh", "ng", "ec", "au", "ir",
 ];
