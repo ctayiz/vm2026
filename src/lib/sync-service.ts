@@ -128,6 +128,11 @@ export async function syncSchedule(): Promise<SyncSummary> {
       where: { externalId: { notIn: [...syncedExternalIds] } },
     });
     removed = del.count;
+    // Verwaiste Teams (ohne Spiele) aus alten Quellen/Codes entfernen,
+    // damit Favoriten-/Turnier-Picker keine falschen Länder/Gruppen zeigen.
+    await db.team.deleteMany({
+      where: { homeMatches: { none: {} }, awayMatches: { none: {} } },
+    });
   }
 
   return {

@@ -71,6 +71,10 @@ export const TEAM_ALIASES: Record<string, string> = {
   Turkiye: "Turkey",
   Türkiye: "Turkey",
   "Cabo Verde": "Cape Verde",
+  "Cape Verde Islands": "Cape Verde",
+  "Bosnia-Herzegovina": "Bosnia & Herzegovina",
+  "Bosnia and Herzegovina": "Bosnia & Herzegovina",
+  "Congo DR": "DR Congo",
 };
 
 /** Englischen Namen -> TeamInfo, falls echtes Team (kein Platzhalter). */

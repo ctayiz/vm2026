@@ -181,11 +181,12 @@ function mapFdStatus(status: string): "scheduled" | "live" | "finished" {
 
 function fdTeamRef(name: string | null, tla: string | null): NormalizedTeamRef | undefined {
   if (!name) return undefined;
-  const ref = resolveTeamRef(name);
-  if (!ref) return undefined;
-  // Bei unbekanntem Team das offizielle TLA als Code bevorzugen.
-  if (tla && ref.name === name) return { code: tla, name };
-  return ref as NormalizedTeamRef;
+  // Bekanntes Team -> unser Code + dt. Name + Flagge (auch wenn dt. = engl. Name,
+  // z. B. Uruguay/Panama/Ghana). NICHT über Namensvergleich entscheiden!
+  const info = lookupTeam(name);
+  if (info) return { code: info.code, name: info.name, flagCode: info.flagCode };
+  // Wirklich unbekannt -> offizielles TLA als Code, Originalname.
+  return { code: (tla || name).slice(0, 3).toUpperCase(), name };
 }
 
 function normalizeFootballData(matches: FDMatch[]): NormalizedMatch[] {
