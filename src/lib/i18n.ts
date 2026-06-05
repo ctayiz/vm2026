@@ -71,6 +71,10 @@ const de = {
     feat1: "Tippen bis 15 Min vor Anpfiff",
     feat2: "Live-Ranking & Statistiken",
     feat3: "Fair: fremde Tipps bleiben geheim",
+    share: "Teilen",
+    shareMail: "E-Mail",
+    shareSubject: "WM 2026 Tippspiel",
+    shareText: "Mach mit beim WM 2026 Tippspiel ⚽",
   },
   countdown: {
     days: "Tage",
@@ -424,6 +428,10 @@ const tr: Dictionary = {
     feat1: "Maç başlamadan 15 dk öncesine kadar tahmin",
     feat2: "Canlı sıralama & istatistikler",
     feat3: "Adil: başkalarının tahminleri gizli kalır",
+    share: "Paylaş",
+    shareMail: "E-posta",
+    shareSubject: "WM 2026 Tahmin Oyunu",
+    shareText: "WM 2026 tahmin oyununa katıl ⚽",
   },
   countdown: {
     days: "Gün",

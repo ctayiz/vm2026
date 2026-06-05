@@ -5,6 +5,7 @@ import { useFormState, useFormStatus } from "react-dom";
 import { loginAction, registerAction, type ActionState } from "@/server/auth-actions";
 import { useT } from "@/components/i18n-provider";
 import { LanguageToggle } from "@/components/language-toggle";
+import { ShareButtons } from "@/components/share-buttons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -118,6 +119,9 @@ export function AuthForm({
           </p>
         </CardFooter>
       </form>
+      <div className="border-t border-border/60 px-5 py-3">
+        <ShareButtons />
+      </div>
     </Card>
   );
 }
