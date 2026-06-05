@@ -4,6 +4,7 @@ import { getMatches } from "@/lib/queries";
 import { MatchCard } from "@/components/match-card";
 import { Card, CardContent } from "@/components/ui/card";
 import { isPickLocked } from "@/lib/lock";
+import { MAX_JOKERS } from "@/lib/constants";
 import { getDictionary } from "@/lib/i18n-server";
 import { ArrowRight } from "lucide-react";
 
@@ -17,9 +18,7 @@ export default async function MeineTippsPage() {
   const predicted = all.filter((m) => m.myPrediction);
   const upcoming = predicted.filter((m) => m.status !== "finished");
   const finished = predicted.filter((m) => m.status === "finished");
-  const lockedJokerPhases = new Set(
-    all.filter((m) => m.myJoker && isPickLocked(m.kickoff)).map((m) => m.phase),
-  );
+  const jokerCapReached = all.filter((m) => m.myJoker).length >= MAX_JOKERS;
   const openCount = all.filter(
     (m) => m.status !== "finished" && !isPickLocked(m.kickoff) && !m.myPrediction,
   ).length;
@@ -54,7 +53,7 @@ export default async function MeineTippsPage() {
                 match={m}
                 index={i}
                 joker
-                phaseJokerLocked={lockedJokerPhases.has(m.phase)}
+                jokerCapReached={jokerCapReached}
               />
             ))}
           </div>

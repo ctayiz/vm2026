@@ -37,6 +37,9 @@ export const POINTS = {
 // max. Anzahl Lieblingsländer pro Nutzer
 export const MAX_FAVORITES = 3;
 
+// max. Anzahl Joker pro Nutzer fürs gesamte Turnier (verdoppeln je Spiel-Punkte)
+export const MAX_JOKERS = 3;
+
 export const SESSION_COOKIE = "wm_session";
 export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30; // 30 Tage
 

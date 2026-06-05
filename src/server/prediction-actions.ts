@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { getDictionary } from "@/lib/i18n-server";
 import { predictionSchema } from "@/lib/validation";
 import { isPickLocked } from "@/lib/lock";
+import { MAX_JOKERS } from "@/lib/constants";
 
 export type PredictionState = { ok: boolean; error?: string; prediction?: string };
 
@@ -60,7 +61,8 @@ export type JokerState = { ok: boolean; error?: string; active?: boolean };
  * Joker für ein Spiel setzen/entfernen. Regeln (serverseitig):
  *  - es muss bereits ein Tipp für das Spiel existieren
  *  - Spiel noch nicht gesperrt
- *  - max. 1 Joker pro Turnierphase; ein bereits gesperrter Joker blockiert die Phase
+ *  - max. 3 Joker pro Nutzer fürs gesamte Turnier (frei verteilbar). Bereits
+ *    gesperrte Joker zählen weiter mit und können nicht mehr entfernt werden.
  */
 export async function toggleJokerAction(_prev: JokerState, formData: FormData): Promise<JokerState> {
   const user = await requireUser();
@@ -85,24 +87,14 @@ export async function toggleJokerAction(_prev: JokerState, formData: FormData): 
     return { ok: true, active: false };
   }
 
-  // Joker dieser Phase finden (über zugehörige Matches)
-  const phaseJokers = await db.prediction.findMany({
-    where: { userId: user.id, isJoker: true, match: { phase: match.phase } },
-    include: { match: { select: { kickoff: true } } },
+  // Obergrenze prüfen: max. 3 aktive Joker insgesamt
+  const jokerCount = await db.prediction.count({
+    where: { userId: user.id, isJoker: true },
   });
-  const lockedJoker = phaseJokers.find((p) => isPickLocked(p.match.kickoff));
-  if (lockedJoker) {
-    return { ok: false, error: t.msg.jokerPhaseTaken };
+  if (jokerCount >= MAX_JOKERS) {
+    return { ok: false, error: t.msg.jokerLimit };
   }
 
-  // offenen Joker derselben Phase verschieben (entfernen) + hier setzen
-  await db.$transaction([
-    db.prediction.updateMany({
-      where: { userId: user.id, isJoker: true, match: { phase: match.phase } },
-      data: { isJoker: false },
-    }),
-    db.prediction.update({ where: { id: own.id }, data: { isJoker: true } }),
-  ]);
-
+  await db.prediction.update({ where: { id: own.id }, data: { isJoker: true } });
   return { ok: true, active: true };
 }

@@ -9,24 +9,24 @@ import { cn } from "@/lib/utils";
 
 /**
  * Joker-Umschalter für ein Spiel. Sichtbar nur wenn getippt & nicht gesperrt.
- * `phaseLocked` = in dieser Phase ist der Joker bereits auf einem gesperrten
- * Spiel vergeben -> hier nicht möglich.
+ * `capReached` = der Nutzer hat bereits alle 3 Joker vergeben -> hier nur noch
+ * möglich, wenn dieses Spiel selbst der Joker ist (zum Entfernen).
  */
 export function JokerButton({
   matchId,
   active,
-  phaseLocked,
+  capReached,
 }: {
   matchId: string;
   active: boolean;
-  phaseLocked: boolean;
+  capReached: boolean;
 }) {
   const t = useT();
   const [pending, start] = useTransition();
   const [isActive, setIsActive] = useState(active);
   const [error, setError] = useState<string | null>(null);
 
-  const disabled = pending || (phaseLocked && !isActive);
+  const disabled = pending || (capReached && !isActive);
 
   const onClick = () => {
     setError(null);
@@ -50,7 +50,7 @@ export function JokerButton({
         onClick={onClick}
         disabled={disabled}
         aria-pressed={isActive}
-        title={phaseLocked && !isActive ? t.joker.lockedHint : t.joker.title}
+        title={capReached && !isActive ? t.joker.lockedHint : t.joker.title}
         className={cn(
           "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-40",
           isActive

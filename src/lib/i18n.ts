@@ -137,8 +137,8 @@ const de = {
   joker: {
     active: "Joker aktiv · 2×",
     set: "Joker",
-    title: "Joker = doppelte Punkte",
-    lockedHint: "Joker in dieser Phase bereits vergeben",
+    title: "Joker = doppelte Punkte (3 fürs ganze Turnier)",
+    lockedHint: "Alle 3 Joker bereits vergeben",
   },
   myTips: {
     title: "Meine Tipps",
@@ -288,7 +288,7 @@ const de = {
     s6: "Turnierphasen",
     s6p: "Die WM 2026 umfasst 48 Teams. Getippt wird über alle Phasen hinweg – inklusive der neuen Runde der letzten 32:",
     bonusTitle: "Turnier-Tipps (Bonus)",
-    bonusP: "Zusätzlich gibt es Bonuspunkte für Outright-Tipps wie Weltmeister, Torschützenkönig oder das Erreichen bestimmter Runden – sowie einen Joker pro Phase, der die Punkte eines Spiel-Tipps verdoppelt.",
+    bonusP: "Zusätzlich gibt es Bonuspunkte für Outright-Tipps wie Weltmeister, Torschützenkönig oder das Erreichen bestimmter Runden – sowie 3 Joker fürs gesamte Turnier, die jeweils die Punkte eines Spiel-Tipps verdoppeln.",
   },
   bracket: {
     title: "Turnierbaum",
@@ -357,7 +357,7 @@ const de = {
     noTeamGiven: "Kein Team angegeben.",
     jokerTipFirst: "Bitte zuerst einen Tipp abgeben.",
     jokerLocked: "Spiel ist gesperrt – Joker nicht änderbar.",
-    jokerPhaseTaken: "Joker in dieser Phase bereits vergeben (Spiel gesperrt).",
+    jokerLimit: "Alle 3 Joker bereits vergeben. Entferne zuerst einen.",
   },
 };
 
@@ -493,8 +493,8 @@ const tr: Dictionary = {
   joker: {
     active: "Joker aktif · 2×",
     set: "Joker",
-    title: "Joker = çift puan",
-    lockedHint: "Bu aşamada joker zaten kullanıldı",
+    title: "Joker = çift puan (tüm turnuva için 3 adet)",
+    lockedHint: "3 jokerin tümü zaten kullanıldı",
   },
   myTips: {
     title: "Tahminlerim",
@@ -644,7 +644,7 @@ const tr: Dictionary = {
     s6: "Turnuva aşamaları",
     s6p: "DK 2026'da 48 takım var. Tüm aşamalarda tahmin yapılır – yeni son 32 turu dahil:",
     bonusTitle: "Turnuva tahminleri (bonus)",
-    bonusP: "Ayrıca şampiyon, gol kralı veya belirli turlara kalma gibi tahminler için bonus puan vardır – ve aşama başına bir maç tahmininin puanını ikiye katlayan bir joker.",
+    bonusP: "Ayrıca şampiyon, gol kralı veya belirli turlara kalma gibi tahminler için bonus puan vardır – ve tüm turnuva için her biri bir maç tahmininin puanını ikiye katlayan 3 joker.",
   },
   bracket: {
     title: "Eleme Ağacı",
@@ -713,7 +713,7 @@ const tr: Dictionary = {
     noTeamGiven: "Takım belirtilmedi.",
     jokerTipFirst: "Lütfen önce bir tahmin yap.",
     jokerLocked: "Maç kilitli – joker değiştirilemez.",
-    jokerPhaseTaken: "Bu aşamada joker zaten kullanıldı (maç kilitli).",
+    jokerLimit: "3 jokerin tümü zaten kullanıldı. Önce birini kaldır.",
   },
 };
 

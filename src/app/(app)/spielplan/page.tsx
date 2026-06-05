@@ -16,7 +16,7 @@ import { TeamFilter, type TeamFilterOption } from "@/components/team-filter";
 import { Flag } from "@/components/flag";
 import { dayKey, dayLabel } from "@/lib/format";
 import { isPickLocked, msUntilLock } from "@/lib/lock";
-import { PHASE_META, type Phase } from "@/lib/constants";
+import { PHASE_META, MAX_JOKERS, type Phase } from "@/lib/constants";
 import { getLocale, getDictionary } from "@/lib/i18n-server";
 import { CalendarDays, Star, AlarmClock } from "lucide-react";
 import Link from "next/link";
@@ -78,10 +78,8 @@ export default async function SpielplanPage({
   const favoriteCodes = favoriteTeams.map((t) => t.code);
   const favoritesOverview = buildFavoritesOverview(favoriteCodes, all);
 
-  // Phasen, in denen der Joker bereits auf einem gesperrten Spiel sitzt
-  const lockedJokerPhases = new Set(
-    all.filter((m) => m.myJoker && isPickLocked(m.kickoff)).map((m) => m.phase),
-  );
+  // Joker: max. 3 fürs gesamte Turnier -> alle aktiven Joker zählen
+  const jokerCapReached = all.filter((m) => m.myJoker).length >= MAX_JOKERS;
 
   const filter = searchParams.filter ?? "alle";
   const teamCode = searchParams.team ?? "";
@@ -201,7 +199,7 @@ export default async function SpielplanPage({
                   index={i}
                   favoriteCodes={favoriteCodes}
                   joker
-                  phaseJokerLocked={lockedJokerPhases.has(m.phase)}
+                  jokerCapReached={jokerCapReached}
                 />
               ))}
             </div>

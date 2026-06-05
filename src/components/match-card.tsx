@@ -26,13 +26,13 @@ export function MatchCard({
   index = 0,
   favoriteCodes = [],
   joker = false,
-  phaseJokerLocked = false,
+  jokerCapReached = false,
 }: {
   match: MatchWithPrediction;
   index?: number;
   favoriteCodes?: string[];
   joker?: boolean; // Joker-Feature für diese Karte aktiv
-  phaseJokerLocked?: boolean; // Joker dieser Phase bereits auf gesperrtem Spiel
+  jokerCapReached?: boolean; // alle 3 Joker bereits vergeben
 }) {
   const t = getDictionary();
   const locale = getLocale();
@@ -160,7 +160,7 @@ export function MatchCard({
               awayShort={away.isReal ? away.code : t.match.away}
             />
             {joker && !locked && match.myPrediction && (
-              <JokerButton matchId={match.id} active={match.myJoker} phaseLocked={phaseJokerLocked} />
+              <JokerButton matchId={match.id} active={match.myJoker} capReached={jokerCapReached} />
             )}
           </div>
         )}
