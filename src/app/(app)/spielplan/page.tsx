@@ -188,7 +188,7 @@ export default async function SpielplanPage({
       ) : (
         days.map(([k, dayMatches]) => (
           <section key={k} className="space-y-3">
-            <h2 className="sticky top-14 z-10 -mx-1 bg-background/80 px-1 py-1 text-sm font-semibold uppercase tracking-wide text-muted-foreground backdrop-blur">
+            <h2 className="sticky top-14 z-10 bg-background/80 py-1 text-sm font-semibold uppercase tracking-wide text-muted-foreground backdrop-blur">
               {dayLabel(dayMatches[0].kickoff, locale)}
             </h2>
             <div className="grid gap-3 sm:grid-cols-2">

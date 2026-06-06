@@ -19,7 +19,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <I18nProvider locale={locale}>
-      <div className="flex min-h-dvh flex-col">
+      {/* overflow-x-clip auf einem normalen Wrapper-div: iOS-Safari ignoriert
+          overflow auf html/body, respektiert es aber hier -> kein "shrink-to-fit"
+          mehr, falls doch mal etwas minimal zu breit rendert. */}
+      <div className="flex min-h-dvh w-full max-w-full flex-col overflow-x-clip">
         <AutoSync />
         <header className="sticky top-0 z-40 border-b border-border bg-card/80 backdrop-blur">
           <div className="container flex h-14 items-center justify-between gap-4">
