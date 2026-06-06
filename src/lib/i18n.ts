@@ -117,6 +117,16 @@ const de = {
     s3Body:
       "Markiere bis zu 3 Lieblingsländer für den schnellen Zugriff auf der Startseite. Dann kann's losgehen – viel Erfolg!",
   },
+  shareResult: {
+    button: "Teilen",
+    cta: "Mach mit 👉 wm2026.tayiz.de",
+    text: (rank: number) =>
+      rank === 1
+        ? "🏆 Ich führe das WM 2026 Tippspiel an! Trau dich gegen mich:"
+        : rank > 0
+          ? `⚽ Ich bin auf Platz ${rank} im WM 2026 Tippspiel – tipp besser als ich:`
+          : "⚽ Ich bin im WM 2026 Tippspiel dabei – mach mit:",
+  },
   countdown: {
     days: "Tage",
     hours: "Std",
@@ -564,6 +574,16 @@ const tr: Dictionary = {
     s3Title: "Favorileri seç",
     s3Body:
       "Ana sayfada hızlı erişim için en fazla 3 favori takım işaretle. Hazırsan başlayalım – bol şans!",
+  },
+  shareResult: {
+    button: "Paylaş",
+    cta: "Sen de katıl 👉 wm2026.tayiz.de",
+    text: (rank: number) =>
+      rank === 1
+        ? "🏆 WM 2026 Tahmin Oyunu'nda lideriz! Bana karşı dene:"
+        : rank > 0
+          ? `⚽ WM 2026 Tahmin Oyunu'nda ${rank}. sıradayım – benden iyi tahmin et:`
+          : "⚽ WM 2026 Tahmin Oyunu'ndayım – sen de katıl:",
   },
   countdown: {
     days: "Gün",

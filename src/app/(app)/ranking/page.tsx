@@ -7,6 +7,7 @@ import { Crown, Medal } from "lucide-react";
 import { CountUp } from "@/components/count-up";
 import { RankCelebration } from "@/components/rank-celebration";
 import { RankDelta } from "@/components/rank-delta";
+import { ShareResultButton } from "@/components/share-result-button";
 import { Podium } from "@/components/podium";
 import { getDictionary } from "@/lib/i18n-server";
 import { cn } from "@/lib/utils";
@@ -105,11 +106,22 @@ export default async function RankingPage() {
   return (
     <div className="space-y-5">
       <RankCelebration active={!!iAmLeader} />
-      <div>
-        <h1 className="text-2xl font-bold">{t.ranking.title}</h1>
-        <p className="text-sm text-muted-foreground">
-          {t.ranking.subtitle(board.length)}
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">{t.ranking.title}</h1>
+          <p className="text-sm text-muted-foreground">
+            {t.ranking.subtitle(board.length)}
+          </p>
+        </div>
+        {myRow && (
+          <ShareResultButton
+            name={myRow.displayName}
+            rank={myRow.rank}
+            totalPlayers={board.length}
+            points={myRow.totalPoints}
+            accuracyPct={Math.round(myRow.accuracy * 100)}
+          />
+        )}
       </div>
 
       {top3.length > 0 && <Podium rows={top3} currentUserId={user.id} />}
