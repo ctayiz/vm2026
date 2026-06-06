@@ -110,26 +110,23 @@ export function Nav({ isAdmin }: { isAdmin: boolean }) {
       {/* Klick-außerhalb schließt das Desktop-Dropdown */}
       {open && <div className="fixed inset-0 z-30 hidden md:block" onClick={() => setOpen(null)} />}
 
-      {/* Mobile: untere Tab-Bar */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-[repeat(auto-fit,minmax(0,1fr))] border-t border-border bg-card/95 backdrop-blur md:hidden">
+      {/* Mobile: untere Tab-Bar.
+          WICHTIG: Flex mit flex-1/min-w-0 (NICHT auto-fit-Grid – das rendert auf
+          iOS-Safari teils breiter als der Viewport und löst dort "shrink-to-fit"
+          aus -> ganze Seite zoomt raus, Ränder verschwinden). */}
+      <nav className="fixed inset-x-0 bottom-0 z-40 flex w-full border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
         {items.map((it) =>
           it.kind === "link" ? (
             <Link
               key={it.href}
               href={it.href}
               className={cn(
-                "flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors",
+                "flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors",
                 isActive(it.href) ? "text-primary" : "text-muted-foreground",
               )}
             >
-              {it.icon ? (
-                <>
-                  <it.icon className="size-5" />
-                  {it.label}
-                </>
-              ) : (
-                <span className="px-1 text-center leading-tight">{it.label}</span>
-              )}
+              {it.icon && <it.icon className="size-5 shrink-0" />}
+              <span className="max-w-full truncate px-0.5 leading-tight">{it.label}</span>
             </Link>
           ) : (
             <button
@@ -137,12 +134,12 @@ export function Nav({ isAdmin }: { isAdmin: boolean }) {
               type="button"
               onClick={() => setOpen(open === it.key ? null : it.key)}
               className={cn(
-                "relative flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors",
+                "relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors",
                 groupActive(it) || open === it.key ? "text-primary" : "text-muted-foreground",
               )}
             >
-              <it.icon className="size-5" />
-              {it.label}
+              <it.icon className="size-5 shrink-0" />
+              <span className="max-w-full truncate px-0.5 leading-tight">{it.label}</span>
             </button>
           ),
         )}
