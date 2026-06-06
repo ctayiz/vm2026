@@ -3,10 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, Trophy, Shield, Sparkles, User, ChevronDown } from "lucide-react";
+import { CalendarDays, Trophy, Shield, Sparkles, User, ChevronDown, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useT } from "@/components/i18n-provider";
-import { BracketIcon } from "@/components/bracket-icon";
 
 type SubItem = { href: string; label: string };
 type Item =
@@ -35,7 +34,18 @@ export function Nav({ isAdmin }: { isAdmin: boolean }) {
         { href: "/meine-tipps", label: t.nav.myTips },
       ],
     },
-    { kind: "link", href: "/turnierbaum", label: t.nav.bracket, icon: BracketIcon },
+    {
+      kind: "group",
+      key: "wm",
+      label: t.nav.wm,
+      icon: Globe,
+      children: [
+        { href: "/wm", label: t.nav.wmInfo },
+        { href: "/wm/gruppen", label: t.nav.groups },
+        { href: "/wm/stadien", label: t.nav.venues },
+        { href: "/turnierbaum", label: t.nav.bracket },
+      ],
+    },
     ...(isAdmin ? [{ kind: "link" as const, href: "/admin", label: t.nav.admin, icon: Shield }] : []),
   ];
 

@@ -5,6 +5,7 @@ import { TOURNAMENT_QUESTIONS, getQuestion, type Prediction } from "./constants"
 import { betStatus } from "./tournament";
 import { pickLastAndNext } from "./favorites";
 import { isPickLocked } from "./lock";
+import { buildGroupTable, type StandingRow, type FinishedGroupMatch } from "./standings";
 
 export interface TipDistribution {
   HOME_WIN: number;
@@ -271,4 +272,105 @@ export async function getMatches(userId: string) {
     myJoker: m.predictions[0]?.isJoker ?? false,
     tipDistribution: isPickLocked(m.kickoff) ? distByMatch.get(m.id) ?? null : null,
   }));
+}
+
+export interface GroupStanding {
+  group: string;
+  rows: StandingRow[];
+}
+
+/** Tabellen aller Gruppen aus den beendeten Gruppenspielen berechnen. */
+export async function getGroupStandings(): Promise<GroupStanding[]> {
+  const teamSel = { select: { code: true, name: true, flagCode: true } };
+  const [teams, matches] = await Promise.all([
+    db.team.findMany({
+      where: { group: { not: null } },
+      select: { code: true, name: true, flagCode: true, group: true },
+    }),
+    db.match.findMany({
+      where: {
+        phase: "GROUP",
+        status: "finished",
+        homeGoals: { not: null },
+        awayGoals: { not: null },
+        homeTeamId: { not: null },
+        awayTeamId: { not: null },
+      },
+      select: { group: true, homeGoals: true, awayGoals: true, homeTeam: teamSel, awayTeam: teamSel },
+    }),
+  ]);
+
+  const teamsByGroup = new Map<string, { code: string; name: string; flagCode: string | null }[]>();
+  for (const t of teams) {
+    const g = t.group!;
+    if (!teamsByGroup.has(g)) teamsByGroup.set(g, []);
+    teamsByGroup.get(g)!.push({ code: t.code, name: t.name, flagCode: t.flagCode });
+  }
+
+  const matchesByGroup = new Map<string, FinishedGroupMatch[]>();
+  for (const m of matches) {
+    if (!m.group || !m.homeTeam || !m.awayTeam) continue;
+    if (!matchesByGroup.has(m.group)) matchesByGroup.set(m.group, []);
+    matchesByGroup.get(m.group)!.push({
+      home: m.homeTeam,
+      away: m.awayTeam,
+      homeGoals: m.homeGoals!,
+      awayGoals: m.awayGoals!,
+    });
+  }
+
+  return [...teamsByGroup.keys()]
+    .sort()
+    .map((group) => ({
+      group,
+      rows: buildGroupTable(teamsByGroup.get(group)!, matchesByGroup.get(group) ?? []),
+    }));
+}
+
+/** Eckdaten des Turniers (Anzahlen + Eröffnungs-/Endspiel-Termin) aus der DB. */
+export async function getTournamentFacts() {
+  const [teams, totalMatches, agg, groupRows] = await Promise.all([
+    db.team.count({ where: { group: { not: null } } }),
+    db.match.count(),
+    db.match.aggregate({ _min: { kickoff: true }, _max: { kickoff: true } }),
+    db.team.findMany({ where: { group: { not: null } }, distinct: ["group"], select: { group: true } }),
+  ]);
+  return {
+    teams,
+    matches: totalMatches,
+    groups: groupRows.length,
+    opening: agg._min.kickoff,
+    final: agg._max.kickoff,
+  };
+}
+
+/** Profil einer Nation: Stammdaten + alle Spiele (chronologisch). */
+export async function getTeamProfile(code: string) {
+  const team = await db.team.findUnique({
+    where: { code },
+    select: { code: true, name: true, flagCode: true, group: true, reachedPhase: true, isChampion: true },
+  });
+  if (!team) return null;
+
+  const teamSel = { select: { code: true, name: true, flagCode: true } };
+  const matches = await db.match.findMany({
+    where: { OR: [{ homeTeam: { code } }, { awayTeam: { code } }] },
+    orderBy: { kickoff: "asc" },
+    select: {
+      id: true,
+      phase: true,
+      group: true,
+      roundLabel: true,
+      kickoff: true,
+      status: true,
+      homeGoals: true,
+      awayGoals: true,
+      homePlaceholder: true,
+      awayPlaceholder: true,
+      homeTeam: teamSel,
+      awayTeam: teamSel,
+    },
+  });
+
+  return { team, matches };
 }
