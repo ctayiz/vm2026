@@ -1,26 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Target, Sparkles, Star, ArrowRight, ArrowLeft } from "lucide-react";
+import { completeOnboardingAction } from "@/server/onboarding-actions";
 import { useT } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 
-const STORAGE_KEY = "wm_onboarded_v1";
-
-/** Einmaliger Willkommens-/Erklär-Flow beim ersten Login (3 Schritte). */
-export function OnboardingModal() {
+/**
+ * Einmaliger Willkommens-/Erklär-Flow. Sichtbarkeit wird PRO ACCOUNT in der DB
+ * gemerkt (user.onboardedAt) – nicht via localStorage, damit es zuverlässig nur
+ * einmal erscheint (localStorage wird auf iOS-Safari teils gelöscht).
+ */
+export function OnboardingModal({ initialOpen }: { initialOpen: boolean }) {
   const t = useT();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(initialOpen);
   const [step, setStep] = useState(0);
-
-  useEffect(() => {
-    try {
-      if (!localStorage.getItem(STORAGE_KEY)) setOpen(true);
-    } catch {
-      /* localStorage evtl. blockiert -> dann kein Onboarding */
-    }
-  }, []);
 
   const steps = [
     { icon: Target, title: t.onboarding.s1Title, body: t.onboarding.s1Body },
@@ -31,12 +26,9 @@ export function OnboardingModal() {
   const s = steps[step];
 
   const finish = () => {
-    try {
-      localStorage.setItem(STORAGE_KEY, "1");
-    } catch {
-      /* ignore */
-    }
     setOpen(false);
+    // serverseitig pro Account merken (Fehler ignorieren – schließt trotzdem)
+    void completeOnboardingAction().catch(() => {});
   };
 
   return (

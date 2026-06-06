@@ -28,6 +28,8 @@ model User {
   role         String   @default("USER")
   // gesperrte Nutzer können sich nicht mehr einloggen / tippen
   blocked      Boolean  @default(false)
+  // Zeitpunkt des abgeschlossenen Onboardings (null = noch nicht gesehen)
+  onboardedAt  DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

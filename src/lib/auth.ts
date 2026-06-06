@@ -11,6 +11,7 @@ export type SafeUser = {
   avatarUrl: string | null;
   role: string;
   blocked: boolean;
+  onboardedAt: Date | null;
   createdAt: Date;
 };
 
@@ -30,6 +31,7 @@ export const getCurrentUser = cache(async (): Promise<SafeUser | null> => {
       avatarUrl: true,
       role: true,
       blocked: true,
+      onboardedAt: true,
       createdAt: true,
     },
   });
