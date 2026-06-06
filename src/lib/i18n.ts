@@ -80,6 +80,28 @@ const de = {
     shareSubject: "Komm ins WM 2026 Tippspiel ⚽",
     shareText: "⚽ Tritt im WM 2026 Tippspiel gegen mich an – wer tippt besser? 🏆 Jetzt mitmachen:",
   },
+  privacy: {
+    button: "Datenschutz",
+    title: "Datenschutz & Datensicherheit",
+    intro:
+      "Dein Vertrauen ist uns wichtig. Hier in Kurzform, wie mit deinen Daten umgegangen wird – transparent und ohne Kleingedrucktes.",
+    encTitle: "Verschlüsselt gespeichert",
+    encBody:
+      "Die Verbindung zur App ist durchgehend per TLS verschlüsselt (https). Dein Passwort wird niemals im Klartext gespeichert, sondern ausschließlich als sicherer, nicht umkehrbarer Hash (bcrypt). Auch die Datenbank selbst ist verschlüsselt abgelegt (Verschlüsselung im Ruhezustand).",
+    accessTitle: "Privat – nur für den Organisator",
+    accessBody:
+      "Deine Daten sind privat und ausschließlich für den Organisator dieses Tippspiels einsehbar. Sie werden nicht verkauft, nicht für Werbung verwendet und nicht an Dritte weitergegeben.",
+    dataTitle: "Was gespeichert wird",
+    dataBody:
+      "Nur das, was du selbst eingibst: dein Anzeigename, deine E-Mail-Adresse, dein Passwort (als Hash) sowie deine Tipps und Favoriten. Mehr nicht.",
+    retentionTitle: "Speicherdauer & Löschung",
+    retentionBody:
+      "Deine Daten werden ausschließlich für die Dauer der WM 2026 und höchstens 6 Monate danach aufbewahrt. Spätestens danach werden alle personenbezogenen Daten endgültig und unwiderruflich gelöscht.",
+    rightsTitle: "Deine Rechte",
+    rightsBody:
+      "Du kannst jederzeit Auskunft über deine Daten sowie deren Löschung verlangen – melde dich einfach beim Organisator, dann wird dein Konto umgehend entfernt.",
+    close: "Verstanden",
+  },
   countdown: {
     days: "Tage",
     hours: "Std",
@@ -489,6 +511,28 @@ const tr: Dictionary = {
     shareMail: "E-posta",
     shareSubject: "WM 2026 Tahmin Oyunu'na gel ⚽",
     shareText: "⚽ WM 2026 Tahmin Oyunu'nda bana karşı yarış – kim daha iyi tahmin eder? 🏆 Hemen katıl:",
+  },
+  privacy: {
+    button: "Gizlilik",
+    title: "Gizlilik & Veri Güvenliği",
+    intro:
+      "Güvenin bizim için önemli. Verilerinle nasıl ilgilenildiğini kısaca burada bulabilirsin – şeffaf ve gizli madde olmadan.",
+    encTitle: "Şifreli saklanır",
+    encBody:
+      "Uygulamaya bağlantı baştan sona TLS ile şifrelidir (https). Şifren asla açık metin olarak saklanmaz, yalnızca güvenli ve geri döndürülemez bir hash (bcrypt) olarak tutulur. Veritabanının kendisi de şifreli olarak saklanır (beklemede şifreleme).",
+    accessTitle: "Özel – yalnızca düzenleyici için",
+    accessBody:
+      "Verilerin özeldir ve yalnızca bu tahmin oyununun düzenleyicisi tarafından görülebilir. Satılmaz, reklam için kullanılmaz ve üçüncü kişilerle paylaşılmaz.",
+    dataTitle: "Neler saklanır",
+    dataBody:
+      "Yalnızca senin girdiğin bilgiler: görünen adın, e-posta adresin, şifren (hash olarak) ile tahminlerin ve favorilerin. Fazlası değil.",
+    retentionTitle: "Saklama süresi & silme",
+    retentionBody:
+      "Verilerin yalnızca WM 2026 süresince ve en fazla 6 ay sonrasına kadar saklanır. En geç o zaman tüm kişisel veriler kalıcı ve geri dönüşü olmayacak şekilde silinir.",
+    rightsTitle: "Hakların",
+    rightsBody:
+      "Dilediğin zaman verilerin hakkında bilgi alabilir ve silinmesini isteyebilirsin – düzenleyiciye haber vermen yeterli, hesabın hemen kaldırılır.",
+    close: "Anladım",
   },
   countdown: {
     days: "Gün",

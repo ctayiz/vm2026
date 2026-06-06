@@ -6,6 +6,7 @@ import { loginAction, registerAction, type ActionState } from "@/server/auth-act
 import { useT } from "@/components/i18n-provider";
 import { LanguageToggle } from "@/components/language-toggle";
 import { ShareButtons } from "@/components/share-buttons";
+import { PrivacyDialog } from "@/components/privacy-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -119,8 +120,9 @@ export function AuthForm({
           </p>
         </CardFooter>
       </form>
-      <div className="border-t border-border/60 px-5 py-3">
+      <div className="flex items-center justify-between gap-2 border-t border-border/60 px-5 py-3">
         <ShareButtons />
+        <PrivacyDialog />
       </div>
     </Card>
   );
