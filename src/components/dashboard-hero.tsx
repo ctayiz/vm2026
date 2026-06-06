@@ -51,14 +51,19 @@ export function DashboardHero({
   rank,
   totalPlayers,
   openCount,
+  tipped = 0,
+  totalMatches = 0,
 }: {
   name: string;
   points: number;
   rank: number | null;
   totalPlayers: number;
   openCount: number;
+  tipped?: number;
+  totalMatches?: number;
 }) {
   const t = getDictionary();
+  const pct = totalMatches > 0 ? Math.round((tipped / totalMatches) * 100) : 0;
   return (
     <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-card to-card p-5 sm:p-6">
       <div className="blob right-[-20%] top-[-60%] h-48 w-48 animate-blob bg-primary/30" />
@@ -89,6 +94,23 @@ export function DashboardHero({
             highlight={openCount > 0}
           />
         </div>
+
+        {totalMatches > 0 && (
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              <span>{t.dashboard.tipProgress}</span>
+              <span className="tabular-nums text-foreground">
+                {tipped}/{totalMatches} · {pct}%
+              </span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-secondary/60">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-primary to-emerald-400 transition-[width] duration-700"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

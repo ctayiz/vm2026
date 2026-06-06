@@ -117,6 +117,7 @@ const de = {
     rank: "Rang",
     rankSub: (n: number) => `Rang · von ${n}`,
     openTips: "Offene Tipps",
+    tipProgress: "Tipp-Fortschritt",
   },
   schedule: {
     title: "Spielplan",
@@ -549,6 +550,7 @@ const tr: Dictionary = {
     rank: "Sıra",
     rankSub: (n: number) => `Sıra · ${n} kişiden`,
     openTips: "Açık tahminler",
+    tipProgress: "Tahmin ilerlemesi",
   },
   schedule: {
     title: "Fikstür",

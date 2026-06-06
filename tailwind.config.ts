@@ -109,6 +109,10 @@ const config: Config = {
           "0%": { transform: "translateY(0.4em)", opacity: "0" },
           "100%": { transform: "translateY(0)", opacity: "1" },
         },
+        "fade-in": {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -125,6 +129,7 @@ const config: Config = {
         "grow-x": "grow-x 0.9s cubic-bezier(0.16, 1, 0.3, 1) both",
         "tick-pop": "tick-pop 0.4s ease-out",
         "count-up": "count-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both",
+        "fade-in": "fade-in 0.25s ease-out both",
       },
     },
   },

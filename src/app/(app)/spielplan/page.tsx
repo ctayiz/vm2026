@@ -119,6 +119,8 @@ export default async function SpielplanPage({
         rank={stats.rank}
         totalPlayers={stats.totalPlayers}
         openCount={openCount}
+        tipped={stats.predictedCount}
+        totalMatches={all.length}
       />
 
       {closingSoon > 0 && (
