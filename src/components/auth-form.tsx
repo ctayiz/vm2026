@@ -118,11 +118,13 @@ export function AuthForm({
               </>
             )}
           </p>
+          <div className="flex justify-center">
+            <PrivacyDialog />
+          </div>
         </CardFooter>
       </form>
-      <div className="flex items-center justify-between gap-2 border-t border-border/60 px-5 py-3">
+      <div className="border-t border-border/60 px-5 py-3">
         <ShareButtons />
-        <PrivacyDialog />
       </div>
     </Card>
   );
