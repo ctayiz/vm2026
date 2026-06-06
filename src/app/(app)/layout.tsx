@@ -7,6 +7,7 @@ import { logoutAction } from "@/server/auth-actions";
 import { Nav } from "@/components/nav";
 import { UserAvatar } from "@/components/user-avatar";
 import { AutoSync } from "@/components/auto-sync";
+import { OnboardingModal } from "@/components/onboarding-modal";
 import { I18nProvider } from "@/components/i18n-provider";
 import { LanguageToggle } from "@/components/language-toggle";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           mehr, falls doch mal etwas minimal zu breit rendert. */}
       <div className="flex min-h-dvh w-full max-w-full flex-col overflow-x-clip">
         <AutoSync />
+        <OnboardingModal />
         <header className="sticky top-0 z-40 border-b border-border bg-card/80 backdrop-blur">
           <div className="container flex h-14 items-center justify-between gap-4">
             <Link href="/spielplan" className="flex items-center text-foreground">

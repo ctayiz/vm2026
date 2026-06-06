@@ -102,6 +102,21 @@ const de = {
       "Du kannst jederzeit Auskunft über deine Daten sowie deren Löschung verlangen – melde dich einfach beim Organisator, dann wird dein Konto umgehend entfernt.",
     close: "Verstanden",
   },
+  onboarding: {
+    skip: "Überspringen",
+    next: "Weiter",
+    back: "Zurück",
+    start: "Los geht's!",
+    s1Title: "Willkommen! 👋",
+    s1Body:
+      "Tippe für jedes Spiel Sieg, Unentschieden oder Niederlage. Ändern kannst du deinen Tipp bis 15 Minuten vor Anpfiff. Richtig = 3 Punkte.",
+    s2Title: "Bonus & Joker",
+    s2Body:
+      "Sammle Extra-Punkte mit Turnier-Tipps (Weltmeister, Torschützenkönig …) und setze bis zu 3 Joker, die die Punkte eines Spiels verdoppeln.",
+    s3Title: "Favoriten wählen",
+    s3Body:
+      "Markiere bis zu 3 Lieblingsländer für den schnellen Zugriff auf der Startseite. Dann kann's losgehen – viel Erfolg!",
+  },
   countdown: {
     days: "Tage",
     hours: "Std",
@@ -534,6 +549,21 @@ const tr: Dictionary = {
     rightsBody:
       "Dilediğin zaman verilerin hakkında bilgi alabilir ve silinmesini isteyebilirsin – düzenleyiciye haber vermen yeterli, hesabın hemen kaldırılır.",
     close: "Anladım",
+  },
+  onboarding: {
+    skip: "Atla",
+    next: "Devam",
+    back: "Geri",
+    start: "Başlayalım!",
+    s1Title: "Hoş geldin! 👋",
+    s1Body:
+      "Her maç için galibiyet, beraberlik veya mağlubiyet tahmin et. Tahminini maç başlamadan 15 dk öncesine kadar değiştirebilirsin. Doğru = 3 puan.",
+    s2Title: "Bonus & Joker",
+    s2Body:
+      "Turnuva tahminleriyle (şampiyon, gol kralı …) ekstra puan topla ve bir maçın puanını ikiye katlayan 3 jokere kadar kullan.",
+    s3Title: "Favorileri seç",
+    s3Body:
+      "Ana sayfada hızlı erişim için en fazla 3 favori takım işaretle. Hazırsan başlayalım – bol şans!",
   },
   countdown: {
     days: "Gün",
