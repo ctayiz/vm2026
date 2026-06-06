@@ -114,7 +114,7 @@ export function Nav({ isAdmin }: { isAdmin: boolean }) {
           WICHTIG: Flex mit flex-1/min-w-0 (NICHT auto-fit-Grid – das rendert auf
           iOS-Safari teils breiter als der Viewport und löst dort "shrink-to-fit"
           aus -> ganze Seite zoomt raus, Ränder verschwinden). */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 flex w-full border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-40 flex w-full max-w-full overflow-hidden border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
         {items.map((it) =>
           it.kind === "link" ? (
             <Link

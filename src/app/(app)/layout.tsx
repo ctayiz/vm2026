@@ -54,7 +54,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </div>
         </header>
 
-        <main className="container flex-1 py-5 pb-24 md:pb-8">{children}</main>
+        {/* overflow-x-clip auf dem Block-Element main: WebKit/iOS respektiert
+            Overflow auf normalen Blöcken zuverlässig (anders als auf html/body) */}
+        <main className="container w-full max-w-full flex-1 overflow-x-clip py-5 pb-24 md:pb-8">
+          {children}
+        </main>
       </div>
     </I18nProvider>
   );
