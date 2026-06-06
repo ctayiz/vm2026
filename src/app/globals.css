@@ -41,6 +41,9 @@
      verschieben/scrollen lassen. clip lässt sticky/fixed intakt. */
   html {
     overflow-x: clip;
+    /* verhindert, dass iOS Safari Text automatisch vergrößert (Layout-Surprises) */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
   body {
     @apply bg-background text-foreground;

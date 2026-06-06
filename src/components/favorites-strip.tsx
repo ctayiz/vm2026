@@ -64,7 +64,7 @@ export function FavoritesStrip({ items }: { items: FavoriteOverview[] }) {
           return (
             <div
               key={f.code}
-              className="card-hover animate-fade-up glass flex flex-col gap-1.5 rounded-xl px-3 py-2.5"
+              className="card-hover animate-fade-up glass flex flex-col gap-1.5 overflow-hidden rounded-xl px-3 py-2.5"
               style={{ animationDelay: `${i * 60}ms` }}
             >
               <Link
@@ -84,11 +84,11 @@ export function FavoritesStrip({ items }: { items: FavoriteOverview[] }) {
 
               {next ? (
                 <div className="mt-0.5 space-y-1">
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-muted-foreground">
                     <span>{t.favorites.next}</span>
                     <Flag code={oppOfNext?.flagCode} className="text-sm" />
-                    <span className="truncate">{oppOfNext?.code ?? "offen"}</span>
-                    <span className="ml-auto whitespace-nowrap">
+                    <span className="min-w-0 truncate">{oppOfNext?.code ?? "offen"}</span>
+                    <span className="ml-auto">
                       {dayLabel(next.kickoff, locale)} {formatTime(next.kickoff, locale)}
                     </span>
                   </div>
