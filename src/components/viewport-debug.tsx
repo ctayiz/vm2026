@@ -13,7 +13,18 @@ export function ViewportDebug() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (!new URLSearchParams(window.location.search).has("debug")) return;
+    // Aktiv via ?debug, #debug oder einmal gesetzt -> bleibt für die Session an
+    // (überlebt Auth-Weiterleitungen, die Query-Parameter verlieren können).
+    const qs = new URLSearchParams(window.location.search);
+    const fromUrl = qs.has("debug") || window.location.hash.includes("debug");
+    let persisted = false;
+    try {
+      if (fromUrl) sessionStorage.setItem("wm_debug", "1");
+      persisted = sessionStorage.getItem("wm_debug") === "1";
+    } catch {
+      /* ignore */
+    }
+    if (!fromUrl && !persisted) return;
     setOn(true);
 
     const measure = () => {
