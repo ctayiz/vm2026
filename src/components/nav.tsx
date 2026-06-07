@@ -26,16 +26,6 @@ export function Nav({ isAdmin }: { isAdmin: boolean }) {
     { kind: "link", href: "/ranking", label: t.nav.ranking, icon: Trophy },
     {
       kind: "group",
-      key: "meins",
-      label: t.nav.meins,
-      icon: User,
-      children: [
-        { href: "/statistiken", label: t.nav.stats },
-        { href: "/meine-tipps", label: t.nav.myTips },
-      ],
-    },
-    {
-      kind: "group",
       key: "wm",
       label: t.nav.wm,
       icon: Globe,
@@ -44,6 +34,16 @@ export function Nav({ isAdmin }: { isAdmin: boolean }) {
         { href: "/wm/gruppen", label: t.nav.groups },
         { href: "/wm/stadien", label: t.nav.venues },
         { href: "/turnierbaum", label: t.nav.bracket },
+      ],
+    },
+    {
+      kind: "group",
+      key: "meins",
+      label: t.nav.meins,
+      icon: User,
+      children: [
+        { href: "/statistiken", label: t.nav.stats },
+        { href: "/meine-tipps", label: t.nav.myTips },
       ],
     },
     ...(isAdmin ? [{ kind: "link" as const, href: "/admin", label: t.nav.admin, icon: Shield }] : []),
