@@ -27,10 +27,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <div className="min-h-dvh w-full max-w-full">
         <AutoSync />
         <OnboardingModal initialOpen={!user.onboardedAt} />
-        {/* Wrapper ist KEIN Flex-Container (sonst rendert iOS sticky wie fixed
-            und der Inhalt rutscht unter den Header). Im normalen Block-Fluss
-            reserviert sticky korrekt Platz -> Leiste oben sichtbar, kein Overlap. */}
-        <header className="sticky top-0 z-40 border-b border-border bg-card/80 backdrop-blur">
+        {/* fixed + fester pt am Inhalt = deterministisch: Leiste immer oben
+            sichtbar, Inhalt IMMER darunter (kein sticky-in-flex-Bug auf iOS). */}
+        <header className="fixed inset-x-0 top-0 z-40 border-b border-border bg-card/80 backdrop-blur">
           <div className="container flex h-14 items-center justify-between gap-4">
             <Link href="/spielplan" className="flex items-center text-foreground">
               <Logo className="h-7" />
@@ -58,7 +57,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </div>
         </header>
 
-        <main className="container w-full max-w-full py-5 pb-24 md:pb-8">
+        <main className="container w-full max-w-full pb-24 pt-[4.5rem] md:pb-8">
           {children}
         </main>
       </div>
