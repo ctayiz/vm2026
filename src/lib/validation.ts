@@ -38,8 +38,12 @@ export const tournamentBetSchema = z
     questionKey: z.enum(questionKeys),
     teamId: z.string().optional().or(z.literal("")),
     playerId: z.string().optional().or(z.literal("")),
+    playerName: z.string().max(60).optional().or(z.literal("")),
   })
-  .refine((d) => !!d.teamId || !!d.playerId, "Bitte ein Team oder einen Spieler wählen.");
+  .refine(
+    (d) => !!d.teamId || !!d.playerId || !!(d.playerName && d.playerName.trim()),
+    "Bitte ein Team, einen Spieler oder einen Namen angeben.",
+  );
 
 export const teamProgressSchema = z.object({
   teamId: z.string().min(1),

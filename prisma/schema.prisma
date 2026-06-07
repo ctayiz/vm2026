@@ -56,6 +56,8 @@ model Team {
   reachedPhase String?
   // wurde dieses Team Weltmeister?
   isChampion   Boolean @default(false)
+  // hat dieses Team die meisten Turnier-Tore (für Bonus-Frage); bei Gleichstand mehrere
+  isTopScoringTeam Boolean @default(false)
 
   homeMatches Match[] @relation("HomeTeam")
   awayMatches Match[] @relation("AwayTeam")
@@ -140,6 +142,8 @@ model TournamentBet {
   // Team-Tipp ODER Spieler-Tipp (je nach Frage); genau einer ist gesetzt.
   teamId      String?
   playerId    String?
+  // Freitext-Tipp (z. B. Torschützenkönig per Name, bevor Spielerdaten existieren)
+  playerName  String?
   // vergebene Bonuspunkte (null = noch nicht ausgewertet)
   points      Int?
   scored      Boolean  @default(false)

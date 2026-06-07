@@ -56,16 +56,16 @@ export function reachOrder(phase: string | null | undefined): number {
 }
 
 // Ziel einer Frage: entweder eine Mindest-Runde oder der Titel.
-export type BetTarget = ReachPhase | "CHAMPION";
+export type BetTarget = ReachPhase | "CHAMPION" | "MOST_GOALS";
 
 export interface TournamentQuestion {
   key: string;
   label: string;
   hint: string;
-  target: BetTarget; // bei Spieler-Fragen irrelevant ("CHAMPION" als Platzhalter)
+  target: BetTarget; // bei TEXT-Fragen irrelevant ("CHAMPION" als Platzhalter)
   points: number;
-  // worauf wird getippt: ein Team oder ein Spieler (Torschützenkönig)
-  pick: "TEAM" | "PLAYER";
+  // worauf wird getippt: Team, Spieler-Auswahl, oder Freitext (Torschützenkönig)
+  pick: "TEAM" | "PLAYER" | "TEXT";
 }
 
 // Fragen sind bewusst hier zentral definiert -> leicht erweiterbar.
@@ -81,10 +81,18 @@ export const TOURNAMENT_QUESTIONS: TournamentQuestion[] = [
   {
     key: "topscorer",
     label: "Wer wird Torschützenkönig?",
-    hint: "Punkte für den Spieler mit den meisten Toren.",
+    hint: "Namen eintippen – Punkte für den Spieler mit den meisten Toren.",
     target: "CHAMPION",
     points: 15,
-    pick: "PLAYER",
+    pick: "TEXT",
+  },
+  {
+    key: "mostgoals",
+    label: "Welche Mannschaft schießt die meisten Tore?",
+    hint: "Punkte für das Team mit den meisten Toren im gesamten Turnier.",
+    target: "MOST_GOALS",
+    points: 12,
+    pick: "TEAM",
   },
   {
     key: "final",

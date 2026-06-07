@@ -2,7 +2,7 @@ import "server-only";
 import { db } from "./db";
 import { buildLeaderboard, type LeaderboardRow, type UserScoreInput } from "./ranking";
 import { TOURNAMENT_QUESTIONS, getQuestion, type Prediction } from "./constants";
-import { betStatus } from "./tournament";
+import { betStatus, topScorerNameMatches } from "./tournament";
 import { pickLastAndNext } from "./favorites";
 import { isPickLocked } from "./lock";
 import { buildGroupTable, type StandingRow, type FinishedGroupMatch } from "./standings";
@@ -103,10 +103,11 @@ export async function getTournamentLock(): Promise<{ lockTime: Date | null; lock
 
 /** Alle Turnier-Fragen mit dem Tipp des Nutzers + Status. */
 export async function getTournamentData(userId: string) {
-  const [bets, teams, players, finished, lock] = await Promise.all([
+  const [bets, teams, players, topScorer, finished, lock] = await Promise.all([
     db.tournamentBet.findMany({ where: { userId }, include: { team: true, player: { include: { team: true } } } }),
     db.team.findMany({ orderBy: [{ group: "asc" }, { name: "asc" }] }),
     db.player.findMany({ orderBy: [{ goals: "desc" }, { name: "asc" }], include: { team: true } }),
+    db.player.findFirst({ where: { isTopScorer: true }, orderBy: { goals: "desc" } }),
     isTournamentFinished(),
     getTournamentLock(),
   ]);
@@ -117,16 +118,28 @@ export async function getTournamentData(userId: string) {
     const bet = byKey.get(q.key);
     let status: "fulfilled" | "missed" | "open" = "open";
     if (bet) {
-      if (q.pick === "PLAYER") {
+      if (q.pick === "TEXT") {
+        const hit = topScorerNameMatches(bet.playerName, topScorer?.name);
+        status = hit ? "fulfilled" : finished ? "missed" : "open";
+      } else if (q.pick === "PLAYER") {
         status = bet.player?.isTopScorer ? "fulfilled" : finished ? "missed" : "open";
       } else if (bet.team) {
-        status = betStatus(q, { reachedPhase: bet.team.reachedPhase, isChampion: bet.team.isChampion }, finished);
+        status = betStatus(
+          q,
+          {
+            reachedPhase: bet.team.reachedPhase,
+            isChampion: bet.team.isChampion,
+            isTopScoringTeam: bet.team.isTopScoringTeam,
+          },
+          finished,
+        );
       }
     }
     return {
       ...q,
       pickedTeam: bet?.team ?? null,
       pickedPlayer: bet?.player ?? null,
+      pickedPlayerName: bet?.playerName ?? null,
       earnedPoints: bet?.points ?? null,
       status,
     };

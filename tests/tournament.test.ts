@@ -69,3 +69,39 @@ describe("Fragen-Katalog", () => {
     expect(TOURNAMENT_QUESTIONS.every((q) => q.points > 0)).toBe(true);
   });
 });
+
+import { normalizeName, topScorerNameMatches } from "@/lib/tournament";
+
+describe("topScorerNameMatches (Freitext-Torschütze)", () => {
+  it("ignoriert Akzente und Groß/Klein", () => {
+    expect(topScorerNameMatches("mbappe", "Kylian Mbappé")).toBe(true);
+    expect(topScorerNameMatches("Kylian Mbappé", "kylian mbappe")).toBe(true);
+  });
+  it("matcht über den Nachnamen", () => {
+    expect(topScorerNameMatches("Harry Kane", "H. Kane")).toBe(true);
+    expect(topScorerNameMatches("Kane", "Harry Kane")).toBe(true);
+  });
+  it("lehnt falsche/zu kurze Namen ab", () => {
+    expect(topScorerNameMatches("Messi", "Cristiano Ronaldo")).toBe(false);
+    expect(topScorerNameMatches("", "Kane")).toBe(false);
+    expect(topScorerNameMatches("ab", "Kane")).toBe(false);
+  });
+  it("normalizeName säubert sauber", () => {
+    expect(normalizeName("  Kylián  MBAPPÉ! ")).toBe("kylian mbappe");
+  });
+});
+
+describe("MOST_GOALS (meiste Tore)", () => {
+  const mg = getQuestion("mostgoals")!;
+  it("ist Bonus-Frage mit Team-Tipp", () => {
+    expect(mg.pick).toBe("TEAM");
+    expect(mg.target).toBe("MOST_GOALS");
+  });
+  it("erfüllt nur für das Team mit den meisten Toren", () => {
+    expect(scoreTournamentBet(mg, { reachedPhase: "GROUP", isChampion: false, isTopScoringTeam: true })).toBe(mg.points);
+    expect(scoreTournamentBet(mg, { reachedPhase: "FINAL", isChampion: true, isTopScoringTeam: false })).toBe(0);
+  });
+  it("topscorer-Frage ist jetzt Freitext", () => {
+    expect(getQuestion("topscorer")!.pick).toBe("TEXT");
+  });
+});

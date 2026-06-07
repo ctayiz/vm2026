@@ -27,9 +27,10 @@ export async function submitTournamentBetAction(
     questionKey: formData.get("questionKey"),
     teamId: formData.get("teamId") ?? "",
     playerId: formData.get("playerId") ?? "",
+    playerName: formData.get("playerName") ?? "",
   });
   if (!parsed.success) return { ok: false, error: t.msg.invalidTip };
-  const { questionKey, teamId, playerId } = parsed.data;
+  const { questionKey, teamId, playerId, playerName } = parsed.data;
 
   const question = getQuestion(questionKey);
   if (!question) return { ok: false, error: t.msg.unknownQuestion };
@@ -37,6 +38,19 @@ export async function submitTournamentBetAction(
   const { locked } = await getTournamentLock();
   if (locked) {
     return { ok: false, error: t.msg.tournamentLocked };
+  }
+
+  // Freitext-Tipp (Torschützenkönig per Name – Spielerdaten existieren noch nicht)
+  if (question.pick === "TEXT") {
+    const name = (playerName ?? "").trim();
+    if (!name) return { ok: false, error: t.msg.invalidTip };
+    await db.tournamentBet.upsert({
+      where: { userId_questionKey: { userId: user.id, questionKey } },
+      update: { playerName: name, teamId: null, playerId: null, points: null, scored: false },
+      create: { userId: user.id, questionKey, playerName: name },
+    });
+    revalidatePath("/turnier-tipps");
+    return { ok: true };
   }
 
   // je nach Frage Team- ODER Spieler-Tipp prüfen

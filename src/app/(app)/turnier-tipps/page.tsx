@@ -87,11 +87,14 @@ export default async function TurnierTippsPage() {
               pick: q.pick,
               pickedTeamId: q.pickedTeam?.id ?? null,
               pickedPlayerId: q.pickedPlayer?.id ?? null,
-              pickedLabel: q.pickedPlayer
-                ? q.pickedPlayer.name
-                : q.pickedTeam
-                  ? q.pickedTeam.name
-                  : null,
+              pickedPlayerName: q.pickedPlayerName ?? null,
+              pickedLabel:
+                q.pickedPlayerName ??
+                (q.pickedPlayer
+                  ? q.pickedPlayer.name
+                  : q.pickedTeam
+                    ? q.pickedTeam.name
+                    : null),
               pickedFlag: q.pickedPlayer
                 ? (q.pickedPlayer.team?.flagCode ?? null)
                 : (q.pickedTeam?.flagCode ?? null),
