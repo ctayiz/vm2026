@@ -24,13 +24,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           daraus einen Scroll-Container und der sticky-Header überlappt dann den
           Inhalt ("Hallo" hinter der Leiste). Horizontaler Schutz läuft über die
           16px-Inputs (kein Auto-Zoom) + html{overflow-x:clip}. */}
-      <div className="flex min-h-dvh w-full max-w-full flex-col">
+      <div className="min-h-dvh w-full max-w-full">
         <AutoSync />
         <OnboardingModal initialOpen={!user.onboardedAt} />
-        {/* Auf Mobile relativ (im Fluss, reserviert Platz) – iOS rendert sticky
-            in der Flex-Spalte sonst wie fixed und der Inhalt rutscht darunter
-            ("Hallo" hinter der Leiste). Ab md wieder sticky. */}
-        <header className="relative z-40 border-b border-border bg-card/80 backdrop-blur md:sticky md:top-0">
+        {/* Wrapper ist KEIN Flex-Container (sonst rendert iOS sticky wie fixed
+            und der Inhalt rutscht unter den Header). Im normalen Block-Fluss
+            reserviert sticky korrekt Platz -> Leiste oben sichtbar, kein Overlap. */}
+        <header className="sticky top-0 z-40 border-b border-border bg-card/80 backdrop-blur">
           <div className="container flex h-14 items-center justify-between gap-4">
             <Link href="/spielplan" className="flex items-center text-foreground">
               <Logo className="h-7" />
@@ -58,7 +58,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </div>
         </header>
 
-        <main className="container w-full max-w-full flex-1 py-5 pb-24 md:pb-8">
+        <main className="container w-full max-w-full py-5 pb-24 md:pb-8">
           {children}
         </main>
       </div>
