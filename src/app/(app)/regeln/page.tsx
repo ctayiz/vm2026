@@ -120,7 +120,9 @@ export default async function RegelnPage() {
               key={q.key}
               className="flex items-center justify-between gap-2 rounded-lg border border-border bg-secondary/40 px-3 py-2"
             >
-              <span className="text-foreground">{q.label}</span>
+              <span className="text-foreground">
+                {(t.bonusQ as Record<string, { label: string }>)[q.key]?.label ?? q.label}
+              </span>
               <Badge variant="secondary" className="shrink-0">
                 {q.points} {t.common.points}
               </Badge>
@@ -160,9 +162,9 @@ export default async function RegelnPage() {
       <Section icon={ShieldCheck} title={r.s6}>
         <p>{r.s6p}</p>
         <div className="mt-3 flex flex-wrap gap-2">
-          {phases.map(([key, meta]) => (
+          {phases.map(([key]) => (
             <Badge key={key} variant="outline">
-              {meta.label}
+              {t.phase[key].label}
             </Badge>
           ))}
         </div>

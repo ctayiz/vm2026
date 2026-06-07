@@ -71,11 +71,11 @@ export function ShareResultButton({
     // Platz
     ctx.fillStyle = "#ffffff";
     ctx.font = "800 150px system-ui, -apple-system, sans-serif";
-    ctx.fillText(rank ? `Platz ${rank}` : "—", W / 2, 500);
+    ctx.fillText(rank ? `${t.shareResult.place} ${rank}` : "—", W / 2, 500);
 
     ctx.fillStyle = "rgba(255,255,255,0.65)";
     ctx.font = "500 40px system-ui, -apple-system, sans-serif";
-    ctx.fillText(`von ${totalPlayers} Mitspielern`, W / 2, 560);
+    ctx.fillText(t.shareResult.ofPlayers(totalPlayers), W / 2, 560);
 
     // Name
     ctx.fillStyle = "#7dd3fc";
@@ -99,14 +99,14 @@ export function ShareResultButton({
     ctx.fillText(`${points}`, W / 2 - 160, 825);
     ctx.fillStyle = "rgba(255,255,255,0.6)";
     ctx.font = "500 32px system-ui, -apple-system, sans-serif";
-    ctx.fillText("Punkte", W / 2 - 160, 868);
+    ctx.fillText(t.common.points, W / 2 - 160, 868);
     // rechts: Quote
     ctx.fillStyle = "#7dd3fc";
     ctx.font = "800 88px system-ui, -apple-system, sans-serif";
     ctx.fillText(`${accuracyPct}%`, W / 2 + 160, 825);
     ctx.fillStyle = "rgba(255,255,255,0.6)";
     ctx.font = "500 32px system-ui, -apple-system, sans-serif";
-    ctx.fillText("Trefferquote", W / 2 + 160, 868);
+    ctx.fillText(t.shareResult.quote, W / 2 + 160, 868);
 
     // CTA
     ctx.fillStyle = "rgba(255,255,255,0.5)";

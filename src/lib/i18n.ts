@@ -14,6 +14,7 @@ const de = {
     saving: "Speichern …",
     saved: "gespeichert",
     pleaseWait: "Bitte warten …",
+    error: "Fehler",
     points: "Punkte",
     pts: "P",
     of: "von",
@@ -41,6 +42,26 @@ const de = {
     groups: "Gruppen",
     venues: "Stadien",
     logout: "Abmelden",
+  },
+  phase: {
+    GROUP: { label: "Gruppenphase", short: "Gruppe" },
+    R32: { label: "Runde der letzten 32", short: "Letzte 32" },
+    R16: { label: "Achtelfinale", short: "Achtelfinale" },
+    QF: { label: "Viertelfinale", short: "Viertelfinale" },
+    SF: { label: "Halbfinale", short: "Halbfinale" },
+    TP: { label: "Spiel um Platz 3", short: "Platz 3" },
+    FINAL: { label: "Finale", short: "Finale" },
+  },
+  groupName: "Gruppe",
+  country: { USA: "USA", Kanada: "Kanada", Mexiko: "Mexiko" },
+  bonusQ: {
+    champion: { label: "Wer wird Weltmeister?", hint: "Volle Punktzahl für den richtigen Titelträger." },
+    topscorer: { label: "Wer wird Torschützenkönig?", hint: "Namen eintippen – Punkte für den Spieler mit den meisten Toren." },
+    mostgoals: { label: "Welche Mannschaft schießt die meisten Tore?", hint: "Punkte für das Team mit den meisten Toren im gesamten Turnier." },
+    final: { label: "Welches Team erreicht das Finale?", hint: "Punkte, wenn dein Team im Endspiel steht." },
+    semi: { label: "Welches Team erreicht das Halbfinale?", hint: "Punkte ab Erreichen des Halbfinales." },
+    r16: { label: "Welches Team erreicht das Achtelfinale?", hint: "Punkte ab Erreichen des Achtelfinales." },
+    r32: { label: "Welches Team erreicht die Runde der letzten 32?", hint: "Punkte ab Erreichen der K.-o.-Phase." },
   },
   auth: {
     signInTitle: "Anmelden",
@@ -120,6 +141,9 @@ const de = {
   shareResult: {
     button: "Teilen",
     cta: "Mach mit 👉 wm2026.tayiz.de",
+    place: "Platz",
+    ofPlayers: (n: number) => `von ${n} Mitspielern`,
+    quote: "Trefferquote",
     text: (rank: number) =>
       rank === 1
         ? "🏆 Ich führe das WM 2026 Tippspiel an! Trau dich gegen mich:"
@@ -188,6 +212,8 @@ const de = {
     live: "Live",
     leading: "liegt vorn",
     trailing: "liegt zurück",
+    pen: "(E)",
+    og: "(ET)",
   },
   outcome: { home: "Heimsieg", draw: "Unentschieden", away: "Auswärtssieg" },
   joker: {
@@ -480,6 +506,7 @@ const tr: Dictionary = {
     saving: "Kaydediliyor …",
     saved: "kaydedildi",
     pleaseWait: "Lütfen bekleyin …",
+    error: "Hata",
     points: "Puan",
     pts: "P",
     of: "/",
@@ -507,6 +534,26 @@ const tr: Dictionary = {
     groups: "Gruplar",
     venues: "Stadyumlar",
     logout: "Çıkış",
+  },
+  phase: {
+    GROUP: { label: "Grup aşaması", short: "Grup" },
+    R32: { label: "Son 32 turu", short: "Son 32" },
+    R16: { label: "Son 16", short: "Son 16" },
+    QF: { label: "Çeyrek final", short: "Çeyrek final" },
+    SF: { label: "Yarı final", short: "Yarı final" },
+    TP: { label: "Üçüncülük maçı", short: "3.lük" },
+    FINAL: { label: "Final", short: "Final" },
+  },
+  groupName: "Grup",
+  country: { USA: "ABD", Kanada: "Kanada", Mexiko: "Meksika" },
+  bonusQ: {
+    champion: { label: "Dünya şampiyonu kim olur?", hint: "Doğru şampiyon için tam puan." },
+    topscorer: { label: "Gol kralı kim olur?", hint: "İsmi yaz – en çok gol atan oyuncu için puan." },
+    mostgoals: { label: "Hangi takım en çok gol atar?", hint: "Tüm turnuvada en çok gol atan takım için puan." },
+    final: { label: "Hangi takım finale çıkar?", hint: "Takımın finaldeyse puan." },
+    semi: { label: "Hangi takım yarı finale çıkar?", hint: "Yarı finale kalınca puan." },
+    r16: { label: "Hangi takım son 16'ya çıkar?", hint: "Son 16'ya kalınca puan." },
+    r32: { label: "Hangi takım son 32'ye çıkar?", hint: "Eleme turuna kalınca puan." },
   },
   auth: {
     signInTitle: "Giriş yap",
@@ -586,6 +633,9 @@ const tr: Dictionary = {
   shareResult: {
     button: "Paylaş",
     cta: "Sen de katıl 👉 wm2026.tayiz.de",
+    place: "Sıra",
+    ofPlayers: (n: number) => `${n} oyuncudan`,
+    quote: "İsabet oranı",
     text: (rank: number) =>
       rank === 1
         ? "🏆 WM 2026 Tahmin Oyunu'nda lideriz! Bana karşı dene:"
@@ -653,6 +703,8 @@ const tr: Dictionary = {
     live: "Canlı",
     leading: "önde",
     trailing: "geride",
+    pen: "(P)",
+    og: "(KK)",
   },
   outcome: { home: "Ev sahibi galip", draw: "Beraberlik", away: "Deplasman galip" },
   joker: {

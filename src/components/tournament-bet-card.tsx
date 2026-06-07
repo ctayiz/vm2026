@@ -78,7 +78,7 @@ export function TournamentBetCard({
         burstConfetti();
         setTimeout(() => setSaved(false), 1500);
       } else {
-        setError(res.error ?? "Fehler");
+        setError(res.error ?? t.common.error);
         lastSaved.current = ""; // erneuten Versuch zulassen
       }
     });
@@ -125,7 +125,7 @@ export function TournamentBetCard({
         burstConfetti();
         setTimeout(() => setSaved(false), 1500);
       } else {
-        setError(res.error ?? "Fehler");
+        setError(res.error ?? t.common.error);
       }
     });
   };

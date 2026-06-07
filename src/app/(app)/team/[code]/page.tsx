@@ -51,7 +51,7 @@ export default async function TeamPage({ params }: { params: { code: string } })
                   <Trophy className="size-4" /> {t.teamPage.champion}
                 </span>
               ) : team.reachedPhase ? (
-                <span>{t.teamPage.reached(PHASE_META[team.reachedPhase as Phase]?.label ?? team.reachedPhase)}</span>
+                <span>{t.teamPage.reached(t.phase[team.reachedPhase as Phase]?.label ?? team.reachedPhase)}</span>
               ) : null}
             </div>
           </div>
@@ -90,7 +90,9 @@ export default async function TeamPage({ params }: { params: { code: string } })
                 <Card key={m.id} className="card-hover">
                   <CardContent className="flex items-center gap-3 py-3">
                     <div className="w-16 shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground">
-                      {m.roundLabel ?? PHASE_META[m.phase as Phase]?.short}
+                      {m.phase === "GROUP" && m.group
+                        ? `${t.groupName} ${m.group}`
+                        : t.phase[m.phase as Phase]?.short}
                     </div>
                     <div className="flex min-w-0 flex-1 items-center gap-2">
                       <Flag code={opp?.flagCode} className="text-xl" />

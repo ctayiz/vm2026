@@ -87,7 +87,7 @@ export function FavoritesStrip({ items }: { items: FavoriteOverview[] }) {
                   <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-muted-foreground">
                     <span>{t.favorites.next}</span>
                     <Flag code={oppOfNext?.flagCode} className="text-sm" />
-                    <span className="min-w-0 truncate">{oppOfNext?.code ?? "offen"}</span>
+                    <span className="min-w-0 truncate">{oppOfNext?.code ?? t.bracket.open}</span>
                     <span className="ml-auto">
                       {dayLabel(next.kickoff, locale)} {formatTime(next.kickoff, locale)}
                     </span>
@@ -96,8 +96,8 @@ export function FavoritesStrip({ items }: { items: FavoriteOverview[] }) {
                     matchId={next.id}
                     initialPrediction={(next.myPrediction as Prediction | null) ?? null}
                     locked={nextLocked}
-                    homeShort={next.homeTeam?.code ?? "Heim"}
-                    awayShort={next.awayTeam?.code ?? "Gast"}
+                    homeShort={next.homeTeam?.code ?? t.match.home}
+                    awayShort={next.awayTeam?.code ?? t.match.away}
                     compact
                   />
                 </div>

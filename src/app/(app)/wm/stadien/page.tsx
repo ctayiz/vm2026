@@ -27,7 +27,7 @@ export default async function StadienPage() {
           <section key={country.name} className="space-y-2">
             <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               <Flag code={country.flagCode} className="text-lg" />
-              {country.name}
+              {(t.country as Record<string, string>)[country.name] ?? country.name}
               <span className="text-muted-foreground/60">({venues.length})</span>
             </h2>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

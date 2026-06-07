@@ -43,6 +43,9 @@ export function MatchCard({
     AWAY_WIN: t.outcome.away,
   };
   const phase = match.phase as Phase;
+  // Rundenlabel lokalisiert aufbauen (statt des deutsch gespeicherten roundLabel)
+  const roundLabel =
+    phase === "GROUP" && match.group ? `${t.groupName} ${match.group}` : t.phase[phase]?.label;
   const home = teamDisplay(match.homeTeam, match.homePlaceholder);
   const away = teamDisplay(match.awayTeam, match.awayPlaceholder);
   const homeFav = home.isReal && favoriteCodes.includes(home.code);
@@ -72,7 +75,7 @@ export function MatchCard({
       <div className="flex items-center justify-between border-b border-border/60 px-4 py-2 text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5 font-medium">
           {PHASE_META[phase]?.knockout && <Trophy className="size-3 text-amber-300" />}
-          {match.roundLabel ?? PHASE_META[phase]?.label}
+          {roundLabel}
         </span>
         {live ? (
           <span className="inline-flex items-center gap-1 rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-400">
@@ -137,8 +140,8 @@ export function MatchCard({
                 <Goal className="size-3 text-primary" />
                 {g.playerName}
                 {g.minute != null && <span className="text-[10px]">{g.minute}{"'"}</span>}
-                {g.type === "penalty" && <span className="text-[10px]">(E)</span>}
-                {g.type === "own" && <span className="text-[10px]">(ET)</span>}
+                {g.type === "penalty" && <span className="text-[10px]">{t.match.pen}</span>}
+                {g.type === "own" && <span className="text-[10px]">{t.match.og}</span>}
               </span>
             ))}
           </div>

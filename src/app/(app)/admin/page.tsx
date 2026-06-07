@@ -78,13 +78,13 @@ export default async function AdminPage() {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 text-sm font-medium">
                       <Flag code={m.homeTeam?.flagCode} />
-                      <span className="truncate">{m.homeTeam?.name ?? m.homePlaceholder ?? "offen"}</span>
+                      <span className="truncate">{m.homeTeam?.name ?? m.homePlaceholder ?? t.bracket.open}</span>
                       <span className="text-muted-foreground">{t.common.vs}</span>
-                      <span className="truncate">{m.awayTeam?.name ?? m.awayPlaceholder ?? "offen"}</span>
+                      <span className="truncate">{m.awayTeam?.name ?? m.awayPlaceholder ?? t.bracket.open}</span>
                       <Flag code={m.awayTeam?.flagCode} />
                     </div>
                     <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                      <Badge variant="outline">{PHASE_META[m.phase as Phase]?.short}</Badge>
+                      <Badge variant="outline">{t.phase[m.phase as Phase]?.short}</Badge>
                       <span>{formatDateTime(m.kickoff, locale)}</span>
                       {m.status === "finished" && <Badge variant="success">{t.admin.finishedBadge}</Badge>}
                     </div>

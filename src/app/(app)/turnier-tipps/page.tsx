@@ -81,8 +81,8 @@ export default async function TurnierTippsPage() {
             players={playerOptions}
             question={{
               key: q.key,
-              label: q.label,
-              hint: q.hint,
+              label: (t.bonusQ as Record<string, { label: string; hint: string }>)[q.key]?.label ?? q.label,
+              hint: (t.bonusQ as Record<string, { label: string; hint: string }>)[q.key]?.hint ?? q.hint,
               points: q.points,
               pick: q.pick,
               pickedTeamId: q.pickedTeam?.id ?? null,

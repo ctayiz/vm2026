@@ -80,6 +80,7 @@ function MatchBox({ m, featured }: { m: BracketMatch; featured?: boolean }) {
 }
 
 function RoundHeader({ phase, count }: { phase: Phase; count: number }) {
+  const t = getDictionary();
   const isFinal = phase === "FINAL";
   return (
     <div
@@ -89,7 +90,7 @@ function RoundHeader({ phase, count }: { phase: Phase; count: number }) {
       )}
     >
       {isFinal && <Trophy className="size-3" />}
-      {PHASE_META[phase].label}
+      {t.phase[phase].label}
       <span className="text-muted-foreground/60">({count})</span>
     </div>
   );
@@ -202,7 +203,7 @@ export default async function TurnierbaumPage() {
       {thirdPlace.length > 0 && (
         <div className="hidden space-y-2 md:block">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            {PHASE_META["TP"].label}
+            {t.phase.TP.label}
           </h2>
           <div className="max-w-xs">
             {thirdPlace.map((m) => (

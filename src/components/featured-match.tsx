@@ -71,7 +71,7 @@ export function FeaturedMatch({ match }: { match: MatchWithPrediction }) {
 
         <div className="mt-4 flex items-center justify-center gap-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
-            {PHASE_META[phase]?.label}
+            {t.phase[phase]?.label}
           </span>
           {match.venue && (
             <span className="flex items-center gap-1">

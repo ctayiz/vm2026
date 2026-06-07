@@ -43,7 +43,7 @@ export function JokerButton({
           jokerHaptic();
         }
       } else {
-        setError(res.error ?? "Fehler");
+        setError(res.error ?? t.common.error);
       }
     });
   };
