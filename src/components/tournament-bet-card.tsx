@@ -159,7 +159,7 @@ export function TournamentBetCard({
             value={picked}
             disabled={pending}
             onChange={(e) => onChange(e.target.value)}
-            className="h-11 w-full rounded-lg border border-input bg-background/60 px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+            className="h-11 w-full rounded-lg border border-input bg-background/60 px-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60 sm:text-sm"
           >
             <option value="" disabled>
               {isPlayer ? t.tournament.pickPlayer : t.tournament.pickTeam}

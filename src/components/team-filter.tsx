@@ -49,7 +49,7 @@ export function TeamFilter({ teams, paramKey = "team" }: { teams: TeamFilterOpti
           value={current}
           onChange={(e) => navigate(e.target.value)}
           aria-label={t.schedule.filterByCountry}
-          className="h-10 w-full rounded-lg border border-input bg-background/60 pl-10 pr-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="h-10 w-full rounded-lg border border-input bg-background/60 pl-10 pr-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
         >
           <option value="">{t.schedule.allCountries}</option>
           {[...groups.entries()].map(([label, ts]) => (
