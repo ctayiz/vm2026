@@ -8,6 +8,7 @@ import { GroupTipBar } from "@/components/tip-distribution";
 import { formatTime } from "@/lib/format";
 import { getLockTime, isPickLocked } from "@/lib/lock";
 import { outcomeFromGoals } from "@/lib/scoring";
+import { localizePlaceholder } from "@/lib/team-map";
 import { PHASE_META, type Phase, type Prediction } from "@/lib/constants";
 import { getLocale, getDictionary } from "@/lib/i18n-server";
 import { MapPin, Trophy, Goal, Star, Zap } from "lucide-react";
@@ -46,8 +47,8 @@ export function MatchCard({
   // Rundenlabel lokalisiert aufbauen (statt des deutsch gespeicherten roundLabel)
   const roundLabel =
     phase === "GROUP" && match.group ? `${t.groupName} ${match.group}` : t.phase[phase]?.label;
-  const home = teamDisplay(match.homeTeam, match.homePlaceholder);
-  const away = teamDisplay(match.awayTeam, match.awayPlaceholder);
+  const home = teamDisplay(match.homeTeam, localizePlaceholder(match.homePlaceholder, t.placeholder));
+  const away = teamDisplay(match.awayTeam, localizePlaceholder(match.awayPlaceholder, t.placeholder));
   const homeFav = home.isReal && favoriteCodes.includes(home.code);
   const awayFav = away.isReal && favoriteCodes.includes(away.code);
   const isFavMatch = homeFav || awayFav;

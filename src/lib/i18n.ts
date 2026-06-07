@@ -54,6 +54,13 @@ const de = {
   },
   groupName: "Gruppe",
   country: { USA: "USA", Kanada: "Kanada", Mexiko: "Mexiko" },
+  placeholder: {
+    groupRank: (rank: number, letter: string) =>
+      rank === 1 ? `Sieger Gruppe ${letter}` : `Zweiter Gruppe ${letter}`,
+    third: (groups: string) => `Dritter (Gruppe ${groups})`,
+    winnerMatch: (n: string) => `Sieger Spiel ${n}`,
+    loserMatch: (n: string) => `Verlierer Spiel ${n}`,
+  },
   bonusQ: {
     champion: { label: "Wer wird Weltmeister?", hint: "Volle Punktzahl für den richtigen Titelträger." },
     topscorer: { label: "Wer wird Torschützenkönig?", hint: "Namen eintippen – Punkte für den Spieler mit den meisten Toren." },
@@ -546,6 +553,13 @@ const tr: Dictionary = {
   },
   groupName: "Grup",
   country: { USA: "ABD", Kanada: "Kanada", Mexiko: "Meksika" },
+  placeholder: {
+    groupRank: (rank: number, letter: string) =>
+      rank === 1 ? `${letter} Grubu galibi` : `${letter} Grubu ikincisi`,
+    third: (groups: string) => `Grup üçüncüsü (${groups})`,
+    winnerMatch: (n: string) => `${n}. maç galibi`,
+    loserMatch: (n: string) => `${n}. maç mağlubu`,
+  },
   bonusQ: {
     champion: { label: "Dünya şampiyonu kim olur?", hint: "Doğru şampiyon için tam puan." },
     topscorer: { label: "Gol kralı kim olur?", hint: "İsmi yaz – en çok gol atan oyuncu için puan." },

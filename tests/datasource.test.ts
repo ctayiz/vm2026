@@ -66,14 +66,14 @@ describe("normalizeOpenFootball (echtes WM-2026-Format)", () => {
     expect(out[0].kickoff).toBe("2026-06-11T19:00:00.000Z");
   });
 
-  it("übersetzt K.o.-Platzhalter ins Deutsche", () => {
+  it("speichert K.o.-Platzhalter als rohen Token (Übersetzung erst beim Rendern)", () => {
     expect(out[1].phase).toBe("R32");
-    expect(out[1].homePlaceholder).toBe("Zweiter Gruppe A");
-    expect(out[1].awayPlaceholder).toBe("Zweiter Gruppe B");
+    expect(out[1].homePlaceholder).toBe("2A");
+    expect(out[1].awayPlaceholder).toBe("2B");
     expect(out[1].home).toBeUndefined();
 
     expect(out[2].phase).toBe("FINAL");
-    expect(out[2].homePlaceholder).toBe("Sieger Spiel 101");
+    expect(out[2].homePlaceholder).toBe("W101");
   });
 
   it("vergibt stabile externalIds (num bzw. Gruppe+Teams)", () => {

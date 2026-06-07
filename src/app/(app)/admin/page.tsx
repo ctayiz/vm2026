@@ -1,5 +1,6 @@
 import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { localizePlaceholder } from "@/lib/team-map";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -78,9 +79,9 @@ export default async function AdminPage() {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 text-sm font-medium">
                       <Flag code={m.homeTeam?.flagCode} />
-                      <span className="truncate">{m.homeTeam?.name ?? m.homePlaceholder ?? t.bracket.open}</span>
+                      <span className="truncate">{m.homeTeam?.name ?? localizePlaceholder(m.homePlaceholder, t.placeholder) ?? t.bracket.open}</span>
                       <span className="text-muted-foreground">{t.common.vs}</span>
-                      <span className="truncate">{m.awayTeam?.name ?? m.awayPlaceholder ?? t.bracket.open}</span>
+                      <span className="truncate">{m.awayTeam?.name ?? localizePlaceholder(m.awayPlaceholder, t.placeholder) ?? t.bracket.open}</span>
                       <Flag code={m.awayTeam?.flagCode} />
                     </div>
                     <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">

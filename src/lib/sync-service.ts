@@ -99,8 +99,10 @@ export async function syncSchedule(): Promise<SyncSummary> {
       city: m.city ?? null,
       homeTeamId,
       awayTeamId,
-      homePlaceholder: m.homePlaceholder ?? null,
-      awayPlaceholder: m.awayPlaceholder ?? null,
+      // Platzhalter nur setzen, wenn die Quelle einen liefert – sonst Bestand
+      // wahren (eine fehlgeschlagene Anreicherung darf sie nicht leeren).
+      ...(m.homePlaceholder ? { homePlaceholder: m.homePlaceholder } : {}),
+      ...(m.awayPlaceholder ? { awayPlaceholder: m.awayPlaceholder } : {}),
     };
 
     // Spielstand nur übernehmen, wenn die Quelle einen liefert – sonst Bestand

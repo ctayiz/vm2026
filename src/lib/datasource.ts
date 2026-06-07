@@ -9,7 +9,7 @@
 // Alle Quellen liefern denselben normalisierten Typ `NormalizedMatch`.
 
 import { buildSchedule, type NormalizedMatch, type NormalizedTeamRef } from "./worldcup-data";
-import { lookupTeam, resolveTeamRef, translatePlaceholder } from "./team-map";
+import { lookupTeam, resolveTeamRef } from "./team-map";
 import { hasApiFootball, fetchFixtures, type ApiFixture } from "./api-football";
 import { hasFootballData, fetchWorldCupMatches, type FDMatch } from "./football-data";
 import type { Phase } from "./constants";
@@ -60,12 +60,12 @@ function slug(s: string): string {
     .replace(/(^-|-$)/g, "");
 }
 
-/** Echtes Team -> NormalizedTeamRef, Platzhalter -> übersetzter String. */
+/** Echtes Team -> NormalizedTeamRef, sonst roher Platzhalter-Token (z. B. "2A"). */
 function resolveSide(token: string | undefined): { team?: NormalizedTeamRef; placeholder?: string } {
   if (!token) return {};
   const info = lookupTeam(token);
   if (info) return { team: { code: info.code, name: info.name, flagCode: info.flagCode } };
-  return { placeholder: translatePlaceholder(token) };
+  return { placeholder: token.trim() };
 }
 
 /**

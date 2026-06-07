@@ -6,6 +6,7 @@ import { dayLabel, formatTime } from "@/lib/format";
 import { getLocale, getDictionary } from "@/lib/i18n-server";
 import { getLockTime, isPickLocked } from "@/lib/lock";
 import { PHASE_META, type Phase } from "@/lib/constants";
+import { localizePlaceholder } from "@/lib/team-map";
 import { MapPin, Sparkles } from "lucide-react";
 import type { MatchWithPrediction } from "@/lib/queries";
 import { cn } from "@/lib/utils";
@@ -19,8 +20,8 @@ export function FeaturedMatch({ match }: { match: MatchWithPrediction }) {
   const t = getDictionary();
   const locale = getLocale();
   const phase = match.phase as Phase;
-  const home = side(match.homeTeam, match.homePlaceholder);
-  const away = side(match.awayTeam, match.awayPlaceholder);
+  const home = side(match.homeTeam, localizePlaceholder(match.homePlaceholder, t.placeholder));
+  const away = side(match.awayTeam, localizePlaceholder(match.awayPlaceholder, t.placeholder));
   const locked = isPickLocked(match.kickoff);
   const lockTimeIso = getLockTime(match.kickoff).toISOString();
 

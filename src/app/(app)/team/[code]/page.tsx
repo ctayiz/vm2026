@@ -6,7 +6,8 @@ import { Flag } from "@/components/flag";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDate, formatTime } from "@/lib/format";
-import { PHASE_META, type Phase } from "@/lib/constants";
+import { type Phase } from "@/lib/constants";
+import { localizePlaceholder } from "@/lib/team-map";
 import { getLocale, getDictionary } from "@/lib/i18n-server";
 import { ArrowLeft, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -72,7 +73,10 @@ export default async function TeamPage({ params }: { params: { code: string } })
             {matches.map((m) => {
               const isHome = m.homeTeam?.code === team.code;
               const opp: TeamRef = isHome ? m.awayTeam : m.homeTeam;
-              const oppPlaceholder = isHome ? m.awayPlaceholder : m.homePlaceholder;
+              const oppPlaceholder = localizePlaceholder(
+                isHome ? m.awayPlaceholder : m.homePlaceholder,
+                t.placeholder,
+              );
               const finished =
                 m.status === "finished" && m.homeGoals != null && m.awayGoals != null;
               const myGoals = isHome ? m.homeGoals : m.awayGoals;

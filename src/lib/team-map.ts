@@ -99,18 +99,31 @@ export function resolveTeamRef(
   return { code: clean.slice(0, 3).toUpperCase(), name: clean };
 }
 
+/** Lokalisierungs-Wörter für K.-o.-Platzhalter (aus dem i18n-Wörterbuch). */
+export interface PlaceholderWords {
+  groupRank: (rank: number, letter: string) => string;
+  third: (groups: string) => string;
+  winnerMatch: (n: string) => string;
+  loserMatch: (n: string) => string;
+}
+
 /**
- * Übersetzt OpenFootball-Platzhalter ("1A", "2B", "3A/B/C/D/F", "W73", "L101")
- * in eine verständliche deutsche Bezeichnung.
+ * Lokalisiert einen OpenFootball-Platzhalter-Token ("1A", "2B", "3A/B/C/D/F",
+ * "W73", "L101") in die jeweilige Sprache. Roher Token bleibt gespeichert,
+ * Übersetzung passiert erst beim Rendern -> mehrsprachig.
  */
-export function translatePlaceholder(token: string): string {
+export function localizePlaceholder(
+  token: string | null | undefined,
+  w: PlaceholderWords,
+): string | null {
+  if (!token) return null;
   const t = token.trim();
   let m = /^([12])([A-L])$/.exec(t);
-  if (m) return `${m[1] === "1" ? "Sieger" : "Zweiter"} Gruppe ${m[2]}`;
-  if (/^3[A-L](\/[A-L])+$/.test(t)) return `Dritter (Gruppe ${t.slice(1)})`;
+  if (m) return w.groupRank(Number(m[1]), m[2]);
+  if (/^3[A-L](\/[A-L])+$/.test(t)) return w.third(t.slice(1));
   m = /^W(\d+)$/.exec(t);
-  if (m) return `Sieger Spiel ${m[1]}`;
+  if (m) return w.winnerMatch(m[1]);
   m = /^L(\d+)$/.exec(t);
-  if (m) return `Verlierer Spiel ${m[1]}`;
+  if (m) return w.loserMatch(m[1]);
   return t;
 }

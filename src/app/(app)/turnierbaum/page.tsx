@@ -8,6 +8,7 @@ import { outcomeFromGoals } from "@/lib/scoring";
 import { PHASE_META, type Phase } from "@/lib/constants";
 import { ChevronRight, Crown, Trophy } from "lucide-react";
 import { BracketIcon } from "@/components/bracket-icon";
+import { localizePlaceholder } from "@/lib/team-map";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -68,9 +69,9 @@ function MatchBox({ m, featured }: { m: BracketMatch; featured?: boolean }) {
     >
       {featured && <span className="shimmer-gold pointer-events-none absolute inset-0 opacity-60" />}
       <div className="relative">
-        <Side team={m.homeTeam} placeholder={m.homePlaceholder} goals={m.homeGoals} winner={outcome === "HOME_WIN"} champion={featured} />
+        <Side team={m.homeTeam} placeholder={localizePlaceholder(m.homePlaceholder, t.placeholder)} goals={m.homeGoals} winner={outcome === "HOME_WIN"} champion={featured} />
         <div className="border-t border-border/50" />
-        <Side team={m.awayTeam} placeholder={m.awayPlaceholder} goals={m.awayGoals} winner={outcome === "AWAY_WIN"} champion={featured} />
+        <Side team={m.awayTeam} placeholder={localizePlaceholder(m.awayPlaceholder, t.placeholder)} goals={m.awayGoals} winner={outcome === "AWAY_WIN"} champion={featured} />
         <div className="border-t border-border/40 px-2 py-0.5 text-[9px] text-muted-foreground">
           {finished ? t.bracket.finished : formatDate(m.kickoff, locale)}
         </div>
