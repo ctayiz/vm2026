@@ -2,7 +2,13 @@ import { requireUser } from "@/lib/auth";
 import { getDictionary } from "@/lib/i18n-server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { PICK_LOCK_MINUTES, POINTS, PHASE_META, type Phase } from "@/lib/constants";
+import {
+  PICK_LOCK_MINUTES,
+  POINTS,
+  PHASE_META,
+  TOURNAMENT_QUESTIONS,
+  type Phase,
+} from "@/lib/constants";
 import {
   Clock,
   Trophy,
@@ -13,6 +19,7 @@ import {
   CheckCircle2,
   XCircle,
   Sparkles,
+  Zap,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -50,6 +57,7 @@ export default async function RegelnPage() {
   const t = getDictionary();
   const r = t.rules;
   const tiebreakers = [r.tb1, r.tb2, r.tb3, r.tb4, r.tb5];
+  const maxBonus = TOURNAMENT_QUESTIONS.reduce((s, q) => s + q.points, 0);
 
   return (
     <div className="mx-auto max-w-2xl space-y-5">
@@ -105,7 +113,30 @@ export default async function RegelnPage() {
       </Section>
 
       <Section icon={Sparkles} title={r.bonusTitle}>
-        <p>{r.bonusP}</p>
+        <p>{r.bonusIntro}</p>
+        <div className="mt-3 space-y-1.5">
+          {TOURNAMENT_QUESTIONS.map((q) => (
+            <div
+              key={q.key}
+              className="flex items-center justify-between gap-2 rounded-lg border border-border bg-secondary/40 px-3 py-2"
+            >
+              <span className="text-foreground">{q.label}</span>
+              <Badge variant="secondary" className="shrink-0">
+                {q.points} {t.common.points}
+              </Badge>
+            </div>
+          ))}
+          <div className="flex items-center justify-between gap-2 px-3 pt-1.5">
+            <span className="font-semibold text-foreground">{r.bonusTotal}</span>
+            <Badge variant="success" className="shrink-0 text-sm">
+              {maxBonus} {t.common.points}
+            </Badge>
+          </div>
+        </div>
+      </Section>
+
+      <Section icon={Zap} title={r.jokerTitle}>
+        <p>{r.jokerP}</p>
       </Section>
 
       <Section icon={ListOrdered} title={r.s4}>
