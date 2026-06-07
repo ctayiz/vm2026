@@ -51,9 +51,15 @@ export function MatchCard({
   const locked = isPickLocked(match.kickoff);
   const lockTimeIso = getLockTime(match.kickoff).toISOString();
   const finished = match.status === "finished" && match.homeGoals != null && match.awayGoals != null;
+  const live = match.status === "live";
+  const hasScore = match.homeGoals != null && match.awayGoals != null;
 
   const actualOutcome = finished ? outcomeFromGoals(match.homeGoals!, match.awayGoals!) : null;
   const correct = match.myPrediction && actualOutcome ? match.myPrediction === actualOutcome : null;
+
+  // Live: liegt der eigene Tipp aktuell vorn? (vorläufig, noch keine Punkte)
+  const liveOutcome = live && hasScore ? outcomeFromGoals(match.homeGoals!, match.awayGoals!) : null;
+  const liveLeading = match.myPrediction && liveOutcome ? match.myPrediction === liveOutcome : null;
 
   return (
     <Card
@@ -68,7 +74,13 @@ export function MatchCard({
           {PHASE_META[phase]?.knockout && <Trophy className="size-3 text-amber-300" />}
           {match.roundLabel ?? PHASE_META[phase]?.label}
         </span>
-        <span>{formatTime(match.kickoff, locale)}</span>
+        {live ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-400">
+            <span className="size-1.5 animate-glow-pulse rounded-full bg-red-500" /> {t.match.live}
+          </span>
+        ) : (
+          <span>{formatTime(match.kickoff, locale)}</span>
+        )}
       </div>
 
       <div className="px-4 py-3">
@@ -82,10 +94,15 @@ export function MatchCard({
             {homeFav && <Star className="size-3 shrink-0 fill-amber-300 text-amber-300" />}
           </div>
 
-          {/* Mitte: Ergebnis oder vs */}
+          {/* Mitte: Ergebnis (auch live) oder vs */}
           <div className="shrink-0 px-2 text-center">
-            {finished ? (
-              <span className="rounded-md bg-secondary px-2 py-1 text-base font-bold tabular-nums">
+            {finished || (live && hasScore) ? (
+              <span
+                className={cn(
+                  "rounded-md px-2 py-1 text-base font-bold tabular-nums",
+                  live ? "bg-red-500/20 text-red-300" : "bg-secondary",
+                )}
+              >
                 {match.homeGoals} : {match.awayGoals}
               </span>
             ) : (
@@ -149,6 +166,34 @@ export function MatchCard({
               <Badge variant={correct ? "success" : "destructive"}>
                 {correct ? t.match.plusPoints(match.myPoints ?? 0) : t.match.zeroPoints}
               </Badge>
+            )}
+          </div>
+        ) : live ? (
+          <div className="flex items-center justify-between text-sm">
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              {match.myPrediction ? (
+                <>
+                  {t.match.yourTip}{" "}<span className="font-medium text-foreground">{PRED_LABEL[match.myPrediction]}</span>
+                </>
+              ) : (
+                t.match.noTip
+              )}
+              {match.myJoker && (
+                <span className="inline-flex items-center gap-0.5 text-amber-300" title={t.joker.title}>
+                  <Zap className="size-3 fill-amber-300" />
+                </span>
+              )}
+            </span>
+            {match.myPrediction && liveLeading !== null && (
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
+                  liveLeading ? "bg-primary/20 text-primary" : "bg-secondary text-muted-foreground",
+                )}
+              >
+                <span className="size-1.5 animate-glow-pulse rounded-full bg-current" />
+                {liveLeading ? t.match.leading : t.match.trailing}
+              </span>
             )}
           </div>
         ) : (

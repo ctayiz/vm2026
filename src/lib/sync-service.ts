@@ -74,12 +74,21 @@ export async function syncSchedule(): Promise<SyncSummary> {
     if (homeTeamId) teamIds.add(homeTeamId);
     if (awayTeamId) teamIds.add(awayTeamId);
 
-    const sourceHasResult = m.homeGoals != null && m.awayGoals != null;
+    // Spielstand (auch live) aus der Quelle, falls vorhanden.
+    const sourceHasScore = m.homeGoals != null && m.awayGoals != null;
+    const srcStatus = m.status; // "scheduled" | "live" | "finished"
 
     const existing = await db.match.findUnique({
       where: { externalId: m.externalId },
-      select: { id: true, status: true, homeGoals: true, awayGoals: true },
+      select: { id: true, status: true },
     });
+
+    // Status bestimmen – ein bereits beendetes Spiel wird NIE zurückgestuft
+    // (z. B. wenn die Quelle kurz „scheduled"/„live" zurückmeldet).
+    let status: string;
+    if (existing?.status === "finished" || srcStatus === "finished") status = "finished";
+    else if (srcStatus === "live") status = "live";
+    else status = "scheduled";
 
     const baseData = {
       phase: m.phase,
@@ -94,27 +103,19 @@ export async function syncSchedule(): Promise<SyncSummary> {
       awayPlaceholder: m.awayPlaceholder ?? null,
     };
 
+    // Spielstand nur übernehmen, wenn die Quelle einen liefert – sonst Bestand
+    // wahren (überschreibt keine vom Admin eingetragenen Ergebnisse mit null).
+    const scoreData = sourceHasScore ? { homeGoals: m.homeGoals, awayGoals: m.awayGoals } : {};
+
     if (!existing) {
       await db.match.create({
-        data: {
-          externalId: m.externalId,
-          ...baseData,
-          status: sourceHasResult ? "finished" : "scheduled",
-          homeGoals: sourceHasResult ? m.homeGoals : null,
-          awayGoals: sourceHasResult ? m.awayGoals : null,
-        },
+        data: { externalId: m.externalId, ...baseData, status, ...scoreData },
       });
       created++;
     } else {
-      // Ergebnis nur aus Quelle übernehmen, wenn vorhanden – sonst Bestand wahren.
       await db.match.update({
         where: { externalId: m.externalId },
-        data: {
-          ...baseData,
-          ...(sourceHasResult
-            ? { status: "finished", homeGoals: m.homeGoals, awayGoals: m.awayGoals }
-            : {}),
-        },
+        data: { ...baseData, status, ...scoreData },
       });
       updated++;
     }

@@ -194,7 +194,8 @@ function normalizeFootballData(matches: FDMatch[]): NormalizedMatch[] {
     const phase = mapFdStage(m.stage);
     const groupLetter = m.group ? /([A-L])\s*$/.exec(m.group)?.[1] : undefined;
     const status = mapFdStatus(m.status);
-    const hasResult = status === "finished" && m.homeGoals != null && m.awayGoals != null;
+    // Spielstand auch WÄHREND des Spiels übernehmen (Fast-Live), nicht nur am Ende.
+    const hasScore = (status === "finished" || status === "live") && m.homeGoals != null && m.awayGoals != null;
     const label = phase === "GROUP" && groupLetter ? `Gruppe ${groupLetter}` : PHASE_LABEL[phase];
     return {
       externalId: `fd-${m.id}`,
@@ -205,8 +206,8 @@ function normalizeFootballData(matches: FDMatch[]): NormalizedMatch[] {
       home: fdTeamRef(m.homeName, m.homeTla),
       away: fdTeamRef(m.awayName, m.awayTla),
       status,
-      homeGoals: hasResult ? m.homeGoals : null,
-      awayGoals: hasResult ? m.awayGoals : null,
+      homeGoals: hasScore ? m.homeGoals : null,
+      awayGoals: hasScore ? m.awayGoals : null,
     } satisfies NormalizedMatch;
   });
 }
@@ -215,7 +216,7 @@ function normalizeApiFootball(fixtures: ApiFixture[]): NormalizedMatch[] {
   return fixtures.map((f) => {
     const { phase, group, label } = mapApiRound(f.round);
     const status = mapApiStatus(f.status);
-    const hasResult = status === "finished" && f.homeGoals != null && f.awayGoals != null;
+    const hasScore = (status === "finished" || status === "live") && f.homeGoals != null && f.awayGoals != null;
     return {
       externalId: `af-${f.fixtureId}`,
       phase,
@@ -227,8 +228,8 @@ function normalizeApiFootball(fixtures: ApiFixture[]): NormalizedMatch[] {
       home: resolveTeamRef(f.homeName) as NormalizedTeamRef | undefined,
       away: resolveTeamRef(f.awayName) as NormalizedTeamRef | undefined,
       status,
-      homeGoals: hasResult ? f.homeGoals : null,
-      awayGoals: hasResult ? f.awayGoals : null,
+      homeGoals: hasScore ? f.homeGoals : null,
+      awayGoals: hasScore ? f.awayGoals : null,
     } satisfies NormalizedMatch;
   });
 }

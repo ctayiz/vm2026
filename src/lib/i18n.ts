@@ -185,6 +185,9 @@ const de = {
     tipLocked: "Tipp gesperrt",
     next: "Nächstes Spiel",
     groupTipped: (n: number) => `So tippte die Gruppe (${n})`,
+    live: "Live",
+    leading: "liegt vorn",
+    trailing: "liegt zurück",
   },
   outcome: { home: "Heimsieg", draw: "Unentschieden", away: "Auswärtssieg" },
   joker: {
@@ -643,6 +646,9 @@ const tr: Dictionary = {
     tipLocked: "Tahmin kilitli",
     next: "Sıradaki maç",
     groupTipped: (n: number) => `Grup böyle tahmin etti (${n})`,
+    live: "Canlı",
+    leading: "önde",
+    trailing: "geride",
   },
   outcome: { home: "Ev sahibi galip", draw: "Beraberlik", away: "Deplasman galip" },
   joker: {
