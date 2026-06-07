@@ -20,10 +20,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <I18nProvider locale={locale}>
-      {/* overflow-x-clip auf einem normalen Wrapper-div: iOS-Safari ignoriert
-          overflow auf html/body, respektiert es aber hier -> kein "shrink-to-fit"
-          mehr, falls doch mal etwas minimal zu breit rendert. */}
-      <div className="flex min-h-dvh w-full max-w-full flex-col overflow-x-clip">
+      {/* KEIN overflow-x:clip hier – auf dem min-h-dvh-Wrapper macht iOS-Safari
+          daraus einen Scroll-Container und der sticky-Header überlappt dann den
+          Inhalt ("Hallo" hinter der Leiste). Horizontaler Schutz läuft über die
+          16px-Inputs (kein Auto-Zoom) + html{overflow-x:clip}. */}
+      <div className="flex min-h-dvh w-full max-w-full flex-col">
         <AutoSync />
         <OnboardingModal initialOpen={!user.onboardedAt} />
         <header className="sticky top-0 z-40 border-b border-border bg-card/80 backdrop-blur">
@@ -54,9 +55,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </div>
         </header>
 
-        {/* overflow-x-clip auf dem Block-Element main: WebKit/iOS respektiert
-            Overflow auf normalen Blöcken zuverlässig (anders als auf html/body) */}
-        <main className="container w-full max-w-full flex-1 overflow-x-clip py-5 pb-24 md:pb-8">
+        <main className="container w-full max-w-full flex-1 py-5 pb-24 md:pb-8">
           {children}
         </main>
       </div>
