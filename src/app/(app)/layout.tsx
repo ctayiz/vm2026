@@ -27,7 +27,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <div className="flex min-h-dvh w-full max-w-full flex-col">
         <AutoSync />
         <OnboardingModal initialOpen={!user.onboardedAt} />
-        <header className="sticky top-0 z-40 border-b border-border bg-card/80 backdrop-blur">
+        {/* Auf Mobile relativ (im Fluss, reserviert Platz) – iOS rendert sticky
+            in der Flex-Spalte sonst wie fixed und der Inhalt rutscht darunter
+            ("Hallo" hinter der Leiste). Ab md wieder sticky. */}
+        <header className="relative z-40 border-b border-border bg-card/80 backdrop-blur md:sticky md:top-0">
           <div className="container flex h-14 items-center justify-between gap-4">
             <Link href="/spielplan" className="flex items-center text-foreground">
               <Logo className="h-7" />

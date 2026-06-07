@@ -174,8 +174,8 @@
     background: hsl(222 44% 16% / 0.92);
   }
 
-  /* Header ohne Blur -> opak machen, sonst scheint Inhalt durch die Leiste */
-  header.sticky {
+  /* Header auf Mobile opak (ohne Blur scheint sonst Inhalt durch) */
+  header {
     background-color: hsl(var(--card)) !important;
   }
 
