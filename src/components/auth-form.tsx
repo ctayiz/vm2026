@@ -47,7 +47,13 @@ export function AuthForm({
           <LanguageToggle variant="flags" />
         </div>
       </CardHeader>
-      <form action={formAction}>
+      <form
+        action={formAction}
+        onSubmit={() => {
+          // Tastatur schließen vor dem Redirect -> iOS behält keinen verschobenen Viewport
+          if (typeof document !== "undefined") (document.activeElement as HTMLElement | null)?.blur();
+        }}
+      >
         <CardContent className="space-y-3">
           {mode === "register" && (
             <div className="space-y-1.5">

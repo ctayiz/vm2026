@@ -8,6 +8,7 @@ import { Nav } from "@/components/nav";
 import { UserAvatar } from "@/components/user-avatar";
 import { AutoSync } from "@/components/auto-sync";
 import { OnboardingModal } from "@/components/onboarding-modal";
+import { ScrollReset } from "@/components/scroll-reset";
 import { I18nProvider } from "@/components/i18n-provider";
 import { LanguageToggle } from "@/components/language-toggle";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           16px-Inputs (kein Auto-Zoom) + html{overflow-x:clip}. */}
       <div className="min-h-dvh w-full max-w-full">
         <AutoSync />
+        <ScrollReset />
         <OnboardingModal initialOpen={!user.onboardedAt} />
         {/* fixed + fester pt am Inhalt = deterministisch: Leiste immer oben
             sichtbar, Inhalt IMMER darunter (kein sticky-in-flex-Bug auf iOS). */}
