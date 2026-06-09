@@ -33,6 +33,7 @@ export function Nav({ isAdmin }: { isAdmin: boolean }) {
         { href: "/wm", label: t.nav.wmInfo },
         { href: "/wm/gruppen", label: t.nav.groups },
         { href: "/wm/stadien", label: t.nav.venues },
+        { href: "/wm/history", label: t.nav.history },
         { href: "/turnierbaum", label: t.nav.bracket },
       ],
     },
