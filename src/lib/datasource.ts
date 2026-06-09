@@ -196,6 +196,8 @@ function normalizeFootballData(matches: FDMatch[]): NormalizedMatch[] {
     const status = mapFdStatus(m.status);
     // Spielstand auch WÄHREND des Spiels übernehmen (Fast-Live), nicht nur am Ende.
     const hasScore = (status === "finished" || status === "live") && m.homeGoals != null && m.awayGoals != null;
+    // K.-o.-Sieger (Verlängerung/Elfmeter) – nur HOME/AWAY ist relevant.
+    const winner = m.winner === "HOME_TEAM" ? "HOME" : m.winner === "AWAY_TEAM" ? "AWAY" : null;
     const label = phase === "GROUP" && groupLetter ? `Gruppe ${groupLetter}` : PHASE_LABEL[phase];
     return {
       externalId: `fd-${m.id}`,
@@ -208,6 +210,7 @@ function normalizeFootballData(matches: FDMatch[]): NormalizedMatch[] {
       status,
       homeGoals: hasScore ? m.homeGoals : null,
       awayGoals: hasScore ? m.awayGoals : null,
+      winner,
     } satisfies NormalizedMatch;
   });
 }

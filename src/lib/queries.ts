@@ -378,6 +378,7 @@ export async function getTeamProfile(code: string) {
       status: true,
       homeGoals: true,
       awayGoals: true,
+      winner: true,
       homePlaceholder: true,
       awayPlaceholder: true,
       homeTeam: teamSel,

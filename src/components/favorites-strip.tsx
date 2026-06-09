@@ -96,6 +96,7 @@ export function FavoritesStrip({ items }: { items: FavoriteOverview[] }) {
                     matchId={next.id}
                     initialPrediction={(next.myPrediction as Prediction | null) ?? null}
                     locked={nextLocked}
+                    allowDraw={next.phase === "GROUP"}
                     homeShort={next.homeTeam?.code ?? t.match.home}
                     awayShort={next.awayTeam?.code ?? t.match.away}
                     compact

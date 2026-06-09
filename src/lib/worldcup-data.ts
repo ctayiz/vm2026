@@ -39,6 +39,8 @@ export interface NormalizedMatch {
   status: "scheduled" | "live" | "finished";
   homeGoals?: number | null;
   awayGoals?: number | null;
+  // K.-o.-Sieger (Verlängerung/Elfmeter): "HOME" | "AWAY" | null
+  winner?: "HOME" | "AWAY" | null;
 }
 
 // 48 Teams, 12 Gruppen à 4. (Illustratives Teilnehmerfeld.)

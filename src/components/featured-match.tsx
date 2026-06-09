@@ -86,6 +86,7 @@ export function FeaturedMatch({ match }: { match: MatchWithPrediction }) {
             matchId={match.id}
             initialPrediction={match.myPrediction}
             locked={locked}
+            allowDraw={!PHASE_META[phase]?.knockout}
             homeShort={home.real ? home.code : t.match.home}
             awayShort={away.real ? away.code : t.match.away}
           />

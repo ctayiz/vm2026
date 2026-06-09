@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatDate, formatTime } from "@/lib/format";
 import { type Phase } from "@/lib/constants";
 import { localizePlaceholder } from "@/lib/team-map";
+import { outcomeOf } from "@/lib/scoring";
 import { getLocale, getDictionary } from "@/lib/i18n-server";
 import { ArrowLeft, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -81,14 +82,18 @@ export default async function TeamPage({ params }: { params: { code: string } })
                 m.status === "finished" && m.homeGoals != null && m.awayGoals != null;
               const myGoals = isHome ? m.homeGoals : m.awayGoals;
               const oppGoals = isHome ? m.awayGoals : m.homeGoals;
-              const res =
+              // K.-o.-Sieger berücksichtigen (Verlängerung/Elfmeter) – sonst Tore.
+              const outcome =
                 finished && myGoals != null && oppGoals != null
-                  ? myGoals > oppGoals
-                    ? "win"
-                    : myGoals < oppGoals
-                      ? "loss"
-                      : "draw"
+                  ? outcomeOf(m.homeGoals!, m.awayGoals!, (m.winner as "HOME" | "AWAY" | null) ?? null)
                   : null;
+              const res = outcome
+                ? outcome === "DRAW"
+                  ? "draw"
+                  : (outcome === "HOME_WIN") === isHome
+                    ? "win"
+                    : "loss"
+                : null;
 
               return (
                 <Card key={m.id} className="card-hover">

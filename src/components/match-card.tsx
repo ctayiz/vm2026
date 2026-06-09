@@ -7,7 +7,7 @@ import { JokerButton } from "@/components/joker-button";
 import { GroupTipBar } from "@/components/tip-distribution";
 import { formatTime } from "@/lib/format";
 import { getLockTime, isPickLocked } from "@/lib/lock";
-import { outcomeFromGoals } from "@/lib/scoring";
+import { outcomeOf } from "@/lib/scoring";
 import { localizePlaceholder } from "@/lib/team-map";
 import { PHASE_META, type Phase, type Prediction } from "@/lib/constants";
 import { getLocale, getDictionary } from "@/lib/i18n-server";
@@ -44,6 +44,8 @@ export function MatchCard({
     AWAY_WIN: t.outcome.away,
   };
   const phase = match.phase as Phase;
+  const isKnockout = !!PHASE_META[phase]?.knockout;
+  const matchWinner = (match.winner as "HOME" | "AWAY" | null) ?? null;
   // Rundenlabel lokalisiert aufbauen (statt des deutsch gespeicherten roundLabel)
   const roundLabel =
     phase === "GROUP" && match.group ? `${t.groupName} ${match.group}` : t.phase[phase]?.label;
@@ -58,11 +60,11 @@ export function MatchCard({
   const live = match.status === "live";
   const hasScore = match.homeGoals != null && match.awayGoals != null;
 
-  const actualOutcome = finished ? outcomeFromGoals(match.homeGoals!, match.awayGoals!) : null;
+  const actualOutcome = finished ? outcomeOf(match.homeGoals!, match.awayGoals!, matchWinner) : null;
   const correct = match.myPrediction && actualOutcome ? match.myPrediction === actualOutcome : null;
 
   // Live: liegt der eigene Tipp aktuell vorn? (vorläufig, noch keine Punkte)
-  const liveOutcome = live && hasScore ? outcomeFromGoals(match.homeGoals!, match.awayGoals!) : null;
+  const liveOutcome = live && hasScore ? outcomeOf(match.homeGoals!, match.awayGoals!, matchWinner) : null;
   const liveLeading = match.myPrediction && liveOutcome ? match.myPrediction === liveOutcome : null;
 
   return (
@@ -206,6 +208,7 @@ export function MatchCard({
               matchId={match.id}
               initialPrediction={match.myPrediction}
               locked={locked}
+              allowDraw={!isKnockout}
               homeShort={home.isReal ? home.code : t.match.home}
               awayShort={away.isReal ? away.code : t.match.away}
             />

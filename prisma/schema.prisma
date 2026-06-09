@@ -97,6 +97,8 @@ model Match {
   status     String   @default("scheduled")
   homeGoals  Int?
   awayGoals  Int?
+  // K.-o.-Sieger (auch nach Verlängerung/Elfmeter): "HOME" | "AWAY" | null
+  winner     String?
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt

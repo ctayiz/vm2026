@@ -5,7 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { getDictionary } from "@/lib/i18n-server";
 import { predictionSchema } from "@/lib/validation";
 import { isPickLocked } from "@/lib/lock";
-import { MAX_JOKERS } from "@/lib/constants";
+import { MAX_JOKERS, PHASE_META, type Phase } from "@/lib/constants";
 
 export type PredictionState = { ok: boolean; error?: string; prediction?: string };
 
@@ -35,6 +35,11 @@ export async function submitPredictionAction(
   const match = await db.match.findUnique({ where: { id: matchId } });
   if (!match) {
     return { ok: false, error: t.msg.matchNotFound };
+  }
+
+  // K.-o.-Phase: kein Unentschieden möglich (Verlängerung/Elfmeter) – serverseitig erzwingen.
+  if (prediction === "DRAW" && PHASE_META[match.phase as Phase]?.knockout) {
+    return { ok: false, error: t.msg.noDrawKnockout };
   }
 
   // Lock-Prüfung mit Server-Zeit (nicht manipulierbar durch Client).

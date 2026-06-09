@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { Flag } from "@/components/flag";
 import { formatDate } from "@/lib/format";
 import { getLocale, getDictionary } from "@/lib/i18n-server";
-import { outcomeFromGoals } from "@/lib/scoring";
+import { outcomeOf } from "@/lib/scoring";
 import { PHASE_META, type Phase } from "@/lib/constants";
 import { ChevronRight, Crown, Trophy } from "lucide-react";
 import { BracketIcon } from "@/components/bracket-icon";
@@ -22,6 +22,7 @@ type BracketMatch = {
   status: string;
   homeGoals: number | null;
   awayGoals: number | null;
+  winner: string | null;
   homeTeam: { name: string; code: string; flagCode: string | null } | null;
   awayTeam: { name: string; code: string; flagCode: string | null } | null;
   homePlaceholder: string | null;
@@ -57,7 +58,7 @@ function MatchBox({ m, featured }: { m: BracketMatch; featured?: boolean }) {
   const t = getDictionary();
   const locale = getLocale();
   const finished = m.status === "finished" && m.homeGoals != null && m.awayGoals != null;
-  const outcome = finished ? outcomeFromGoals(m.homeGoals!, m.awayGoals!) : null;
+  const outcome = finished ? outcomeOf(m.homeGoals!, m.awayGoals!, m.winner as "HOME" | "AWAY" | null) : null;
   return (
     <div
       className={cn(

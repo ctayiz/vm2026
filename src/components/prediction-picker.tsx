@@ -63,6 +63,7 @@ export function PredictionPicker({
   homeShort,
   awayShort,
   compact = false,
+  allowDraw = true,
 }: {
   matchId: string;
   initialPrediction: Prediction | null;
@@ -70,6 +71,7 @@ export function PredictionPicker({
   homeShort: string;
   awayShort: string;
   compact?: boolean;
+  allowDraw?: boolean;
 }) {
   const t = useT();
   const [state, formAction] = useFormState<PredictionState, FormData>(submitPredictionAction, {
@@ -95,7 +97,9 @@ export function PredictionPicker({
       <input type="hidden" name="matchId" value={matchId} />
       <div className={cn("flex items-center", compact ? "gap-1" : "gap-2")}>
         <OptionButton value="HOME_WIN" label={homeShort} selected={current === "HOME_WIN"} locked={locked} compact={compact} flash={justSaved && current === "HOME_WIN"} />
-        <OptionButton value="DRAW" label="X" selected={current === "DRAW"} locked={locked} compact={compact} flash={justSaved && current === "DRAW"} />
+        {allowDraw && (
+          <OptionButton value="DRAW" label="X" selected={current === "DRAW"} locked={locked} compact={compact} flash={justSaved && current === "DRAW"} />
+        )}
         <OptionButton value="AWAY_WIN" label={awayShort} selected={current === "AWAY_WIN"} locked={locked} compact={compact} flash={justSaved && current === "AWAY_WIN"} />
       </div>
 

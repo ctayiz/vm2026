@@ -44,6 +44,7 @@ export interface FDMatch {
   awayTla: string | null;
   homeGoals: number | null;
   awayGoals: number | null;
+  winner: string | null; // "HOME_TEAM" | "AWAY_TEAM" | "DRAW" | null
 }
 
 /** Alle WM-Spiele (1 Request). */
@@ -62,6 +63,7 @@ export async function fetchWorldCupMatches(): Promise<FDMatch[]> {
     awayTla: m.awayTeam?.tla ?? null,
     homeGoals: m.score?.fullTime?.home ?? null,
     awayGoals: m.score?.fullTime?.away ?? null,
+    winner: m.score?.winner ?? null,
   }));
 }
 

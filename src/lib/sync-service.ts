@@ -107,7 +107,10 @@ export async function syncSchedule(): Promise<SyncSummary> {
 
     // Spielstand nur übernehmen, wenn die Quelle einen liefert – sonst Bestand
     // wahren (überschreibt keine vom Admin eingetragenen Ergebnisse mit null).
-    const scoreData = sourceHasScore ? { homeGoals: m.homeGoals, awayGoals: m.awayGoals } : {};
+    const scoreData = {
+      ...(sourceHasScore ? { homeGoals: m.homeGoals, awayGoals: m.awayGoals } : {}),
+      ...(m.winner ? { winner: m.winner } : {}), // K.-o.-Sieger nie mit null leeren
+    };
 
     if (!existing) {
       await db.match.create({

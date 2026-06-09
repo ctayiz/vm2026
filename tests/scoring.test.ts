@@ -42,3 +42,26 @@ describe("Admin-Ergebnisupdate führt zu korrekter Auswertung", () => {
     expect(isCorrect("AWAY_WIN", 4, 0)).toBe(false);
   });
 });
+
+import { outcomeOf } from "@/lib/scoring";
+
+describe("outcomeOf (K.-o.-Sieger hat Vorrang vor Toren)", () => {
+  it("ohne Sieger = normaler 1X2-Ausgang", () => {
+    expect(outcomeOf(1, 1, null)).toBe("DRAW");
+    expect(outcomeOf(2, 0, null)).toBe("HOME_WIN");
+  });
+  it("Sieger nach Elfmeter trotz Tor-Gleichstand", () => {
+    expect(outcomeOf(1, 1, "AWAY")).toBe("AWAY_WIN");
+    expect(outcomeOf(1, 1, "HOME")).toBe("HOME_WIN");
+  });
+  it("Tipp auf Sieger zählt, nicht auf Unentschieden", () => {
+    // 1:1, Heim gewinnt im Elfmeterschießen
+    expect(scorePrediction("HOME_WIN", 1, 1, { winner: "HOME" })).toBe(3);
+    expect(scorePrediction("DRAW", 1, 1, { winner: "HOME" })).toBe(0);
+    expect(scorePrediction("AWAY_WIN", 1, 1, { winner: "HOME" })).toBe(0);
+  });
+  it("isCorrect mit Sieger", () => {
+    expect(isCorrect("AWAY_WIN", 2, 2, "AWAY")).toBe(true);
+    expect(isCorrect("DRAW", 2, 2, "AWAY")).toBe(false);
+  });
+});
