@@ -11,6 +11,7 @@ import { MatchCard } from "@/components/match-card";
 import { FeaturedMatch } from "@/components/featured-match";
 import { DashboardHero } from "@/components/dashboard-hero";
 import { FavoritesStrip } from "@/components/favorites-strip";
+import { ExploreTiles } from "@/components/explore-tiles";
 import { FilterBar } from "@/components/filter-bar";
 import { TeamFilter, type TeamFilterOption } from "@/components/team-filter";
 import { Flag } from "@/components/flag";
@@ -155,6 +156,8 @@ export default async function SpielplanPage({
           <FeaturedMatch match={nextMatch} />
         </section>
       )}
+
+      <ExploreTiles />
 
       <div className="space-y-3">
         <div className="flex items-center gap-2">
