@@ -70,9 +70,11 @@ export async function registerAction(_prev: ActionState, formData: FormData): Pr
 export async function loginAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const t = getDictionary();
 
-  // Brute-Force-Bremse: max. 10 Login-Versuche / 5 Min pro IP.
+  // Brute-Force-Bremse: max. 40 Login-Versuche / 5 Min pro IP. Bewusst großzügig,
+  // weil bei Watch-Partys mehrere Leute hinter derselben IP (WLAN/Mobilfunk-NAT)
+  // sitzen und sich sonst gegenseitig aussperren würden.
   const ip = headers().get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  if (!rateLimit(`login:${ip}`, 10, 5 * 60 * 1000)) {
+  if (!rateLimit(`login:${ip}`, 40, 5 * 60 * 1000)) {
     return { ok: false, error: t.msg.tooManyAttempts };
   }
 
