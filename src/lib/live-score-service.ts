@@ -112,14 +112,10 @@ export async function syncLiveScores(): Promise<LiveSyncResult> {
   let checked = 0;
 
   for (const f of fixtures) {
-    const status = LIVE.has(f.status) ? "live" : FINISHED.has(f.status) ? "finished" : null;
-    if (!status) continue; // nur laufende/beendete Spiele interessieren uns
-
     const hc = NAME_TO_CODE.get(norm(f.homeName));
     const ac = NAME_TO_CODE.get(norm(f.awayName));
     if (!hc || !ac) continue; // Team nicht eindeutig zuordenbar -> überspringen
 
-    checked++;
     const candidates = byPair.get([hc, ac].sort().join("|")) ?? [];
     if (candidates.length === 0) continue;
     // bei mehreren (Gruppe + evtl. K.o.-Rückspiel) das datumsnächste nehmen
@@ -133,36 +129,41 @@ export async function syncLiveScores(): Promise<LiveSyncResult> {
               : best,
           );
 
-    // beendete Spiele nicht wieder auf "live" zurücksetzen
-    if (m.status === "finished" && status !== "finished") continue;
+    const data: Record<string, unknown> = {};
 
-    // Orientierung anhand des Codes (Heim/Auswärts kann je Quelle abweichen)
-    const sameOrient = m.homeTeam!.code === hc;
-    const hg = sameOrient ? f.homeGoals : f.awayGoals;
-    const ag = sameOrient ? f.awayGoals : f.homeGoals;
-    const winner =
-      f.homeWinner === true
-        ? sameOrient
-          ? "HOME"
-          : "AWAY"
-        : f.awayWinner === true
+    // Stadion/Stadt anreichern, wenn die API es liefert und bei uns noch leer ist.
+    if (f.venue && !m.venue) data.venue = f.venue;
+    if (f.city && !m.city) data.city = f.city;
+
+    // Live-/Endstand übernehmen (beendete Spiele nie wieder zurückstufen).
+    const status = LIVE.has(f.status) ? "live" : FINISHED.has(f.status) ? "finished" : null;
+    if (status && !(m.status === "finished" && status !== "finished")) {
+      checked++;
+      // Orientierung anhand des Codes (Heim/Auswärts kann je Quelle abweichen)
+      const sameOrient = m.homeTeam!.code === hc;
+      const hg = sameOrient ? f.homeGoals : f.awayGoals;
+      const ag = sameOrient ? f.awayGoals : f.homeGoals;
+      const winner =
+        f.homeWinner === true
           ? sameOrient
-            ? "AWAY"
-            : "HOME"
-          : null;
+            ? "HOME"
+            : "AWAY"
+          : f.awayWinner === true
+            ? sameOrient
+              ? "AWAY"
+              : "HOME"
+            : null;
+      data.status = status;
+      if (hg != null) data.homeGoals = hg;
+      if (ag != null) data.awayGoals = ag;
+      if (winner) data.winner = winner;
+    }
 
-    await db.match.update({
-      where: { id: m.id },
-      data: {
-        status,
-        ...(hg != null ? { homeGoals: hg } : {}),
-        ...(ag != null ? { awayGoals: ag } : {}),
-        ...(winner ? { winner } : {}),
-      },
-    });
+    if (Object.keys(data).length === 0) continue; // nichts zu tun
 
-    updated++;
-    if (status === "live") live++;
+    await db.match.update({ where: { id: m.id }, data });
+    if (data.status) updated++;
+    if (data.status === "live") live++;
   }
 
   return { ok: true, updated, live, checked };

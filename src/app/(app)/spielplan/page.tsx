@@ -88,9 +88,11 @@ export default async function SpielplanPage({
   const matches = applyTeamFilter(applyFilter(all, filter, favoriteCodes), teamCode);
 
   const now = Date.now();
-  // nächstes anstehendes Spiel (noch nicht beendet, Anpfiff in der Zukunft)
+  // Highlight: ein laufendes Spiel hat Vorrang, sonst das nächste anstehende.
+  const liveMatch = all.find((m) => m.status === "live") ?? null;
   const nextMatch =
     all.find((m) => m.status !== "finished" && m.kickoff.getTime() > now) ?? null;
+  const featuredMatch = liveMatch ?? nextMatch;
   const openCount = all.filter(
     (m) => m.status !== "finished" && !isPickLocked(m.kickoff) && !m.myPrediction,
   ).length;
@@ -151,9 +153,9 @@ export default async function SpielplanPage({
         </Link>
       )}
 
-      {nextMatch && (
+      {featuredMatch && (
         <section className="space-y-3">
-          <FeaturedMatch match={nextMatch} />
+          <FeaturedMatch match={featuredMatch} />
         </section>
       )}
 

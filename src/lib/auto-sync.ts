@@ -14,6 +14,7 @@ import { hasFootballData } from "./football-data";
 const SCHEDULE_MS = 15 * 60 * 1000; // normal: 15 Min
 const SCHEDULE_LIVE_MS = 60 * 1000; // Live-Fenster: 60 Sek
 const LIVE_SCORE_MS = 5 * 60 * 1000; // Live-Stände (API-Football): alle 5 Min – schont das Gratis-Kontingent (100/Tag)
+const META_MS = 6 * 60 * 60 * 1000; // außerhalb Live: alle 6 Std (füllt Stadien/Stadt nach)
 const STATS_MS = 60 * 60 * 1000; // Torschützen: 60 Min
 
 /** Läuft gerade ein Spiel? (Status "live" oder Anpfiff < 2,5h, nicht beendet) */
@@ -41,12 +42,12 @@ export async function runScheduledSync(): Promise<{ did: string[]; live: boolean
     did.push("schedule");
   }
 
-  // Echte Live-Stände nur im Live-Fenster und nur alle 5 Min (Quota-schonend).
-  // Läuft NACH syncSchedule, hat also bei Stand/Status das letzte Wort.
-  if (live && hasApiFootball() && (await shouldRun("lastLiveScoreSync", LIVE_SCORE_MS))) {
+  // API-Football: im Live-Fenster alle 5 Min (echte Live-Stände), sonst alle 6 Std
+  // (füllt nur Stadien/Stadt nach). Läuft NACH syncSchedule -> letztes Wort bei Stand/Status.
+  if (hasApiFootball() && (await shouldRun("lastLiveScoreSync", live ? LIVE_SCORE_MS : META_MS))) {
     const r = await syncLiveScores();
     if (r.updated > 0) await rescoreAll(); // beendete Spiele sofort werten
-    did.push("livescores");
+    did.push(live ? "livescores" : "meta");
   }
 
   if ((hasFootballData() || hasApiFootball()) && (await shouldRun("lastStatsSync", STATS_MS))) {

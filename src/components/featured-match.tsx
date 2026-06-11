@@ -5,7 +5,8 @@ import { PredictionPicker } from "@/components/prediction-picker";
 import { dayLabel, formatTime } from "@/lib/format";
 import { getLocale, getDictionary } from "@/lib/i18n-server";
 import { getLockTime, isPickLocked } from "@/lib/lock";
-import { PHASE_META, type Phase } from "@/lib/constants";
+import { outcomeOf } from "@/lib/scoring";
+import { PHASE_META, type Phase, type Prediction } from "@/lib/constants";
 import { localizePlaceholder } from "@/lib/team-map";
 import { MapPin, Sparkles } from "lucide-react";
 import type { MatchWithPrediction } from "@/lib/queries";
@@ -25,16 +26,43 @@ export function FeaturedMatch({ match }: { match: MatchWithPrediction }) {
   const locked = isPickLocked(match.kickoff);
   const lockTimeIso = getLockTime(match.kickoff).toISOString();
 
+  const live = match.status === "live";
+  const hasScore = match.homeGoals != null && match.awayGoals != null;
+  const PRED_LABEL: Record<Prediction, string> = {
+    HOME_WIN: t.outcome.home,
+    DRAW: t.outcome.draw,
+    AWAY_WIN: t.outcome.away,
+  };
+  // Live: liegt der eigene Tipp aktuell vorn? (vorläufig)
+  const liveOutcome =
+    live && hasScore
+      ? outcomeOf(match.homeGoals!, match.awayGoals!, (match.winner as "HOME" | "AWAY" | null) ?? null)
+      : null;
+  const liveLeading = match.myPrediction && liveOutcome ? match.myPrediction === liveOutcome : null;
+
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-card to-card p-[1px] shadow-xl shadow-primary/10">
+    <div
+      className={cn(
+        "relative overflow-hidden rounded-2xl border p-[1px] shadow-xl",
+        live
+          ? "border-red-500/40 bg-gradient-to-br from-red-500/10 via-card to-card shadow-red-500/10"
+          : "border-primary/30 bg-gradient-to-br from-primary/10 via-card to-card shadow-primary/10",
+      )}
+    >
       {/* dezenter Glanz */}
       <div className="shimmer-gold pointer-events-none absolute inset-0 opacity-60" />
 
       <div className="relative rounded-2xl px-5 py-5 sm:px-6">
         <div className="mb-4 flex items-center justify-between">
-          <Badge variant="default" className="gap-1">
-            <Sparkles className="size-3" /> {t.match.next}
-          </Badge>
+          {live ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/15 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-red-400">
+              <span className="size-1.5 animate-glow-pulse rounded-full bg-red-500" /> {t.match.live}
+            </span>
+          ) : (
+            <Badge variant="default" className="gap-1">
+              <Sparkles className="size-3" /> {t.match.next}
+            </Badge>
+          )}
           <span className="text-xs font-medium text-muted-foreground">
             {dayLabel(match.kickoff, locale)} · {formatTime(match.kickoff, locale)}
           </span>
@@ -52,10 +80,18 @@ export function FeaturedMatch({ match }: { match: MatchWithPrediction }) {
             </div>
           </div>
 
-          {/* Mitte */}
+          {/* Mitte: Live-Stand oder vs + Countdown */}
           <div className="flex flex-col items-center gap-1">
-            <span className="text-xl font-black text-muted-foreground">{t.match.vsShort}</span>
-            <Countdown lockTimeIso={lockTimeIso} />
+            {live && hasScore ? (
+              <span className="rounded-lg bg-red-500/20 px-3 py-1.5 text-2xl font-black tabular-nums text-red-300 sm:text-3xl">
+                {match.homeGoals} : {match.awayGoals}
+              </span>
+            ) : (
+              <>
+                <span className="text-xl font-black text-muted-foreground">{t.match.vsShort}</span>
+                <Countdown lockTimeIso={lockTimeIso} />
+              </>
+            )}
           </div>
 
           {/* Auswärts */}
@@ -81,16 +117,41 @@ export function FeaturedMatch({ match }: { match: MatchWithPrediction }) {
           )}
         </div>
 
-        <div className="mx-auto mt-4 max-w-sm">
-          <PredictionPicker
-            matchId={match.id}
-            initialPrediction={match.myPrediction}
-            locked={locked}
-            allowDraw={!PHASE_META[phase]?.knockout}
-            homeShort={home.real ? home.code : t.match.home}
-            awayShort={away.real ? away.code : t.match.away}
-          />
-        </div>
+        {/* Live: eigenen Tipp + Live-Status zeigen. Sonst: Tipp-Picker. */}
+        {live ? (
+          <div className="mx-auto mt-4 flex max-w-sm items-center justify-center gap-2 text-sm">
+            {match.myPrediction ? (
+              <span className="text-muted-foreground">
+                {t.match.yourTip}{" "}
+                <span className="font-medium text-foreground">{PRED_LABEL[match.myPrediction]}</span>
+              </span>
+            ) : (
+              <span className="text-muted-foreground">{t.match.noTip}</span>
+            )}
+            {match.myPrediction && liveLeading !== null && (
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
+                  liveLeading ? "bg-primary/20 text-primary" : "bg-secondary text-muted-foreground",
+                )}
+              >
+                <span className="size-1.5 animate-glow-pulse rounded-full bg-current" />
+                {liveLeading ? t.match.leading : t.match.trailing}
+              </span>
+            )}
+          </div>
+        ) : (
+          <div className="mx-auto mt-4 max-w-sm">
+            <PredictionPicker
+              matchId={match.id}
+              initialPrediction={match.myPrediction}
+              locked={locked}
+              allowDraw={!PHASE_META[phase]?.knockout}
+              homeShort={home.real ? home.code : t.match.home}
+              awayShort={away.real ? away.code : t.match.away}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
