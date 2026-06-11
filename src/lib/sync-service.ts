@@ -83,12 +83,14 @@ export async function syncSchedule(): Promise<SyncSummary> {
       select: { id: true, status: true },
     });
 
-    // Status bestimmen – ein bereits beendetes Spiel wird NIE zurückgestuft
-    // (z. B. wenn die Quelle kurz „scheduled"/„live" zurückmeldet).
-    let status: string;
-    if (existing?.status === "finished" || srcStatus === "finished") status = "finished";
-    else if (srcStatus === "live") status = "live";
-    else status = "scheduled";
+    // Status darf NIE zurückgestuft werden (scheduled < live < finished).
+    // Wichtig, weil API-Football ein Spiel live/beendet meldet, football-data
+    // (Gratis-Tarif) es aber oft noch lange als „TIMED"/scheduled führt – ohne
+    // diesen Schutz würde football-data den Live-Stand wieder verstecken.
+    const RANK: Record<string, number> = { scheduled: 0, live: 1, finished: 2 };
+    const srcRank = RANK[srcStatus] ?? 0;
+    const existingRank = RANK[existing?.status ?? "scheduled"] ?? 0;
+    const status = srcRank >= existingRank ? srcStatus : existing!.status;
 
     const baseData = {
       phase: m.phase,
