@@ -8,6 +8,8 @@ import { requireAdmin } from "@/lib/auth";
 import { getDictionary } from "@/lib/i18n-server";
 import { resultSchema, teamProgressSchema } from "@/lib/validation";
 import { syncSchedule } from "@/lib/sync-service";
+import { syncLiveScores } from "@/lib/live-score-service";
+import { hasApiFootball } from "@/lib/api-football";
 import { rescoreMatch, rescoreAll, rescoreTournamentBets } from "@/lib/scoring-service";
 import { syncTopScorers, syncMatchGoals } from "@/lib/stats-service";
 
@@ -110,6 +112,30 @@ export async function syncStatsAction(): Promise<AdminState> {
     return { ok: false, error: scorers.message };
   }
   return { ok: true, message: `${scorers.message} ${goals.ok ? goals.message : ""}`.trim() };
+}
+
+/**
+ * Live-/Endstände von API-Football abrufen und übernehmen (Status, Tore, Sieger).
+ * Danach Spiel-Tipps neu bewerten, damit beendete Spiele sofort zählen.
+ */
+export async function syncLiveScoresAction(): Promise<AdminState> {
+  await requireAdmin();
+  if (!hasApiFootball()) {
+    return { ok: false, error: "APIFOOTBALL_KEY ist nicht gesetzt (in Vercel eintragen)." };
+  }
+  try {
+    const r = await syncLiveScores();
+    if (r.updated > 0) await rescoreAll();
+    revalidatePath("/spielplan");
+    revalidatePath("/ranking");
+    revalidatePath("/admin");
+    return {
+      ok: true,
+      message: `Live-Stände aktualisiert: ${r.updated} Spiele (${r.live} laufen, ${r.checked} geprüft).`,
+    };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Abruf fehlgeschlagen." };
+  }
 }
 
 export async function recomputeAllAction(): Promise<AdminState> {

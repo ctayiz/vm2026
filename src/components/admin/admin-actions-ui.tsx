@@ -2,13 +2,14 @@
 
 import { useState, useTransition } from "react";
 import { useFormState, useFormStatus } from "react-dom";
-import { RefreshCw, Calculator, Save, Ban, Trash2, CheckCircle2, Crown, Goal, KeyRound, Copy } from "lucide-react";
+import { RefreshCw, Calculator, Save, Ban, Trash2, CheckCircle2, Crown, Goal, KeyRound, Copy, Radio } from "lucide-react";
 import {
   syncScheduleAction,
   recomputeAllAction,
   setResultAction,
   setTeamProgressAction,
   syncStatsAction,
+  syncLiveScoresAction,
   toggleBlockUserAction,
   deleteUserAction,
   createPasswordResetAction,
@@ -132,6 +133,28 @@ export function SyncStatsButton() {
         disabled={pending}
       >
         <Goal className={pending ? "animate-spin" : ""} /> {t.admin.syncStats}
+      </Button>
+      {msg && <p className="max-w-xs text-xs text-muted-foreground">{msg}</p>}
+    </div>
+  );
+}
+
+export function LiveScoresButton() {
+  const t = useT();
+  const [msg, setMsg] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+  return (
+    <div className="flex flex-col gap-1">
+      <Button
+        onClick={() =>
+          start(async () => {
+            const r = await syncLiveScoresAction();
+            setMsg(r.message ?? r.error ?? null);
+          })
+        }
+        disabled={pending}
+      >
+        <Radio className={pending ? "animate-pulse" : ""} /> {t.admin.syncLive}
       </Button>
       {msg && <p className="max-w-xs text-xs text-muted-foreground">{msg}</p>}
     </div>

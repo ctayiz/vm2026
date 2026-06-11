@@ -6,12 +6,14 @@ import { db } from "./db";
 import { shouldRun } from "./app-settings";
 import { syncSchedule } from "./sync-service";
 import { syncTopScorers, syncMatchGoals } from "./stats-service";
+import { syncLiveScores } from "./live-score-service";
 import { rescoreAll, rescoreTournamentBets } from "./scoring-service";
 import { hasApiFootball } from "./api-football";
 import { hasFootballData } from "./football-data";
 
 const SCHEDULE_MS = 15 * 60 * 1000; // normal: 15 Min
 const SCHEDULE_LIVE_MS = 60 * 1000; // Live-Fenster: 60 Sek
+const LIVE_SCORE_MS = 5 * 60 * 1000; // Live-Stände (API-Football): alle 5 Min – schont das Gratis-Kontingent (100/Tag)
 const STATS_MS = 60 * 60 * 1000; // Torschützen: 60 Min
 
 /** Läuft gerade ein Spiel? (Status "live" oder Anpfiff < 2,5h, nicht beendet) */
@@ -37,6 +39,14 @@ export async function runScheduledSync(): Promise<{ did: string[]; live: boolean
     await syncSchedule();
     await rescoreAll();
     did.push("schedule");
+  }
+
+  // Echte Live-Stände nur im Live-Fenster und nur alle 5 Min (Quota-schonend).
+  // Läuft NACH syncSchedule, hat also bei Stand/Status das letzte Wort.
+  if (live && hasApiFootball() && (await shouldRun("lastLiveScoreSync", LIVE_SCORE_MS))) {
+    const r = await syncLiveScores();
+    if (r.updated > 0) await rescoreAll(); // beendete Spiele sofort werten
+    did.push("livescores");
   }
 
   if ((hasFootballData() || hasApiFootball()) && (await shouldRun("lastStatsSync", STATS_MS))) {

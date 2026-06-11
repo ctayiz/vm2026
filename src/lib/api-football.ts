@@ -76,6 +76,9 @@ export interface ApiFixture {
   homeGoals: number | null;
   awayGoals: number | null;
   status: string; // API-Football short status (NS, FT, 1H, …)
+  // Sieger laut API (auch nach Verlängerung/Elfmeter); null = unentschieden/offen
+  homeWinner: boolean | null;
+  awayWinner: boolean | null;
 }
 
 /** Alle Fixtures der Liga/Saison (Spielplan + Live-Ergebnisse). */
@@ -93,6 +96,8 @@ export async function fetchFixtures(): Promise<ApiFixture[]> {
     homeGoals: r.goals?.home ?? null,
     awayGoals: r.goals?.away ?? null,
     status: r.fixture?.status?.short ?? "NS",
+    homeWinner: r.teams?.home?.winner ?? null,
+    awayWinner: r.teams?.away?.winner ?? null,
   }));
 }
 

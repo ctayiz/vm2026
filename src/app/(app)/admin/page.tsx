@@ -9,6 +9,7 @@ import {
   SyncButton,
   RecomputeButton,
   SyncStatsButton,
+  LiveScoresButton,
   ResultForm,
   UserRowActions,
   TeamProgressRow,
@@ -57,6 +58,7 @@ export default async function AdminPage() {
 
       <div className="flex flex-wrap gap-3">
         <SyncButton />
+        <LiveScoresButton />
         <SyncStatsButton />
         <RecomputeButton />
       </div>
