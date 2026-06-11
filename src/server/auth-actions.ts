@@ -134,6 +134,36 @@ export async function changePasswordAction(_prev: ActionState, formData: FormDat
   return { ok: true };
 }
 
+/**
+ * Setzt das Passwort über einen Admin-Reset-Link (kein Login nötig).
+ * Prüft Token (existiert, unbenutzt, nicht abgelaufen), speichert das neue
+ * Passwort und entwertet den Link (Einmal-Nutzung).
+ */
+export async function resetPasswordWithTokenAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const t = getDictionary();
+  const token = String(formData.get("token") ?? "");
+  const password = String(formData.get("password") ?? "");
+  const confirm = String(formData.get("confirmPassword") ?? "");
+
+  if (password.length < 8) return { ok: false, error: t.msg.passwordMin };
+  if (password !== confirm) return { ok: false, error: t.msg.passwordMismatch };
+
+  const reset = await db.passwordReset.findUnique({ where: { token } });
+  if (!reset || reset.usedAt || reset.expiresAt.getTime() < Date.now()) {
+    return { ok: false, error: t.msg.resetInvalid };
+  }
+
+  const passwordHash = await hashPassword(password);
+  await db.$transaction([
+    db.user.update({ where: { id: reset.userId }, data: { passwordHash } }),
+    db.passwordReset.update({ where: { id: reset.id }, data: { usedAt: new Date() } }),
+  ]);
+  return { ok: true };
+}
+
 export async function updateProfileAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const user = await requireUser();
   const t = getDictionary();

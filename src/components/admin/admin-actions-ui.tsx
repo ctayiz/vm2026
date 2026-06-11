@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useFormState, useFormStatus } from "react-dom";
-import { RefreshCw, Calculator, Save, Ban, Trash2, CheckCircle2, Crown, Goal } from "lucide-react";
+import { RefreshCw, Calculator, Save, Ban, Trash2, CheckCircle2, Crown, Goal, KeyRound, Copy } from "lucide-react";
 import {
   syncScheduleAction,
   recomputeAllAction,
@@ -11,6 +11,7 @@ import {
   syncStatsAction,
   toggleBlockUserAction,
   deleteUserAction,
+  createPasswordResetAction,
   type AdminState,
 } from "@/server/admin-actions";
 import { Button } from "@/components/ui/button";
@@ -215,6 +216,9 @@ export function UserRowActions({
 }) {
   const t = useT();
   const [pending, start] = useTransition();
+  const [resetUrl, setResetUrl] = useState<string | null>(null);
+  const [resetErr, setResetErr] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const block = () => {
     const fd = new FormData();
@@ -233,14 +237,62 @@ export function UserRowActions({
     });
   };
 
+  const makeResetLink = () => {
+    setResetErr(null);
+    setCopied(false);
+    const fd = new FormData();
+    fd.set("userId", userId);
+    start(async () => {
+      const r = await createPasswordResetAction(fd);
+      if (r.ok && r.url) setResetUrl(r.url);
+      else setResetErr(r.error ?? t.admin.resetFailed);
+    });
+  };
+
+  const copy = async () => {
+    if (!resetUrl) return;
+    try {
+      await navigator.clipboard.writeText(resetUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* Clipboard nicht verfügbar – Link kann manuell markiert werden */
+    }
+  };
+
   return (
-    <div className="flex items-center gap-1">
-      <Button variant="ghost" size="sm" onClick={block} disabled={pending}>
-        <Ban className="size-4" /> {blocked ? t.admin.unblock : t.admin.block}
-      </Button>
-      <Button variant="ghost" size="icon" onClick={del} disabled={pending} aria-label="Löschen">
-        <Trash2 className="size-4 text-red-300" />
-      </Button>
+    <div className="flex flex-col items-end gap-2">
+      <div className="flex items-center gap-1">
+        <Button variant="ghost" size="sm" onClick={makeResetLink} disabled={pending}>
+          <KeyRound className="size-4" /> {t.admin.resetPw}
+        </Button>
+        <Button variant="ghost" size="sm" onClick={block} disabled={pending}>
+          <Ban className="size-4" /> {blocked ? t.admin.unblock : t.admin.block}
+        </Button>
+        <Button variant="ghost" size="icon" onClick={del} disabled={pending} aria-label="Löschen">
+          <Trash2 className="size-4 text-red-300" />
+        </Button>
+      </div>
+
+      {resetErr && <p className="text-xs text-red-300">{resetErr}</p>}
+
+      {resetUrl && (
+        <div className="w-full max-w-md space-y-1.5 rounded-lg border border-border bg-secondary/30 p-2.5 text-left">
+          <p className="text-[11px] text-muted-foreground">{t.admin.resetLinkTitle}</p>
+          <div className="flex items-center gap-2">
+            <input
+              readOnly
+              value={resetUrl}
+              onFocus={(e) => e.currentTarget.select()}
+              className="min-w-0 flex-1 rounded-md border border-input bg-background/60 px-2 py-1.5 text-xs"
+            />
+            <Button type="button" size="sm" variant="secondary" onClick={copy}>
+              <Copy className="size-3.5" /> {copied ? t.admin.resetCopied : t.admin.resetCopy}
+            </Button>
+          </div>
+          <p className="text-[11px] text-muted-foreground">{t.admin.resetExpiry}</p>
+        </div>
+      )}
     </div>
   );
 }

@@ -36,8 +36,26 @@ model User {
   predictions    Prediction[]
   tournamentBets TournamentBet[]
   favorites      Favorite[]
+  passwordResets PasswordReset[]
 
   @@index([role])
+}
+
+// --- Passwort-Reset (Admin erstellt einmaligen Link) -----------------------
+model PasswordReset {
+  id        String    @id @default(cuid())
+  userId    String
+  // zufälliges, einmaliges Token im Link (/reset/<token>)
+  token     String    @unique
+  // Ablaufzeitpunkt – danach ist der Link ungültig
+  expiresAt DateTime
+  // gesetzt, sobald der Link benutzt wurde (Einmal-Nutzung)
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 // --- Teams -----------------------------------------------------------------

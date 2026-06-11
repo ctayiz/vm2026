@@ -1,8 +1,11 @@
 "use server";
 
+import { randomBytes } from "crypto";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
+import { getDictionary } from "@/lib/i18n-server";
 import { resultSchema, teamProgressSchema } from "@/lib/validation";
 import { syncSchedule } from "@/lib/sync-service";
 import { rescoreMatch, rescoreAll, rescoreTournamentBets } from "@/lib/scoring-service";
@@ -132,6 +135,36 @@ export async function toggleBlockUserAction(_prev: AdminState, formData: FormDat
   await db.user.update({ where: { id: userId }, data: { blocked: !user.blocked } });
   revalidatePath("/admin");
   return { ok: true, message: user.blocked ? "Nutzer entsperrt." : "Nutzer gesperrt." };
+}
+
+export type ResetLinkState = { ok: boolean; url?: string; error?: string };
+
+/**
+ * Erzeugt einen einmaligen, 7 Tage gültigen Passwort-Reset-Link für einen Nutzer.
+ * Der Admin teilt den Link (z. B. per WhatsApp); der Nutzer setzt selbst ein neues
+ * Passwort. Der Admin sieht das Passwort nie. Alte, ungenutzte Links werden entwertet.
+ */
+export async function createPasswordResetAction(formData: FormData): Promise<ResetLinkState> {
+  await requireAdmin();
+  const t = getDictionary();
+  const userId = String(formData.get("userId") ?? "");
+  if (!userId) return { ok: false, error: t.admin.resetFailed };
+
+  const user = await db.user.findUnique({ where: { id: userId }, select: { id: true } });
+  if (!user) return { ok: false, error: t.admin.resetFailed };
+
+  // bestehende, noch ungenutzte Links für diesen Nutzer ungültig machen
+  await db.passwordReset.deleteMany({ where: { userId, usedAt: null } });
+
+  const token = randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  await db.passwordReset.create({ data: { userId, token, expiresAt } });
+
+  const h = headers();
+  const host = h.get("host") ?? "wm2026.tayiz.de";
+  const proto = h.get("x-forwarded-proto") ?? "https";
+  const url = `${proto}://${host}/reset/${token}`;
+  return { ok: true, url };
 }
 
 export async function deleteUserAction(_prev: AdminState, formData: FormData): Promise<AdminState> {
