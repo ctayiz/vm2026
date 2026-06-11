@@ -13,7 +13,8 @@ import { hasFootballData } from "./football-data";
 
 const SCHEDULE_MS = 15 * 60 * 1000; // normal: 15 Min
 const SCHEDULE_LIVE_MS = 60 * 1000; // Live-Fenster: 60 Sek
-const LIVE_SCORE_MS = 5 * 60 * 1000; // Live-Stände (API-Football): alle 5 Min – schont das Gratis-Kontingent (100/Tag)
+const LIVE_SCORE_INPLAY_MS = 2 * 60 * 1000; // Spiel LÄUFT: alle 2 Min (möglichst aktuell)
+const LIVE_SCORE_SOON_MS = 5 * 60 * 1000; // Anpfiff nahe (< 2,5h): alle 5 Min (um Anpfiff zu erkennen)
 const META_MS = 6 * 60 * 60 * 1000; // außerhalb Live: alle 6 Std (füllt Stadien/Stadt nach)
 const STATS_MS = 60 * 60 * 1000; // Torschützen: 60 Min
 
@@ -33,7 +34,8 @@ export async function isLiveWindow(): Promise<boolean> {
 
 /** Führt den gedrosselten Sync aus. Gibt zurück, was lief + ob Live-Fenster. */
 export async function runScheduledSync(): Promise<{ did: string[]; live: boolean }> {
-  const live = await isLiveWindow();
+  const inPlay = (await db.match.count({ where: { status: "live" } })) > 0;
+  const live = inPlay || (await isLiveWindow());
   const did: string[] = [];
 
   if (await shouldRun("lastScheduleSync", live ? SCHEDULE_LIVE_MS : SCHEDULE_MS)) {
@@ -42,12 +44,19 @@ export async function runScheduledSync(): Promise<{ did: string[]; live: boolean
     did.push("schedule");
   }
 
-  // API-Football: im Live-Fenster alle 5 Min (echte Live-Stände), sonst alle 6 Std
-  // (füllt nur Stadien/Stadt nach). Läuft NACH syncSchedule -> letztes Wort bei Stand/Status.
-  if (hasApiFootball() && (await shouldRun("lastLiveScoreSync", live ? LIVE_SCORE_MS : META_MS))) {
-    const r = await syncLiveScores();
-    if (r.updated > 0) await rescoreAll(); // beendete Spiele sofort werten
-    did.push(live ? "livescores" : "meta");
+  // API-Football: läuft ein Spiel -> alle 2 Min (möglichst aktuell). Anpfiff nahe
+  // -> alle 5 Min (um den Start zu erkennen). Sonst alle 6 Std (nur Stadien nachfüllen).
+  // Läuft NACH syncSchedule -> letztes Wort bei Stand/Status. Fehler (z. B. Quota)
+  // werden geschluckt, damit der restliche Sync nicht abbricht.
+  const liveScoreInterval = inPlay ? LIVE_SCORE_INPLAY_MS : live ? LIVE_SCORE_SOON_MS : META_MS;
+  if (hasApiFootball() && (await shouldRun("lastLiveScoreSync", liveScoreInterval))) {
+    try {
+      const r = await syncLiveScores();
+      if (r.updated > 0) await rescoreAll(); // beendete Spiele sofort werten
+      did.push(live ? "livescores" : "meta");
+    } catch {
+      /* API-Fehler/Quota: ignorieren, nächster Lauf versucht es erneut */
+    }
   }
 
   if ((hasFootballData() || hasApiFootball()) && (await shouldRun("lastStatsSync", STATS_MS))) {
