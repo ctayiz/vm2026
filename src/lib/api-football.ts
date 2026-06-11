@@ -110,6 +110,38 @@ export interface ApiGoalEvent {
   type: "normal" | "penalty" | "own";
 }
 
+export interface ApiLineupPlayer {
+  number: number | null;
+  name: string;
+  pos: string | null; // G/D/M/F
+  grid: string | null; // z. B. "4:2" (Reihe:Position)
+}
+export interface ApiLineup {
+  teamName: string;
+  formation: string | null; // z. B. "4-3-3"
+  coach: string | null;
+  startXI: ApiLineupPlayer[];
+  substitutes: ApiLineupPlayer[];
+}
+
+/** Aufstellungen (beide Teams) eines Fixtures. Leer, wenn (noch) keine vorliegt. */
+export async function fetchLineups(fixtureId: number): Promise<ApiLineup[]> {
+  const rows: any[] = await call("/fixtures/lineups", { fixture: fixtureId });
+  const mapP = (p: any): ApiLineupPlayer => ({
+    number: p?.player?.number ?? null,
+    name: p?.player?.name ?? "?",
+    pos: p?.player?.pos ?? null,
+    grid: p?.player?.grid ?? null,
+  });
+  return rows.map((r) => ({
+    teamName: r?.team?.name ?? "",
+    formation: r?.formation ?? null,
+    coach: r?.coach?.name ?? null,
+    startXI: (r?.startXI ?? []).map((x: any) => mapP(x)),
+    substitutes: (r?.substitutes ?? []).map((x: any) => mapP(x)),
+  }));
+}
+
 /** Tor-Ereignisse eines Fixtures. */
 export async function fetchFixtureGoals(fixtureId: number): Promise<ApiGoalEvent[]> {
   const rows: any[] = await call("/fixtures/events", { fixture: fixtureId });
