@@ -21,6 +21,23 @@ export async function GET(req: Request) {
   if (!authorized(req)) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   if (!hasApiFootball()) return NextResponse.json({ ok: false, error: "APIFOOTBALL_KEY fehlt" });
 
+  // Diagnose: Konfiguration + ob fetchFixtures überhaupt Daten liefert.
+  const config = {
+    league: process.env.APIFOOTBALL_LEAGUE ?? "(default 1)",
+    season: process.env.APIFOOTBALL_SEASON ?? "(default 2026)",
+    host: process.env.APIFOOTBALL_HOST ?? "(direct api-sports)",
+  };
+  let fixturesInfo: unknown;
+  try {
+    const fx = await fetchFixtures();
+    fixturesInfo = { ok: true, count: fx.length, sample: fx.slice(0, 2).map((f) => `${f.homeName} v ${f.awayName} [${f.status}]`) };
+  } catch (e) {
+    fixturesInfo = { ok: false, error: e instanceof Error ? e.message : "Fehler" };
+  }
+  if (new URL(req.url).searchParams.get("diag") === "1") {
+    return NextResponse.json({ ok: true, config, fixtures: fixturesInfo });
+  }
+
   try {
     const url = new URL(req.url);
     let fixtureId = Number(url.searchParams.get("fixture")) || null;
