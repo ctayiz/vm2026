@@ -1,5 +1,6 @@
 import { db } from "./db";
 import { fetchSchedule } from "./datasource";
+import { venueFor } from "./match-venues";
 import type { NormalizedMatch, NormalizedTeamRef } from "./worldcup-data";
 
 async function upsertTeam(ref: NormalizedTeamRef, group?: string | null): Promise<string> {
@@ -92,13 +93,17 @@ export async function syncSchedule(): Promise<SyncSummary> {
     const existingRank = RANK[existing?.status ?? "scheduled"] ?? 0;
     const status = srcRank >= existingRank ? srcStatus : existing!.status;
 
+    // Stadion/Stadt aus fester Zuordnung (offizieller Spielplan) – die Quelle
+    // liefert im Gratis-Tarif keine; die feste Zuordnung hat daher Vorrang.
+    const fixedVenue = venueFor(m.externalId);
+
     const baseData = {
       phase: m.phase,
       group: m.group ?? null,
       roundLabel: m.roundLabel ?? null,
       kickoff: new Date(m.kickoff),
-      venue: m.venue ?? null,
-      city: m.city ?? null,
+      venue: fixedVenue?.stadium ?? m.venue ?? null,
+      city: fixedVenue?.city ?? m.city ?? null,
       homeTeamId,
       awayTeamId,
       // Platzhalter nur setzen, wenn die Quelle einen liefert – sonst Bestand
