@@ -76,6 +76,8 @@ model Team {
   isChampion   Boolean @default(false)
   // hat dieses Team die meisten Turnier-Tore (für Bonus-Frage); bei Gleichstand mehrere
   isTopScoringTeam Boolean @default(false)
+  // API-Football Team-ID (für Kader-Abfragen via /players/squads)
+  apiTeamId    Int?     @unique
 
   homeMatches Match[] @relation("HomeTeam")
   awayMatches Match[] @relation("AwayTeam")

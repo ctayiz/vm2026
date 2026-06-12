@@ -79,6 +79,8 @@ export interface ApiFixture {
   // Sieger laut API (auch nach Verlängerung/Elfmeter); null = unentschieden/offen
   homeWinner: boolean | null;
   awayWinner: boolean | null;
+  homeTeamId: number | null;
+  awayTeamId: number | null;
 }
 
 /** Alle Fixtures der Liga/Saison (Spielplan + Live-Ergebnisse). */
@@ -98,6 +100,32 @@ export async function fetchFixtures(): Promise<ApiFixture[]> {
     status: r.fixture?.status?.short ?? "NS",
     homeWinner: r.teams?.home?.winner ?? null,
     awayWinner: r.teams?.away?.winner ?? null,
+    homeTeamId: r.teams?.home?.id ?? null,
+    awayTeamId: r.teams?.away?.id ?? null,
+  }));
+}
+
+export interface SquadPlayer {
+  id: number;
+  name: string;
+  age: number | null;
+  number: number | null;
+  position: string; // "Goalkeeper" | "Defender" | "Midfielder" | "Attacker"
+  photo: string | null;
+}
+
+/** Kader eines Teams via /players/squads?team=<id>. */
+export async function fetchSquad(apiTeamId: number): Promise<SquadPlayer[]> {
+  const rows: any[] = await call("/players/squads", { team: apiTeamId });
+  const entry = rows[0];
+  if (!entry) return [];
+  return (entry.players ?? []).map((p: any) => ({
+    id: p.id,
+    name: p.name ?? "?",
+    age: p.age ?? null,
+    number: p.number ?? null,
+    position: p.position ?? "",
+    photo: p.photo ?? null,
   }));
 }
 

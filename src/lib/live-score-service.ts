@@ -112,8 +112,10 @@ export async function syncApiFootball(): Promise<SyncResult> {
 
   const fixtures = await fetchFixtures();
   const ours = await loadMatches();
-  const teams = await db.team.findMany({ select: { id: true, code: true } });
+  const teams = await db.team.findMany({ select: { id: true, code: true, apiTeamId: true } });
+  const teamByCode = new Map(teams.map((t) => [t.code, t]));
   const teamIdByCode = new Map(teams.map((t) => [t.code, t.id]));
+  const pendingApiTeamIds = new Map<string, number>(); // db team id -> API team id
 
   // Index: Gruppen-/aufgelöste Spiele nach ungeordnetem Code-Paar
   const byPair = new Map<string, OurMatch[]>();
@@ -161,6 +163,16 @@ export async function syncApiFootball(): Promise<SyncResult> {
       if (m && hc && ac) resolveTeams = true;
     }
     if (!m) continue;
+
+    // Collect apiTeamId for matched teams (for squad lookups)
+    if (hc && f.homeTeamId) {
+      const t = teamByCode.get(hc);
+      if (t && !t.apiTeamId && !pendingApiTeamIds.has(t.id)) pendingApiTeamIds.set(t.id, f.homeTeamId);
+    }
+    if (ac && f.awayTeamId) {
+      const t = teamByCode.get(ac);
+      if (t && !t.apiTeamId && !pendingApiTeamIds.has(t.id)) pendingApiTeamIds.set(t.id, f.awayTeamId);
+    }
 
     const data: Record<string, unknown> = {};
 
@@ -217,6 +229,14 @@ export async function syncApiFootball(): Promise<SyncResult> {
     } catch {
       /* z. B. apiFixtureId-Kollision -> ignorieren */
     }
+  }
+
+  // Save API team IDs for squad lookups (fire-and-forget, non-critical)
+  for (const [id, apiTeamId] of pendingApiTeamIds) {
+    await db.team.update({ where: { id }, data: { apiTeamId } }).catch(() => {});
+    // Mark in-memory so subsequent calls within this run don't re-queue
+    const t = teams.find((x) => x.id === id);
+    if (t) t.apiTeamId = apiTeamId;
   }
 
   return { ok: true, updated, live, checked, resolved };

@@ -509,6 +509,14 @@ const de = {
     reached: (r: string) => `Erreicht: ${r}`,
     noMatches: "Noch keine Spiele angesetzt.",
     back: "Zur WM-Übersicht",
+    squad: "Kader",
+    noSquad: "Kein Kader verfügbar.",
+    pos: {
+      Goalkeeper: "Tor",
+      Defender: "Abwehr",
+      Midfielder: "Mittelfeld",
+      Attacker: "Sturm",
+    } as Record<string, string>,
   },
   notFound: {
     title: "Seite nicht gefunden",
@@ -1105,6 +1113,14 @@ const tr: Dictionary = {
     reached: (r: string) => `Ulaştığı tur: ${r}`,
     noMatches: "Henüz maç planlanmadı.",
     back: "Dünya Kupası özetine",
+    squad: "Kadro",
+    noSquad: "Kadro mevcut değil.",
+    pos: {
+      Goalkeeper: "Kaleci",
+      Defender: "Defans",
+      Midfielder: "Orta Saha",
+      Attacker: "Forvet",
+    } as Record<string, string>,
   },
   notFound: {
     title: "Sayfa bulunamadı",

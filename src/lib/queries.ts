@@ -389,7 +389,7 @@ export async function getTournamentFacts() {
 export async function getTeamProfile(code: string) {
   const team = await db.team.findUnique({
     where: { code },
-    select: { code: true, name: true, flagCode: true, group: true, reachedPhase: true, isChampion: true },
+    select: { code: true, name: true, flagCode: true, group: true, reachedPhase: true, isChampion: true, apiTeamId: true },
   });
   if (!team) return null;
 

@@ -12,6 +12,7 @@ import { outcomeOf } from "@/lib/scoring";
 import { getLocale, getDictionary } from "@/lib/i18n-server";
 import { ArrowLeft, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { fetchSquad, type SquadPlayer, hasApiFootball } from "@/lib/api-football";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,19 @@ export default async function TeamPage({ params }: { params: { code: string } })
   if (!data) notFound();
 
   const { team, matches } = data;
+
+  // Squad from API-Football (only if apiTeamId is known)
+  let squad: SquadPlayer[] = [];
+  if (team.apiTeamId && hasApiFootball()) {
+    squad = await fetchSquad(team.apiTeamId).catch(() => []);
+  }
+
+  // Group by position in standard order
+  const POS_ORDER = ["Goalkeeper", "Defender", "Midfielder", "Attacker"];
+  const squadByPos = POS_ORDER.map((pos) => ({
+    pos,
+    players: squad.filter((p) => p.position === pos).sort((a, b) => (a.number ?? 99) - (b.number ?? 99)),
+  })).filter((g) => g.players.length > 0);
 
   return (
     <div className="space-y-5">
@@ -134,6 +148,49 @@ export default async function TeamPage({ params }: { params: { code: string } })
           </div>
         )}
       </section>
+
+      {/* KADER */}
+      {(team.apiTeamId || squad.length > 0) && (
+        <section className="space-y-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            {t.teamPage.squad}
+          </h2>
+          {squad.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+              {t.teamPage.noSquad}
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {squadByPos.map(({ pos, players }) => (
+                <div key={pos}>
+                  <div className="mb-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                    {t.teamPage.pos[pos] ?? pos}
+                  </div>
+                  <div className="overflow-hidden rounded-xl border border-border">
+                    {players.map((p, i) => (
+                      <div
+                        key={p.id}
+                        className={cn(
+                          "flex items-center gap-3 px-4 py-2.5 text-sm",
+                          i !== players.length - 1 && "border-b border-border",
+                        )}
+                      >
+                        <span className="w-6 shrink-0 text-right tabular-nums text-muted-foreground">
+                          {p.number ?? "—"}
+                        </span>
+                        <span className="flex-1 font-medium">{p.name}</span>
+                        {p.age != null && (
+                          <span className="shrink-0 text-xs text-muted-foreground">{p.age} J.</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
     </div>
   );
 }
