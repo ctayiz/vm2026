@@ -25,8 +25,8 @@ export function AutoSync() {
         // Cron oder das Tab eines anderen Nutzers in die DB gekommen sein – nicht
         // nur durch den Sync dieses Tabs. Sonst nur, wenn dieser Tab etwas synct hat.
         if (data?.live || data?.did?.length) router.refresh();
-        // Im Live-Fenster alle 60 Sek erneut, sonst nicht weiter pollen.
-        if (data?.live) timer.current = setTimeout(tick, 60_000);
+        // Im Live-Fenster alle 30 Sek erneut, sonst nicht weiter pollen.
+        if (data?.live) timer.current = setTimeout(tick, 30_000);
       } catch {
         /* ignorieren */
       }

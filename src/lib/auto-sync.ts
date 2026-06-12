@@ -9,7 +9,7 @@ import { syncApiFootball } from "./live-score-service";
 import { rescoreAll, rescoreTournamentBets } from "./scoring-service";
 import { hasApiFootball } from "./api-football";
 
-const SYNC_INPLAY_MS = 2 * 60 * 1000; // Spiel LÄUFT: alle 2 Min
+const SYNC_INPLAY_MS = 60 * 1000; // Spiel LÄUFT: jede Minute (Bezahl-Tarif erlaubt häufigeres Abrufen)
 const SYNC_LIVE_MS = 5 * 60 * 1000; // Anpfiff nahe (< 2,5h): alle 5 Min
 const SYNC_IDLE_MS = 30 * 60 * 1000; // sonst: alle 30 Min (K.o.-Paarungen/Stadien nachziehen)
 const STATS_MS = 60 * 60 * 1000; // Torschützen: 60 Min
