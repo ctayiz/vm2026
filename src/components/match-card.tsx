@@ -5,7 +5,7 @@ import { Flag } from "@/components/flag";
 import { Countdown } from "@/components/countdown";
 import { PredictionPicker } from "@/components/prediction-picker";
 import { JokerButton } from "@/components/joker-button";
-import { GroupTipBar } from "@/components/tip-distribution";
+import { TipRevealSection } from "@/components/tip-distribution";
 import { formatTime } from "@/lib/format";
 import { getLockTime, isPickLocked } from "@/lib/lock";
 import { outcomeOf } from "@/lib/scoring";
@@ -222,11 +222,15 @@ export function MatchCard({
         )}
 
         {match.tipDistribution && (
-          <GroupTipBar
+          <TipRevealSection
             dist={match.tipDistribution}
             myPick={match.myPrediction}
             homeShort={home.isReal ? home.code : t.match.home}
             awayShort={away.isReal ? away.code : t.match.away}
+            autoShow={locked}
+            labelTipped={t.match.groupTipped(match.tipDistribution.total)}
+            labelReveal={t.match.revealTips}
+            labelHide={t.match.hideTips}
           />
         )}
       </div>

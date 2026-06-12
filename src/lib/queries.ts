@@ -283,7 +283,7 @@ export async function getMatches(userId: string) {
     myPoints: m.predictions[0]?.points ?? null,
     myScored: m.predictions[0]?.scored ?? false,
     myJoker: m.predictions[0]?.isJoker ?? false,
-    tipDistribution: isPickLocked(m.kickoff) ? distByMatch.get(m.id) ?? null : null,
+    tipDistribution: distByMatch.get(m.id) ?? null,
   }));
 }
 
