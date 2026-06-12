@@ -204,20 +204,27 @@ export async function syncApiFootball(): Promise<SyncResult> {
       const sameOrient = data.homeTeamId ? true : m.homeTeam?.code === hc;
       const hg = sameOrient ? f.homeGoals : f.awayGoals;
       const ag = sameOrient ? f.awayGoals : f.homeGoals;
-      const winner =
+      // Sieger: Gruppenspiele haben nie einen Sieger bei Unentschieden –
+      // API gibt manchmal fälschlich winner=true zurück. Daher: Gruppenspiele
+      // immer aus den Toren ableiten; K.-o.-Spiele aus dem API-Feld.
+      const isKnockout = !!PHASE_META[m.phase as Phase]?.knockout;
+      const apiWinner =
         f.homeWinner === true
-          ? sameOrient
-            ? "HOME"
-            : "AWAY"
+          ? sameOrient ? "HOME" : "AWAY"
           : f.awayWinner === true
-            ? sameOrient
-              ? "AWAY"
-              : "HOME"
+            ? sameOrient ? "AWAY" : "HOME"
             : null;
+      const goalsWinner =
+        hg != null && ag != null
+          ? hg > ag ? "HOME" : ag > hg ? "AWAY" : null
+          : null;
+      const winner = isKnockout ? apiWinner : goalsWinner;
       data.status = status;
       if (hg != null) data.homeGoals = hg;
       if (ag != null) data.awayGoals = ag;
-      if (winner) data.winner = winner;
+      // Immer schreiben (auch null), damit falsch gesetzte winner-Felder
+      // beim nächsten Sync selbst korrigiert werden.
+      data.winner = winner;
     }
 
     if (Object.keys(data).length === 0) continue;
