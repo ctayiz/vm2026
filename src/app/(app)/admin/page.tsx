@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Flag } from "@/components/flag";
 import {
-  SyncButton,
   RecomputeButton,
   SyncStatsButton,
   LiveScoresButton,
@@ -57,7 +56,6 @@ export default async function AdminPage() {
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <SyncButton />
         <LiveScoresButton />
         <SyncStatsButton />
         <RecomputeButton />

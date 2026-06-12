@@ -142,6 +142,118 @@ export async function fetchLineups(fixtureId: number): Promise<ApiLineup[]> {
   }));
 }
 
+// --- Volle Spiel-Details (für die Match-Detailseite) -----------------------
+// Ein Abruf /fixtures?id=<id> liefert bei API-Football zusätzlich events,
+// lineups und statistics inline mit – also alles für die Detailseite in 1 Call.
+
+export interface FixtureEvent {
+  minute: number | null;
+  extra: number | null;
+  teamName: string;
+  playerName: string | null;
+  assistName: string | null;
+  type: string; // "Goal" | "Card" | "subst" | "Var"
+  detail: string | null; // z. B. "Normal Goal", "Yellow Card", "Substitution 1"
+}
+
+export interface FixtureTeamStat {
+  teamName: string;
+  stats: { type: string; value: string | number | null }[];
+}
+
+export interface FixtureDetail {
+  fixtureId: number;
+  date: string;
+  statusShort: string;
+  statusLong: string;
+  elapsed: number | null;
+  referee: string | null;
+  venue: string | null;
+  city: string | null;
+  round: string;
+  home: { name: string; logo: string | null; winner: boolean | null };
+  away: { name: string; logo: string | null; winner: boolean | null };
+  goalsHome: number | null;
+  goalsAway: number | null;
+  score: {
+    halftime: [number | null, number | null];
+    fulltime: [number | null, number | null];
+    extratime: [number | null, number | null];
+    penalty: [number | null, number | null];
+  };
+  events: FixtureEvent[];
+  lineups: ApiLineup[];
+  statistics: FixtureTeamStat[];
+}
+
+function mapLineupPlayer(p: any): ApiLineupPlayer {
+  return {
+    number: p?.player?.number ?? null,
+    name: p?.player?.name ?? "?",
+    pos: p?.player?.pos ?? null,
+    grid: p?.player?.grid ?? null,
+  };
+}
+
+/** Alle Details eines Fixtures (Meta, Stand, Events, Aufstellungen, Statistiken). */
+export async function fetchFixtureDetail(fixtureId: number): Promise<FixtureDetail | null> {
+  const rows: any[] = await call("/fixtures", { id: fixtureId });
+  const r = rows[0];
+  if (!r) return null;
+
+  const pair = (o: any): [number | null, number | null] => [o?.home ?? null, o?.away ?? null];
+
+  return {
+    fixtureId: r.fixture?.id,
+    date: r.fixture?.date,
+    statusShort: r.fixture?.status?.short ?? "NS",
+    statusLong: r.fixture?.status?.long ?? "",
+    elapsed: r.fixture?.status?.elapsed ?? null,
+    referee: r.fixture?.referee ?? null,
+    venue: r.fixture?.venue?.name ?? null,
+    city: r.fixture?.venue?.city ?? null,
+    round: r.league?.round ?? "",
+    home: {
+      name: r.teams?.home?.name ?? "",
+      logo: r.teams?.home?.logo ?? null,
+      winner: r.teams?.home?.winner ?? null,
+    },
+    away: {
+      name: r.teams?.away?.name ?? "",
+      logo: r.teams?.away?.logo ?? null,
+      winner: r.teams?.away?.winner ?? null,
+    },
+    goalsHome: r.goals?.home ?? null,
+    goalsAway: r.goals?.away ?? null,
+    score: {
+      halftime: pair(r.score?.halftime),
+      fulltime: pair(r.score?.fulltime),
+      extratime: pair(r.score?.extratime),
+      penalty: pair(r.score?.penalty),
+    },
+    events: (r.events ?? []).map((e: any) => ({
+      minute: e?.time?.elapsed ?? null,
+      extra: e?.time?.extra ?? null,
+      teamName: e?.team?.name ?? "",
+      playerName: e?.player?.name ?? null,
+      assistName: e?.assist?.name ?? null,
+      type: e?.type ?? "",
+      detail: e?.detail ?? null,
+    })),
+    lineups: (r.lineups ?? []).map((l: any) => ({
+      teamName: l?.team?.name ?? "",
+      formation: l?.formation ?? null,
+      coach: l?.coach?.name ?? null,
+      startXI: (l?.startXI ?? []).map(mapLineupPlayer),
+      substitutes: (l?.substitutes ?? []).map(mapLineupPlayer),
+    })),
+    statistics: (r.statistics ?? []).map((s: any) => ({
+      teamName: s?.team?.name ?? "",
+      stats: (s?.statistics ?? []).map((x: any) => ({ type: x?.type ?? "", value: x?.value ?? null })),
+    })),
+  };
+}
+
 /** Tor-Ereignisse eines Fixtures. */
 export async function fetchFixtureGoals(fixtureId: number): Promise<ApiGoalEvent[]> {
   const rows: any[] = await call("/fixtures/events", { fixture: fixtureId });

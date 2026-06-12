@@ -287,6 +287,34 @@ export async function getMatches(userId: string) {
   }));
 }
 
+/** Ein einzelnes Spiel inkl. Teams, Toren und dem Tipp des Nutzers (Detailseite). */
+export async function getMatchById(matchId: string, userId: string) {
+  const m = await db.match.findUnique({
+    where: { id: matchId },
+    include: {
+      homeTeam: true,
+      awayTeam: true,
+      predictions: {
+        where: { userId },
+        select: { prediction: true, points: true, scored: true, isJoker: true },
+      },
+      goals: {
+        orderBy: { minute: "asc" },
+        include: { team: { select: { flagCode: true, code: true } } },
+      },
+    },
+  });
+  if (!m) return null;
+  return {
+    ...m,
+    myPrediction: (m.predictions[0]?.prediction as Prediction | undefined) ?? null,
+    myPoints: m.predictions[0]?.points ?? null,
+    myScored: m.predictions[0]?.scored ?? false,
+    myJoker: m.predictions[0]?.isJoker ?? false,
+  };
+}
+export type MatchDetailData = NonNullable<Awaited<ReturnType<typeof getMatchById>>>;
+
 export interface GroupStanding {
   group: string;
   rows: StandingRow[];

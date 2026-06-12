@@ -1,21 +1,19 @@
-// Live-Ergebnisse von API-Football (api-sports.io) in unsere DB übernehmen.
-//
-// football-data.org liefert im Gratis-Tarif keine Live-Stände (Status bleibt
-// "TIMED" bis lange nach Abpfiff). API-Football liefert sie. Ein einziger Abruf
-// (/fixtures?league&season) gibt ALLE Spiele inkl. aktuellem Stand zurück – das
-// ist quotaschonend (Free: 100 Abrufe/Tag).
+// API-Football (api-sports.io) ist die ALLEINIGE Datenquelle für Live-/Endstände,
+// Status, K.-o.-Sieger und das Auflösen der K.-o.-Paarungen. Ein Abruf
+// (/fixtures?league&season) liefert alle Spiele inkl. aktuellem Stand.
 //
 // Knackpunkt: Unsere Teams heißen deutsch ("Mexiko"), API-Football englisch
 // ("Mexico"). Wir überbrücken das exakt über den FIFA-Code: englischer Name ->
 // FIFA-Code -> unser Team. Zugeordnet wird ein Spiel über das (ungeordnete)
-// Code-Paar + Datum, damit auch zeitgleiche Gruppenspiele eindeutig matchen.
+// Code-Paar (Gruppenphase) bzw. über den exakten Anpfiff (K.-o. mit Platzhaltern).
 
 import { db } from "./db";
 import { fetchFixtures, hasApiFootball } from "./api-football";
+import { PHASE_META, type Phase } from "./constants";
 
 // API-Football Kurz-Status -> unser Status
 const LIVE = new Set(["1H", "HT", "2H", "ET", "BT", "P", "SUSP", "INT", "LIVE"]);
-const FINISHED = new Set(["FT", "AET", "PEN"]);
+const FINISHED = new Set(["FT", "AET", "PEN", "WO", "AWD"]);
 
 /** Englische API-Namen (inkl. gängiger Schreibvarianten) je FIFA-Code. */
 const EN_ALIASES: Record<string, string[]> = {
@@ -44,10 +42,10 @@ const EN_ALIASES: Record<string, string[]> = {
   SWE: ["sweden"],
   TUN: ["tunisia"],
   BEL: ["belgium"],
-  IRN: ["iran"],
+  IRN: ["iran", "iriran"],
   NZL: ["newzealand"],
   EGY: ["egypt"],
-  CPV: ["capeverde", "capeverdeislands"],
+  CPV: ["capeverde", "caboverde"],
   KSA: ["saudiarabia"],
   ESP: ["spain"],
   URU: ["uruguay"],
@@ -74,73 +72,124 @@ for (const [code, aliases] of Object.entries(EN_ALIASES)) {
   for (const a of aliases) NAME_TO_CODE.set(a, code);
 }
 
-/** Normalisiert einen Ländernamen für den Vergleich (klein, ohne Akzente/Sonderzeichen). */
+/** Normalisiert einen Ländernamen (klein, ohne Akzente/Sonderzeichen). */
 function norm(s: string): string {
-  // NFD trennt Akzente in Basiszeichen + kombinierende Marke; der finale
-  // [^a-z0-9]-Filter entfernt diese Marken und alle Sonderzeichen/Leerzeichen.
   return s.toLowerCase().normalize("NFD").replace(/[^a-z0-9]/g, "");
 }
 
-export type LiveSyncResult = { ok: boolean; updated: number; live: number; checked: number; note?: string };
+function codeOf(name: string): string | null {
+  return NAME_TO_CODE.get(norm(name)) ?? null;
+}
+
+/** Englischer API-Teamname -> unser FIFA-Code (z. B. "Mexico" -> "MEX"). */
+export function apiNameToCode(name: string): string | null {
+  return codeOf(name);
+}
+
+export type SyncResult = {
+  ok: boolean;
+  updated: number; // Spiele mit Stand/Status-Änderung
+  live: number;
+  checked: number;
+  resolved: number; // K.-o.-Paarungen neu aufgelöst
+  note?: string;
+};
+
+type OurMatch = Awaited<ReturnType<typeof loadMatches>>[number];
+function loadMatches() {
+  return db.match.findMany({ include: { homeTeam: true, awayTeam: true } });
+}
 
 /**
- * Holt alle Fixtures von API-Football und übernimmt Live-/Endstände in unsere DB.
- * Aktualisiert Status, Tore und (für K.o.) den Sieger. Beendete Spiele werden nie
- * wieder „heruntergestuft". Gibt zurück, wie viele Spiele aktualisiert wurden.
+ * Holt alle Fixtures von API-Football und übernimmt sie in unsere DB:
+ *  - apiFixtureId merken (für Detail-Abrufe)
+ *  - Status, Tore, K.-o.-Sieger (beendete Spiele nie zurückstufen)
+ *  - Stadion/Stadt nachfüllen, falls leer
+ *  - K.-o.-Paarungen auflösen, sobald die Teams feststehen
  */
-export async function syncLiveScores(): Promise<LiveSyncResult> {
-  if (!hasApiFootball()) return { ok: false, updated: 0, live: 0, checked: 0, note: "APIFOOTBALL_KEY fehlt" };
+export async function syncApiFootball(): Promise<SyncResult> {
+  if (!hasApiFootball()) return { ok: false, updated: 0, live: 0, checked: 0, resolved: 0, note: "APIFOOTBALL_KEY fehlt" };
 
   const fixtures = await fetchFixtures();
+  const ours = await loadMatches();
+  const teams = await db.team.findMany({ select: { id: true, code: true } });
+  const teamIdByCode = new Map(teams.map((t) => [t.code, t.id]));
 
-  const ours = await db.match.findMany({
-    where: { homeTeamId: { not: null }, awayTeamId: { not: null } },
-    include: { homeTeam: true, awayTeam: true },
-  });
-
-  // Index nach ungeordnetem Code-Paar (z. B. "MEX|RSA")
-  const byPair = new Map<string, typeof ours>();
+  // Index: Gruppen-/aufgelöste Spiele nach ungeordnetem Code-Paar
+  const byPair = new Map<string, OurMatch[]>();
   for (const m of ours) {
-    const key = [m.homeTeam!.code, m.awayTeam!.code].sort().join("|");
-    const list = byPair.get(key);
-    if (list) list.push(m);
-    else byPair.set(key, [m]);
+    if (!m.homeTeam || !m.awayTeam) continue;
+    const key = [m.homeTeam.code, m.awayTeam.code].sort().join("|");
+    (byPair.get(key) ?? byPair.set(key, []).get(key)!).push(m);
+  }
+  // Index: noch offene K.-o.-Spiele (Platzhalter) nach Anpfiff-Zeit
+  const koByTime = new Map<number, OurMatch[]>();
+  for (const m of ours) {
+    if (m.homeTeam && m.awayTeam) continue;
+    const k = m.kickoff.getTime();
+    (koByTime.get(k) ?? koByTime.set(k, []).get(k)!).push(m);
   }
 
   let updated = 0;
   let live = 0;
   let checked = 0;
+  let resolved = 0;
 
   for (const f of fixtures) {
-    const hc = NAME_TO_CODE.get(norm(f.homeName));
-    const ac = NAME_TO_CODE.get(norm(f.awayName));
-    if (!hc || !ac) continue; // Team nicht eindeutig zuordenbar -> überspringen
+    const hc = codeOf(f.homeName);
+    const ac = codeOf(f.awayName);
 
-    const candidates = byPair.get([hc, ac].sort().join("|")) ?? [];
-    if (candidates.length === 0) continue;
-    // bei mehreren (Gruppe + evtl. K.o.-Rückspiel) das datumsnächste nehmen
-    const m =
-      candidates.length === 1
-        ? candidates[0]
-        : candidates.reduce((best, c) =>
-            Math.abs(c.kickoff.getTime() - new Date(f.date).getTime()) <
-            Math.abs(best.kickoff.getTime() - new Date(f.date).getTime())
-              ? c
-              : best,
-          );
+    // 1) passendes Spiel finden
+    let m: OurMatch | undefined;
+    let resolveTeams = false;
+    if (hc && ac) {
+      const cands = byPair.get([hc, ac].sort().join("|")) ?? [];
+      m =
+        cands.length <= 1
+          ? cands[0]
+          : cands.reduce((b, c) =>
+              Math.abs(c.kickoff.getTime() - new Date(f.date).getTime()) <
+              Math.abs(b.kickoff.getTime() - new Date(f.date).getTime())
+                ? c
+                : b,
+            );
+    }
+    if (!m) {
+      // K.-o.-Platzhalter über exakte Anpfiff-Zeit zuordnen
+      const cands = koByTime.get(new Date(f.date).getTime()) ?? [];
+      m = cands[0];
+      if (m && hc && ac) resolveTeams = true;
+    }
+    if (!m) continue;
 
     const data: Record<string, unknown> = {};
 
-    // Stadion/Stadt anreichern, wenn die API es liefert und bei uns noch leer ist.
+    // 2) apiFixtureId merken
+    if (f.fixtureId && m.apiFixtureId !== String(f.fixtureId)) data.apiFixtureId = String(f.fixtureId);
+
+    // 3) K.-o.-Paarung auflösen (Platzhalter -> echte Teams)
+    if (resolveTeams && PHASE_META[m.phase as Phase]?.knockout) {
+      const homeId = teamIdByCode.get(hc!);
+      const awayId = teamIdByCode.get(ac!);
+      if (homeId && awayId) {
+        data.homeTeamId = homeId;
+        data.awayTeamId = awayId;
+        data.homePlaceholder = null;
+        data.awayPlaceholder = null;
+        resolved++;
+      }
+    }
+
+    // 4) Stadion/Stadt nachfüllen, falls leer
     if (f.venue && !m.venue) data.venue = f.venue;
     if (f.city && !m.city) data.city = f.city;
 
-    // Live-/Endstand übernehmen (beendete Spiele nie wieder zurückstufen).
+    // 5) Stand/Status übernehmen (beendete Spiele nie zurückstufen)
     const status = LIVE.has(f.status) ? "live" : FINISHED.has(f.status) ? "finished" : null;
     if (status && !(m.status === "finished" && status !== "finished")) {
       checked++;
-      // Orientierung anhand des Codes (Heim/Auswärts kann je Quelle abweichen)
-      const sameOrient = m.homeTeam!.code === hc;
+      // gerade aufgelöst -> wir haben Heim = hc gesetzt, also gleiche Orientierung
+      const sameOrient = data.homeTeamId ? true : m.homeTeam?.code === hc;
       const hg = sameOrient ? f.homeGoals : f.awayGoals;
       const ag = sameOrient ? f.awayGoals : f.homeGoals;
       const winner =
@@ -159,12 +208,16 @@ export async function syncLiveScores(): Promise<LiveSyncResult> {
       if (winner) data.winner = winner;
     }
 
-    if (Object.keys(data).length === 0) continue; // nichts zu tun
+    if (Object.keys(data).length === 0) continue;
 
-    await db.match.update({ where: { id: m.id }, data });
-    if (data.status) updated++;
-    if (data.status === "live") live++;
+    try {
+      await db.match.update({ where: { id: m.id }, data });
+      if (data.status) updated++;
+      if (data.status === "live") live++;
+    } catch {
+      /* z. B. apiFixtureId-Kollision -> ignorieren */
+    }
   }
 
-  return { ok: true, updated, live, checked };
+  return { ok: true, updated, live, checked, resolved };
 }

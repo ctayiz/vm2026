@@ -11,11 +11,10 @@
 import { buildSchedule, type NormalizedMatch, type NormalizedTeamRef } from "./worldcup-data";
 import { lookupTeam, resolveTeamRef } from "./team-map";
 import { hasApiFootball, fetchFixtures, type ApiFixture } from "./api-football";
-import { hasFootballData, fetchWorldCupMatches, type FDMatch } from "./football-data";
 import type { Phase } from "./constants";
 
 export interface SyncResult {
-  source: "football-data" | "api-football" | "openfootball" | "builtin";
+  source: "api-football" | "openfootball" | "builtin";
   matches: NormalizedMatch[];
   note?: string;
 }
@@ -148,73 +147,6 @@ function mapApiStatus(short: string): "scheduled" | "live" | "finished" {
   return "scheduled";
 }
 
-// --- football-data.org (kostenlos, WM im Free-Tier) ------------------------
-
-const PHASE_LABEL: Record<Phase, string> = {
-  GROUP: "Gruppenphase",
-  R32: "Runde der letzten 32",
-  R16: "Achtelfinale",
-  QF: "Viertelfinale",
-  SF: "Halbfinale",
-  TP: "Spiel um Platz 3",
-  FINAL: "Finale",
-};
-
-function mapFdStage(stage: string): Phase {
-  const s = (stage ?? "").toUpperCase();
-  if (s.includes("GROUP")) return "GROUP";
-  if (s.includes("32")) return "R32";
-  if (s.includes("16")) return "R16";
-  if (s.includes("QUARTER")) return "QF";
-  if (s.includes("SEMI")) return "SF";
-  if (s.includes("THIRD") || s.includes("3RD")) return "TP";
-  if (s.includes("FINAL")) return "FINAL";
-  return "GROUP";
-}
-
-function mapFdStatus(status: string): "scheduled" | "live" | "finished" {
-  const s = (status ?? "").toUpperCase();
-  if (s === "FINISHED" || s === "AWARDED") return "finished";
-  if (s === "IN_PLAY" || s === "PAUSED" || s === "LIVE") return "live";
-  return "scheduled";
-}
-
-function fdTeamRef(name: string | null, tla: string | null): NormalizedTeamRef | undefined {
-  if (!name) return undefined;
-  // Bekanntes Team -> unser Code + dt. Name + Flagge (auch wenn dt. = engl. Name,
-  // z. B. Uruguay/Panama/Ghana). NICHT über Namensvergleich entscheiden!
-  const info = lookupTeam(name);
-  if (info) return { code: info.code, name: info.name, flagCode: info.flagCode };
-  // Wirklich unbekannt -> offizielles TLA als Code, Originalname.
-  return { code: (tla || name).slice(0, 3).toUpperCase(), name };
-}
-
-function normalizeFootballData(matches: FDMatch[]): NormalizedMatch[] {
-  return matches.map((m) => {
-    const phase = mapFdStage(m.stage);
-    const groupLetter = m.group ? /([A-L])\s*$/.exec(m.group)?.[1] : undefined;
-    const status = mapFdStatus(m.status);
-    // Spielstand auch WÄHREND des Spiels übernehmen (Fast-Live), nicht nur am Ende.
-    const hasScore = (status === "finished" || status === "live") && m.homeGoals != null && m.awayGoals != null;
-    // K.-o.-Sieger (Verlängerung/Elfmeter) – nur HOME/AWAY ist relevant.
-    const winner = m.winner === "HOME_TEAM" ? "HOME" : m.winner === "AWAY_TEAM" ? "AWAY" : null;
-    const label = phase === "GROUP" && groupLetter ? `Gruppe ${groupLetter}` : PHASE_LABEL[phase];
-    return {
-      externalId: `fd-${m.id}`,
-      phase,
-      group: phase === "GROUP" ? groupLetter : undefined,
-      roundLabel: label,
-      kickoff: m.utcDate,
-      home: fdTeamRef(m.homeName, m.homeTla),
-      away: fdTeamRef(m.awayName, m.awayTla),
-      status,
-      homeGoals: hasScore ? m.homeGoals : null,
-      awayGoals: hasScore ? m.awayGoals : null,
-      winner,
-    } satisfies NormalizedMatch;
-  });
-}
-
 function normalizeApiFootball(fixtures: ApiFixture[]): NormalizedMatch[] {
   return fixtures.map((f) => {
     const { phase, group, label } = mapApiRound(f.round);
@@ -282,30 +214,17 @@ async function enrichKnockoutPlaceholders(target: NormalizedMatch[]): Promise<vo
  * eingebauten Datensatz zurück (für ein robustes MVP-Erlebnis).
  */
 export async function fetchSchedule(): Promise<SyncResult> {
-  // 1) football-data.org (kostenlos, WM im Free-Tier) – wenn Token gesetzt.
-  if (hasFootballData()) {
-    try {
-      const matches = normalizeFootballData(await fetchWorldCupMatches());
-      if (matches.length > 0) {
-        await enrichKnockoutPlaceholders(matches); // Bracket-Platzhalter ergänzen
-        return { source: "football-data", matches };
-      }
-    } catch {
-      // weiter zur nächsten Quelle
-    }
-  }
-
-  // 2) API-Football (autoritativ + live) – wenn Key gesetzt ist (Saison 2026 = Bezahlplan).
+  // 1) API-Football (autoritativ + live) – einzige echte Quelle (Saison 2026 = Bezahlplan).
   if (hasApiFootball()) {
     try {
       const fixtures = await fetchFixtures();
       const matches = normalizeApiFootball(fixtures);
       if (matches.length > 0) {
+        await enrichKnockoutPlaceholders(matches); // Bracket-Platzhalter ergänzen
         return { source: "api-football", matches };
       }
-    } catch (e) {
+    } catch {
       // bei API-Fehler/Limit: auf nächste Quelle ausweichen
-      // (Meldung wird im Sync-Ergebnis als note geführt)
     }
   }
 

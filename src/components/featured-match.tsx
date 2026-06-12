@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Flag } from "@/components/flag";
 import { Countdown } from "@/components/countdown";
@@ -68,7 +69,7 @@ export function FeaturedMatch({ match }: { match: MatchWithPrediction }) {
           </span>
         </div>
 
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+        <Link href={`/spiel/${match.id}`} className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-xl transition-colors hover:bg-foreground/[0.03]">
           {/* Heim */}
           <div className="flex flex-col items-center gap-2 text-center">
             <Flag code={home.flagCode} className="text-5xl drop-shadow sm:text-6xl" />
@@ -104,7 +105,7 @@ export function FeaturedMatch({ match }: { match: MatchWithPrediction }) {
               {away.real && <div className="text-xs text-muted-foreground">{away.code}</div>}
             </div>
           </div>
-        </div>
+        </Link>
 
         <div className="mt-4 flex items-center justify-center gap-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">

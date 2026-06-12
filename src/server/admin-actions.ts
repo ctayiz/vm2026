@@ -7,24 +7,12 @@ import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { getDictionary } from "@/lib/i18n-server";
 import { resultSchema, teamProgressSchema } from "@/lib/validation";
-import { syncSchedule } from "@/lib/sync-service";
-import { syncLiveScores } from "@/lib/live-score-service";
+import { syncApiFootball } from "@/lib/live-score-service";
 import { hasApiFootball } from "@/lib/api-football";
 import { rescoreMatch, rescoreAll, rescoreTournamentBets } from "@/lib/scoring-service";
 import { syncTopScorers, syncMatchGoals } from "@/lib/stats-service";
 
 export type AdminState = { ok: boolean; error?: string; message?: string };
-
-export async function syncScheduleAction(): Promise<AdminState> {
-  await requireAdmin();
-  const s = await syncSchedule();
-  revalidatePath("/spielplan");
-  revalidatePath("/admin");
-  return {
-    ok: true,
-    message: `Quelle: ${s.source} · ${s.created} neu, ${s.updated} aktualisiert${s.removed ? `, ${s.removed} veraltete entfernt` : ""} (gesamt ${s.total}).${s.note ? " " + s.note : ""}`,
-  };
-}
 
 export async function setResultAction(_prev: AdminState, formData: FormData): Promise<AdminState> {
   await requireAdmin();
@@ -124,14 +112,14 @@ export async function syncLiveScoresAction(): Promise<AdminState> {
     return { ok: false, error: "APIFOOTBALL_KEY ist nicht gesetzt (in Vercel eintragen)." };
   }
   try {
-    const r = await syncLiveScores();
-    if (r.updated > 0) await rescoreAll();
+    const r = await syncApiFootball();
+    if (r.updated > 0 || r.resolved > 0) await rescoreAll();
     revalidatePath("/spielplan");
     revalidatePath("/ranking");
     revalidatePath("/admin");
     return {
       ok: true,
-      message: `Live-Stände aktualisiert: ${r.updated} Spiele (${r.live} laufen, ${r.checked} geprüft).`,
+      message: `Synchronisiert: ${r.updated} Spiele aktualisiert (${r.live} live, ${r.checked} geprüft, ${r.resolved} K.o.-Paarungen aufgelöst).`,
     };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Abruf fehlgeschlagen." };

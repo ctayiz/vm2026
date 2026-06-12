@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Flag } from "@/components/flag";
@@ -75,6 +76,7 @@ export function MatchCard({
       )}
       style={{ animationDelay: `${Math.min(index, 12) * 45}ms` }}
     >
+      <Link href={`/spiel/${match.id}`} className="block transition-colors hover:bg-secondary/10">
       <div className="flex items-center justify-between border-b border-border/60 px-4 py-2 text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5 font-medium">
           {PHASE_META[phase]?.knockout && <Trophy className="size-3 text-amber-300" />}
@@ -134,6 +136,7 @@ export function MatchCard({
           {!finished && <Countdown lockTimeIso={lockTimeIso} />}
         </div>
       </div>
+      </Link>
 
       {finished && match.goals.length > 0 && (
         <div className="border-t border-border/60 px-4 py-2">

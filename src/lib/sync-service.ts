@@ -40,7 +40,7 @@ export interface SyncSummary {
  */
 export async function syncSchedule(): Promise<SyncSummary> {
   const result = await fetchSchedule();
-  const authoritative = result.source === "football-data" || result.source === "api-football";
+  const authoritative = result.source === "api-football";
 
   // Schutz: Eine Fallback-Quelle (OpenFootball/builtin) darf bereits vorhandene
   // autoritative Daten NICHT überschreiben/löschen. Verhindert, dass z. B. ein

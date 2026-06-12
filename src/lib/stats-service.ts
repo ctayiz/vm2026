@@ -1,7 +1,6 @@
 import { db } from "./db";
 import { fetchTopScorers, fetchFixtures, fetchFixtureGoals, hasApiFootball } from "./api-football";
 import { lookupTeam } from "./team-map";
-import { hasFootballData, fetchWorldCupScorers } from "./football-data";
 
 // API-Football nutzt teils andere Namen für Nationalteams -> auf unsere Keys mappen.
 const TEAM_ALIASES: Record<string, string> = {
@@ -40,12 +39,11 @@ export interface ScorerSyncSummary {
  * Markiert den/die Spieler mit den meisten Toren als Torschützenkönig.
  */
 export async function syncTopScorers(): Promise<ScorerSyncSummary> {
-  if (!hasFootballData() && !hasApiFootball()) {
-    return { ok: false, message: "Keine Datenquelle gesetzt (FOOTBALLDATA_TOKEN oder APIFOOTBALL_KEY)." };
+  if (!hasApiFootball()) {
+    return { ok: false, message: "Kein APIFOOTBALL_KEY gesetzt." };
   }
   try {
-    // bevorzugt football-data (Free-Tier mit WM), sonst API-Football
-    const scorers = hasFootballData() ? await fetchWorldCupScorers() : await fetchTopScorers();
+    const scorers = await fetchTopScorers();
     const codeIndex = await loadCodeIndex();
 
     for (const s of scorers) {
