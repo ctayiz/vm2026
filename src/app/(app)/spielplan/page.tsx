@@ -77,8 +77,8 @@ export default async function SpielplanPage({
     }),
     getFavoriteTeams(user.id),
     db.player.findMany({
-      where: { isTopScorer: true },
-      orderBy: { goals: "desc" },
+      where: { goals: { gt: 0 } },
+      orderBy: [{ goals: "desc" }, { assists: "desc" }, { name: "asc" }],
       take: 3,
       include: { team: { select: { name: true, flagCode: true } } },
     }),
