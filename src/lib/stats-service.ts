@@ -50,8 +50,8 @@ export async function syncTopScorers(): Promise<ScorerSyncSummary> {
       const teamId = await teamIdByApiName(s.teamName, codeIndex);
       await db.player.upsert({
         where: { externalId: s.externalId },
-        update: { name: s.name, goals: s.goals, assists: s.assists, teamId },
-        create: { externalId: s.externalId, name: s.name, goals: s.goals, assists: s.assists, teamId },
+        update: { name: s.name, goals: s.goals, assists: s.assists, photo: s.photo, teamId },
+        create: { externalId: s.externalId, name: s.name, goals: s.goals, assists: s.assists, photo: s.photo, teamId },
       });
     }
 

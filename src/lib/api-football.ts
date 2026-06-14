@@ -47,6 +47,7 @@ export interface ApiTopScorer {
   teamName: string;
   goals: number;
   assists: number;
+  photo: string | null;
 }
 
 /** Torschützenliste (top scorers) der Liga/Saison. */
@@ -61,6 +62,7 @@ export async function fetchTopScorers(): Promise<ApiTopScorer[]> {
       teamName: stat.team?.name ?? "",
       goals: stat.goals?.total ?? 0,
       assists: stat.goals?.assists ?? 0,
+      photo: r.player?.photo ?? null,
     };
   });
 }

@@ -19,8 +19,9 @@ import { dayKey, dayLabel } from "@/lib/format";
 import { isPickLocked, msUntilLock } from "@/lib/lock";
 import { PHASE_META, MAX_JOKERS, type Phase } from "@/lib/constants";
 import { getLocale, getDictionary } from "@/lib/i18n-server";
-import { CalendarDays, Star, AlarmClock } from "lucide-react";
+import { CalendarDays, Star, AlarmClock, Goal } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 export const dynamic = "force-dynamic";
 
@@ -67,7 +68,7 @@ export default async function SpielplanPage({
     { value: "gruppe", label: t.schedule.fGroup },
     { value: "ko", label: t.schedule.fKo },
   ];
-  const [all, stats, teams, favoriteTeams] = await Promise.all([
+  const [all, stats, teams, favoriteTeams, topScorers] = await Promise.all([
     getMatches(user.id),
     getUserStats(user.id),
     db.team.findMany({
@@ -75,6 +76,12 @@ export default async function SpielplanPage({
       select: { code: true, name: true, flagCode: true, group: true },
     }),
     getFavoriteTeams(user.id),
+    db.player.findMany({
+      where: { isTopScorer: true },
+      orderBy: { goals: "desc" },
+      take: 3,
+      include: { team: { select: { name: true, flagCode: true } } },
+    }),
   ]);
   const favoriteCodes = favoriteTeams.map((t) => t.code);
   const favoritesOverview = buildFavoritesOverview(favoriteCodes, all);
@@ -139,6 +146,51 @@ export default async function SpielplanPage({
         </Link>
       )}
 
+      {/* Torschützenkönig */}
+      {topScorers.length > 0 && (
+        <div className="rounded-xl border border-border bg-card p-3">
+          <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <Goal className="size-3.5 text-primary" />
+            {t.history.topScorer}
+          </div>
+          <div className="flex flex-wrap gap-3">
+            {topScorers.map((p) => (
+              <div key={p.id} className="flex items-center gap-2.5">
+                {p.photo ? (
+                  <Image
+                    src={p.photo}
+                    alt={p.name}
+                    width={36}
+                    height={36}
+                    className="rounded-full object-cover ring-2 ring-primary/40"
+                    unoptimized
+                  />
+                ) : (
+                  <div className="flex size-9 items-center justify-center rounded-full bg-secondary text-xs font-bold">
+                    {p.name.charAt(0)}
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-semibold">{p.name}</div>
+                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                    {p.team && <Flag code={p.team.flagCode} className="text-sm" />}
+                    <span className="font-bold tabular-nums text-primary">{p.goals}</span>
+                    {t.history.goals}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {(liveMatch || nextMatch) && (
+        <section className="space-y-3">
+          {liveMatch && <FeaturedMatch match={liveMatch} />}
+          {nextMatch && <FeaturedMatch match={nextMatch} />}
+        </section>
+      )}
+
       {favoritesOverview.length > 0 ? (
         <FavoritesStrip items={favoritesOverview} />
       ) : (
@@ -151,13 +203,6 @@ export default async function SpielplanPage({
             {t.schedule.favPrompt1} <span className="font-semibold">{t.schedule.favPromptWord}</span> {t.schedule.favPrompt2}
           </span>
         </Link>
-      )}
-
-      {(liveMatch || nextMatch) && (
-        <section className="space-y-3">
-          {liveMatch && <FeaturedMatch match={liveMatch} />}
-          {nextMatch && <FeaturedMatch match={nextMatch} />}
-        </section>
       )}
 
       <ExploreTiles />

@@ -191,6 +191,7 @@ model Player {
   team        Team?    @relation(fields: [teamId], references: [id], onDelete: SetNull)
   goals       Int      @default(0)
   assists     Int      @default(0)
+  photo       String?  // Foto-URL von API-Football
   // ist aktueller Torschützenkönig (höchste Toranzahl)
   isTopScorer Boolean  @default(false)
   createdAt   DateTime @default(now())

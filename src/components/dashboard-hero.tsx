@@ -27,14 +27,14 @@ function Chip({
     >
       <span
         className={cn(
-          "flex size-9 shrink-0 items-center justify-center rounded-lg",
+          "flex size-7 shrink-0 items-center justify-center rounded-lg",
           highlight ? "bg-primary/20 text-primary" : "bg-secondary text-primary",
         )}
       >
-        <Icon className="size-4" />
+        <Icon className="size-3.5" />
       </span>
       <div className="min-w-0 flex-1">
-        <div className="text-lg font-bold leading-none tabular-nums">{value}</div>
+        <div className="text-base font-bold leading-none tabular-nums">{value}</div>
         <div className="mt-0.5 truncate text-[11px] uppercase tracking-wide text-muted-foreground">
           {label}
         </div>

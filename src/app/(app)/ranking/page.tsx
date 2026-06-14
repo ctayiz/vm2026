@@ -50,15 +50,22 @@ function Row({ row, isMe, index }: { row: LeaderboardRow; isMe: boolean; index: 
     >
       {isLeader && <span className="shimmer-gold pointer-events-none absolute inset-0" />}
       <CardContent className="relative flex items-center gap-3 py-3">
-        <div className="flex w-7 shrink-0 flex-col items-center justify-center gap-0.5">
+        <div className="flex w-8 shrink-0 flex-col items-center justify-center gap-0.5">
           {top3 ? (
-            row.rank === 1 ? (
-              <Crown className={cn("size-5 animate-float", rankColor[0])} />
-            ) : (
-              <Medal className={cn("size-5", rankColor[row.rank - 1])} />
-            )
+            <>
+              {row.rank === 1 ? (
+                <Crown className={cn("size-4 animate-float", rankColor[0])} />
+              ) : (
+                <Medal className={cn("size-4", rankColor[row.rank - 1])} />
+              )}
+              <span className={cn("text-xs font-bold tabular-nums", rankColor[row.rank - 1])}>
+                #{row.rank}
+              </span>
+            </>
           ) : (
-            <span className="text-sm font-bold text-muted-foreground tabular-nums">{row.rank}</span>
+            <span className="flex size-7 items-center justify-center rounded-full bg-secondary text-sm font-bold tabular-nums text-foreground">
+              {row.rank}
+            </span>
           )}
           <RankDelta delta={row.rankDelta} />
         </div>
