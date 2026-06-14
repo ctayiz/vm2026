@@ -79,6 +79,7 @@ export const TOURNAMENT_QUESTIONS: TournamentQuestion[] = [
     target: "CHAMPION",
     points: 20,
     pick: "TEAM",
+    finalOnly: true,
   },
   {
     key: "topscorer",
@@ -105,6 +106,7 @@ export const TOURNAMENT_QUESTIONS: TournamentQuestion[] = [
     target: "FINAL",
     points: 10,
     pick: "TEAM",
+    finalOnly: true,
   },
   {
     key: "semi",
@@ -113,6 +115,7 @@ export const TOURNAMENT_QUESTIONS: TournamentQuestion[] = [
     target: "SF",
     points: 7,
     pick: "TEAM",
+    finalOnly: true,
   },
   {
     key: "r16",
@@ -121,6 +124,7 @@ export const TOURNAMENT_QUESTIONS: TournamentQuestion[] = [
     target: "R16",
     points: 5,
     pick: "TEAM",
+    finalOnly: true,
   },
   {
     key: "r32",
@@ -129,6 +133,7 @@ export const TOURNAMENT_QUESTIONS: TournamentQuestion[] = [
     target: "R32",
     points: 3,
     pick: "TEAM",
+    finalOnly: true,
   },
 ];
 
