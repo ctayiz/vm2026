@@ -51,8 +51,8 @@ export async function runScheduledSync(): Promise<{ did: string[]; live: boolean
   // Torschützen + Tor-Events (für Statistik/Bonus), seltener.
   if (await shouldRun("lastStatsSync", STATS_MS)) {
     try {
-      await syncTopScorers();
-      await syncMatchGoals();
+      await syncMatchGoals();  // erst Spieler aus Events anlegen
+      await syncTopScorers(); // dann Fotos + Assists ergänzen
       await rescoreTournamentBets();
       did.push("stats");
     } catch {
