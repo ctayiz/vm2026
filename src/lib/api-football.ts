@@ -67,15 +67,9 @@ export async function fetchTopScorers(): Promise<ApiTopScorer[]> {
   });
 }
 
-/** Foto-URL für einen einzelnen Spieler per ID (Fallback wenn nicht in topscorers). */
-export async function fetchPlayerPhoto(playerId: string): Promise<string | null> {
-  const { season } = requireConfig();
-  try {
-    const rows: any[] = await call("/players", { id: playerId, season });
-    return rows[0]?.player?.photo ?? null;
-  } catch {
-    return null;
-  }
+/** Foto-URL für einen Spieler – direkt aus der externalId konstruiert (kein API-Call). */
+export function playerPhotoUrl(externalId: string): string {
+  return `https://media.api-sports.io/football/players/${externalId}.png`;
 }
 
 export interface ApiFixture {
