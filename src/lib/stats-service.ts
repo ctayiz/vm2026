@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { fetchTopScorers, fetchFixtures, fetchFixtureGoals, hasApiFootball } from "./api-football";
+import { fetchTopScorers, fetchFixtures, fetchFixtureGoals, fetchPlayerPhoto, hasApiFootball } from "./api-football";
 import { lookupTeam } from "./team-map";
 
 // API-Football nutzt teils andere Namen für Nationalteams -> auf unsere Keys mappen.
@@ -60,6 +60,16 @@ export async function syncTopScorers(): Promise<ScorerSyncSummary> {
     await db.player.updateMany({ data: { isTopScorer: false } });
     if (max > 0) {
       await db.player.updateMany({ where: { goals: max }, data: { isTopScorer: true } });
+    }
+
+    // Fotos für Spieler nachladen, die noch keins haben (z. B. aus Match-Events angelegt).
+    const noPhoto = await db.player.findMany({
+      where: { photo: null, externalId: { not: null }, goals: { gt: 0 } },
+      select: { id: true, externalId: true },
+    });
+    for (const p of noPhoto) {
+      const photo = await fetchPlayerPhoto(p.externalId!);
+      if (photo) await db.player.update({ where: { id: p.id }, data: { photo } });
     }
 
     return { ok: true, message: `${scorers.length} Torschützen aktualisiert.`, players: scorers.length };
