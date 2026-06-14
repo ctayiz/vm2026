@@ -65,15 +65,21 @@ export async function rescoreMatch(matchId: string): Promise<{ scored: number }>
  * neu aus. Idempotent – kann nach jeder Team-Aktualisierung erneut laufen.
  */
 export async function rescoreTournamentBets(): Promise<{ scored: number }> {
-  const [bets, topScorer] = await Promise.all([
+  const [bets, topScorer, finalCount] = await Promise.all([
     db.tournamentBet.findMany({ include: { team: true, player: true } }),
     db.player.findFirst({ where: { isTopScorer: true }, orderBy: { goals: "desc" } }),
+    db.match.count({ where: { phase: "FINAL", status: "finished" } }),
   ]);
+  const tournamentOver = finalCount > 0;
+
   for (const bet of bets) {
     const question = getQuestion(bet.questionKey);
     let points = 0;
     if (question) {
-      if (question.pick === "TEXT") {
+      // finalOnly-Fragen (meiste Tore, Torschützenkönig) erst nach dem Finale werten.
+      if (question.finalOnly && !tournamentOver) {
+        // Punkte bleiben 0 bis Turnierende
+      } else if (question.pick === "TEXT") {
         // Torschützenkönig per Name: tolerant gegen den tatsächlichen Topscorer.
         points = topScorerNameMatches(bet.playerName, topScorer?.name) ? question.points : 0;
       } else if (question.pick === "PLAYER") {

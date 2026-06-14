@@ -66,6 +66,8 @@ export interface TournamentQuestion {
   points: number;
   // worauf wird getippt: Team, Spieler-Auswahl, oder Freitext (Torschützenkönig)
   pick: "TEAM" | "PLAYER" | "TEXT";
+  // true = Punkte erst nach dem Finale vergeben (kein Zwischen-Award)
+  finalOnly?: boolean;
 }
 
 // Fragen sind bewusst hier zentral definiert -> leicht erweiterbar.
@@ -85,6 +87,7 @@ export const TOURNAMENT_QUESTIONS: TournamentQuestion[] = [
     target: "CHAMPION",
     points: 15,
     pick: "TEXT",
+    finalOnly: true,
   },
   {
     key: "mostgoals",
@@ -93,6 +96,7 @@ export const TOURNAMENT_QUESTIONS: TournamentQuestion[] = [
     target: "MOST_GOALS",
     points: 12,
     pick: "TEAM",
+    finalOnly: true,
   },
   {
     key: "final",
