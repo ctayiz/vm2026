@@ -52,13 +52,14 @@ export function accuracyOf(u: UserScoreInput): number {
 
 /**
  * Baut das sortierte Leaderboard inkl. Rang und Trefferquote.
- * Gleiche Punkte+Tiebreaker erhalten denselben Rang (Standard-Competition-Ranking).
+ * Dense Ranking (1,1,2,3,3,4): Ties erzeugen keine Lücken im Rang –
+ * 2 Personen auf Platz 1 → nächster ist Platz 2, nicht 3.
  */
 export function buildLeaderboard(users: UserScoreInput[]): LeaderboardRow[] {
   const sorted = [...users].sort(compareUsers);
 
   const rows: LeaderboardRow[] = [];
-  let lastRank = 0;
+  let rank = 0;
   sorted.forEach((u, i) => {
     const prev = i > 0 ? sorted[i - 1] : null;
     // gleicher Rang nur bei identischem (Punkte, richtige, Quote)-Tupel
@@ -67,8 +68,7 @@ export function buildLeaderboard(users: UserScoreInput[]): LeaderboardRow[] {
       prev.totalPoints === u.totalPoints &&
       prev.correctCount === u.correctCount &&
       accuracyOf(prev) === accuracyOf(u);
-    const rank = tie ? lastRank : i + 1;
-    lastRank = rank;
+    if (!tie) rank++;
     rows.push({ ...u, rank, accuracy: accuracyOf(u) });
   });
 
