@@ -69,9 +69,9 @@ export async function fetchTopScorers(): Promise<ApiTopScorer[]> {
 
 /** Foto-URL für einen einzelnen Spieler per ID (Fallback wenn nicht in topscorers). */
 export async function fetchPlayerPhoto(playerId: string): Promise<string | null> {
-  const { league, season } = requireConfig();
+  const { season } = requireConfig();
   try {
-    const rows: any[] = await call("/players", { id: playerId, league, season });
+    const rows: any[] = await call("/players", { id: playerId, season });
     return rows[0]?.player?.photo ?? null;
   } catch {
     return null;
