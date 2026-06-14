@@ -153,27 +153,32 @@ export default async function SpielplanPage({
             <Goal className="size-3.5 text-primary" />
             {t.history.topScorer}
           </div>
-          <div className="flex flex-wrap gap-3">
-            {topScorers.map((p) => (
-              <div key={p.id} className="flex items-center gap-2.5">
-                {p.photo ? (
-                  <Image
-                    src={p.photo}
-                    alt={p.name}
-                    width={36}
-                    height={36}
-                    className="rounded-full object-cover ring-2 ring-primary/40"
-                    unoptimized
-                  />
-                ) : (
-                  <div className="flex size-9 items-center justify-center rounded-full bg-secondary text-xs font-bold">
-                    {p.name.charAt(0)}
-                  </div>
-                )}
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-semibold">{p.name}</div>
-                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                    {p.team && <Flag code={p.team.flagCode} className="text-sm" />}
+          <div className="grid grid-cols-3 gap-2">
+            {topScorers.map((p, i) => (
+              <div key={p.id} className="flex flex-col items-center gap-1.5 text-center">
+                <div className="relative">
+                  {p.photo ? (
+                    <Image
+                      src={p.photo}
+                      alt={p.name}
+                      width={52}
+                      height={52}
+                      className="rounded-full object-cover ring-2 ring-primary/40"
+                      unoptimized
+                    />
+                  ) : (
+                    <div className="flex size-[52px] items-center justify-center rounded-full bg-secondary text-sm font-bold">
+                      {p.name.charAt(0)}
+                    </div>
+                  )}
+                  <span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                    {i + 1}
+                  </span>
+                </div>
+                <div className="min-w-0 w-full">
+                  <div className="truncate text-xs font-semibold leading-tight">{p.name}</div>
+                  <div className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground">
+                    {p.team && <Flag code={p.team.flagCode} className="text-xs" />}
                     <span className="font-bold tabular-nums text-primary">{p.goals}</span>
                     {t.history.goals}
                   </div>
