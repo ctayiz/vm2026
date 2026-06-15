@@ -90,11 +90,8 @@ export interface ApiFixture {
   awayTeamId: number | null;
 }
 
-/** Alle Fixtures der Liga/Saison (Spielplan + Live-Ergebnisse). */
-export async function fetchFixtures(): Promise<ApiFixture[]> {
-  const { league, season } = requireConfig();
-  const rows: any[] = await call("/fixtures", { league, season });
-  return rows.map((r) => ({
+function mapFixture(r: any): ApiFixture {
+  return {
     fixtureId: r.fixture?.id,
     date: r.fixture?.date,
     round: r.league?.round ?? "",
@@ -109,7 +106,21 @@ export async function fetchFixtures(): Promise<ApiFixture[]> {
     awayWinner: r.teams?.away?.winner ?? null,
     homeTeamId: r.teams?.home?.id ?? null,
     awayTeamId: r.teams?.away?.id ?? null,
-  }));
+  };
+}
+
+/** Alle Fixtures der Liga/Saison (Spielplan + Ergebnisse). */
+export async function fetchFixtures(): Promise<ApiFixture[]> {
+  const { league, season } = requireConfig();
+  const rows: any[] = await call("/fixtures", { league, season });
+  return rows.map(mapFixture);
+}
+
+/** Nur aktuell laufende Fixtures (Echtzeit, nicht gecacht). */
+export async function fetchLiveFixtures(): Promise<ApiFixture[]> {
+  const { league } = requireConfig();
+  const rows: any[] = await call("/fixtures", { live: "all", league });
+  return rows.map(mapFixture);
 }
 
 export interface SquadPlayer {

@@ -8,7 +8,7 @@
 // Code-Paar (Gruppenphase) bzw. über den exakten Anpfiff (K.-o. mit Platzhaltern).
 
 import { db } from "./db";
-import { fetchFixtures, hasApiFootball } from "./api-football";
+import { fetchFixtures, fetchLiveFixtures, hasApiFootball } from "./api-football";
 import { PHASE_META, type Phase } from "./constants";
 
 // API-Football Kurz-Status -> unser Status
@@ -110,7 +110,10 @@ function loadMatches() {
 export async function syncApiFootball(): Promise<SyncResult> {
   if (!hasApiFootball()) return { ok: false, updated: 0, live: 0, checked: 0, resolved: 0, note: "APIFOOTBALL_KEY fehlt" };
 
-  const fixtures = await fetchFixtures();
+  // Basisplan laden; Live-Daten überschreiben gecachte Einträge für laufende Spiele.
+  const [allFixtures, liveFixtures] = await Promise.all([fetchFixtures(), fetchLiveFixtures()]);
+  const liveById = new Map(liveFixtures.map((f) => [f.fixtureId, f]));
+  const fixtures = allFixtures.map((f) => liveById.get(f.fixtureId) ?? f);
   const ours = await loadMatches();
   const teams = await db.team.findMany({ select: { id: true, code: true, apiTeamId: true } });
   const teamByCode = new Map(teams.map((t) => [t.code, t]));
