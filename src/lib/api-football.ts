@@ -116,10 +116,10 @@ export async function fetchFixtures(): Promise<ApiFixture[]> {
   return rows.map(mapFixture);
 }
 
-/** Nur aktuell laufende Fixtures (Echtzeit, nicht gecacht). */
+/** Nur aktuell laufende Fixtures (Echtzeit, nicht gecacht). Kein League-Filter –
+ *  manche Anbieter ignorieren den Filter bei live=all. */
 export async function fetchLiveFixtures(): Promise<ApiFixture[]> {
-  const { league } = requireConfig();
-  const rows: any[] = await call("/fixtures", { live: "all", league });
+  const rows: any[] = await call("/fixtures", { live: "all" });
   return rows.map(mapFixture);
 }
 
