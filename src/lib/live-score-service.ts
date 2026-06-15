@@ -45,7 +45,7 @@ const EN_ALIASES: Record<string, string[]> = {
   IRN: ["iran", "iriran"],
   NZL: ["newzealand"],
   EGY: ["egypt"],
-  CPV: ["capeverde", "caboverde"],
+  CPV: ["capeverde", "caboverde", "capeverdeislands"],
   KSA: ["saudiarabia"],
   ESP: ["spain"],
   URU: ["uruguay"],
