@@ -19,7 +19,7 @@ import { dayKey, dayLabel } from "@/lib/format";
 import { isPickLocked, msUntilLock } from "@/lib/lock";
 import { PHASE_META, MAX_JOKERS, type Phase } from "@/lib/constants";
 import { getLocale, getDictionary } from "@/lib/i18n-server";
-import { CalendarDays, Star, AlarmClock, Goal } from "lucide-react";
+import { CalendarDays, Star, AlarmClock, Goal, Shield } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -68,7 +68,7 @@ export default async function SpielplanPage({
     { value: "gruppe", label: t.schedule.fGroup },
     { value: "ko", label: t.schedule.fKo },
   ];
-  const [all, stats, teams, favoriteTeams, topScorers] = await Promise.all([
+  const [all, stats, teams, favoriteTeams, topScorers, finishedMatches] = await Promise.all([
     getMatches(user.id),
     getUserStats(user.id),
     db.team.findMany({
@@ -82,7 +82,30 @@ export default async function SpielplanPage({
       take: 3,
       include: { team: { select: { name: true, flagCode: true } } },
     }),
+    db.match.findMany({
+      where: { status: "finished" },
+      select: {
+        homeGoals: true,
+        awayGoals: true,
+        homeTeam: { select: { code: true, name: true, flagCode: true } },
+        awayTeam: { select: { code: true, name: true, flagCode: true } },
+      },
+    }),
   ]);
+
+  // Top-3-Teams nach erzielten Toren
+  const teamGoalsMap = new Map<string, { name: string; flagCode: string | null; goals: number }>();
+  for (const m of finishedMatches) {
+    if (m.homeTeam && m.homeGoals != null) {
+      const prev = teamGoalsMap.get(m.homeTeam.code) ?? { name: m.homeTeam.name, flagCode: m.homeTeam.flagCode, goals: 0 };
+      teamGoalsMap.set(m.homeTeam.code, { ...prev, goals: prev.goals + m.homeGoals });
+    }
+    if (m.awayTeam && m.awayGoals != null) {
+      const prev = teamGoalsMap.get(m.awayTeam.code) ?? { name: m.awayTeam.name, flagCode: m.awayTeam.flagCode, goals: 0 };
+      teamGoalsMap.set(m.awayTeam.code, { ...prev, goals: prev.goals + m.awayGoals });
+    }
+  }
+  const topTeams = [...teamGoalsMap.values()].sort((a, b) => b.goals - a.goals).slice(0, 3);
   const favoriteCodes = favoriteTeams.map((t) => t.code);
   const favoritesOverview = buildFavoritesOverview(favoriteCodes, all);
 
@@ -180,6 +203,35 @@ export default async function SpielplanPage({
                   <div className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground">
                     {p.team && <Flag code={p.team.flagCode} className="text-xs" />}
                     <span className="font-bold tabular-nums text-primary">{p.goals}</span>
+                    {t.history.goals}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Top-3-Teams nach Toren */}
+      {topTeams.length > 0 && (
+        <div className="rounded-xl border border-border bg-card p-3">
+          <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <Shield className="size-3.5 text-primary" />
+            Meiste Tore
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {topTeams.map((team, i) => (
+              <div key={team.name} className="flex flex-col items-center gap-1.5 text-center">
+                <div className="relative flex size-[52px] items-center justify-center">
+                  <Flag code={team.flagCode} className="text-4xl" />
+                  <span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                    {i + 1}
+                  </span>
+                </div>
+                <div className="min-w-0 w-full">
+                  <div className="truncate text-xs font-semibold leading-tight">{team.name}</div>
+                  <div className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground">
+                    <span className="font-bold tabular-nums text-primary">{team.goals}</span>
                     {t.history.goals}
                   </div>
                 </div>
