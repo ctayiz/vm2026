@@ -301,11 +301,14 @@ export default async function SpielplanPage({
         </p>
       ) : (
         days.map(([k, dayMatches]) => (
-          <section key={k} id={k === currentDayKey ? "aktuell" : undefined} className="space-y-3">
+          <section key={k} className="space-y-3">
             <h2 className="sticky top-14 z-10 bg-background/80 py-1 text-sm font-semibold uppercase tracking-wide text-muted-foreground backdrop-blur">
               {dayLabel(dayMatches[0].kickoff, locale)}
             </h2>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div
+              id={k === currentDayKey ? "aktuell" : undefined}
+              className="grid gap-3 sm:grid-cols-2 scroll-mt-24"
+            >
               {dayMatches.map((m, i) => (
                 <MatchCard
                   key={m.id}
