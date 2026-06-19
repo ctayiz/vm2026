@@ -3,7 +3,6 @@ import {
   getMatches,
   getFavoriteTeams,
   buildFavoritesOverview,
-  getGroupStandings,
   type MatchWithPrediction,
 } from "@/lib/queries";
 import { db } from "@/lib/db";
@@ -14,13 +13,12 @@ import { FavoritesStrip } from "@/components/favorites-strip";
 import { ExploreTiles } from "@/components/explore-tiles";
 import { FilterBar } from "@/components/filter-bar";
 import { TeamFilter, type TeamFilterOption } from "@/components/team-filter";
-import { GroupTable } from "@/components/group-table";
 import { Flag } from "@/components/flag";
 import { dayKey, dayLabel } from "@/lib/format";
 import { isPickLocked, msUntilLock } from "@/lib/lock";
 import { PHASE_META, MAX_JOKERS, type Phase } from "@/lib/constants";
 import { getLocale, getDictionary } from "@/lib/i18n-server";
-import { CalendarDays, Star, AlarmClock, Goal, Shield, Layers, ArrowRight } from "lucide-react";
+import { CalendarDays, Star, AlarmClock, Goal, Shield } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -70,7 +68,7 @@ export default async function SpielplanPage({
     { value: "ko", label: t.schedule.fKo },
   ];
 
-  const [all, teams, favoriteTeams, topScorers, finishedMatches, groupStandings] = await Promise.all([
+  const [all, teams, favoriteTeams, topScorers, finishedMatches] = await Promise.all([
     getMatches(user.id),
     db.team.findMany({
       orderBy: [{ group: "asc" }, { name: "asc" }],
@@ -92,7 +90,6 @@ export default async function SpielplanPage({
         awayTeam: { select: { code: true, name: true, flagCode: true } },
       },
     }),
-    getGroupStandings(),
   ]);
 
   // Top-3-Teams nach erzielten Toren
@@ -108,9 +105,6 @@ export default async function SpielplanPage({
     }
   }
   const topTeams = [...teamGoalsMap.values()].sort((a, b) => b.goals - a.goals).slice(0, 3);
-
-  // Nur Gruppen anzeigen, in denen bereits Spiele gelaufen sind
-  const activeGroups = groupStandings.filter((g) => g.rows.some((r) => r.played > 0));
 
   const favoriteCodes = favoriteTeams.map((t) => t.code);
   const favoritesOverview = buildFavoritesOverview(favoriteCodes, all);
@@ -240,29 +234,6 @@ export default async function SpielplanPage({
             </div>
           )}
         </div>
-      )}
-
-      {/* Live-Gruppenstand */}
-      {activeGroups.length > 0 && (
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Layers className="size-4 text-primary" />
-              <h2 className="text-sm font-bold">{t.wm.groupsTitle}</h2>
-            </div>
-            <Link
-              href="/wm/gruppen"
-              className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {t.wm.group} A–L <ArrowRight className="size-3" />
-            </Link>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {activeGroups.map((g, i) => (
-              <GroupTable key={g.group} group={g.group} rows={g.rows} index={i} />
-            ))}
-          </div>
-        </section>
       )}
 
       {(liveMatch || nextMatch) && (
