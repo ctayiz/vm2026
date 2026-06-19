@@ -120,11 +120,9 @@ export default async function SpielplanPage({
   const now = Date.now();
   const liveMatch = all.find((m) => m.status === "live") ?? null;
   const nextMatch = all.find((m) => m.status !== "finished" && m.kickoff.getTime() > now) ?? null;
-  const currentDayKey = liveMatch
-    ? dayKey(liveMatch.kickoff)
-    : nextMatch
-      ? dayKey(nextMatch.kickoff)
-      : null;
+  // Anchor-Ziel: erstes live oder nicht-beendetes Spiel in der gefilterten Liste
+  const currentMatchId =
+    (matches.find((m) => m.status === "live") ?? matches.find((m) => m.status !== "finished"))?.id ?? null;
   const openCount = all.filter(
     (m) => m.status !== "finished" && !isPickLocked(m.kickoff) && !m.myPrediction,
   ).length;
@@ -146,7 +144,7 @@ export default async function SpielplanPage({
 
   return (
     <div className="space-y-6">
-      {currentDayKey && (
+      {currentMatchId && (
         <JumpToNow
           hasLive={!!liveMatch}
           label={liveMatch ? t.schedule.jumpToLive : t.schedule.jumpToNow}
@@ -305,19 +303,21 @@ export default async function SpielplanPage({
             <h2 className="sticky top-14 z-10 bg-background/80 py-1 text-sm font-semibold uppercase tracking-wide text-muted-foreground backdrop-blur">
               {dayLabel(dayMatches[0].kickoff, locale)}
             </h2>
-            <div
-              id={k === currentDayKey ? "aktuell" : undefined}
-              className="grid gap-3 sm:grid-cols-2 scroll-mt-24"
-            >
+            <div className="grid gap-3 sm:grid-cols-2">
               {dayMatches.map((m, i) => (
-                <MatchCard
+                <div
                   key={m.id}
-                  match={m}
-                  index={i}
-                  favoriteCodes={favoriteCodes}
-                  joker
-                  jokerCapReached={jokerCapReached}
-                />
+                  id={m.id === currentMatchId ? "aktuell" : undefined}
+                  className={m.id === currentMatchId ? "scroll-mt-24" : undefined}
+                >
+                  <MatchCard
+                    match={m}
+                    index={i}
+                    favoriteCodes={favoriteCodes}
+                    joker
+                    jokerCapReached={jokerCapReached}
+                  />
+                </div>
               ))}
             </div>
           </section>
