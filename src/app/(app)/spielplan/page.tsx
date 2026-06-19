@@ -1,9 +1,9 @@
 import { requireUser } from "@/lib/auth";
 import {
   getMatches,
-  getUserStats,
   getFavoriteTeams,
   buildFavoritesOverview,
+  getGroupStandings,
   type MatchWithPrediction,
 } from "@/lib/queries";
 import { db } from "@/lib/db";
@@ -14,12 +14,13 @@ import { FavoritesStrip } from "@/components/favorites-strip";
 import { ExploreTiles } from "@/components/explore-tiles";
 import { FilterBar } from "@/components/filter-bar";
 import { TeamFilter, type TeamFilterOption } from "@/components/team-filter";
+import { GroupTable } from "@/components/group-table";
 import { Flag } from "@/components/flag";
 import { dayKey, dayLabel } from "@/lib/format";
 import { isPickLocked, msUntilLock } from "@/lib/lock";
 import { PHASE_META, MAX_JOKERS, type Phase } from "@/lib/constants";
 import { getLocale, getDictionary } from "@/lib/i18n-server";
-import { CalendarDays, Star, AlarmClock, Goal, Shield } from "lucide-react";
+import { CalendarDays, Star, AlarmClock, Goal, Shield, Layers, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -68,9 +69,9 @@ export default async function SpielplanPage({
     { value: "gruppe", label: t.schedule.fGroup },
     { value: "ko", label: t.schedule.fKo },
   ];
-  const [all, stats, teams, favoriteTeams, topScorers, finishedMatches] = await Promise.all([
+
+  const [all, teams, favoriteTeams, topScorers, finishedMatches, groupStandings] = await Promise.all([
     getMatches(user.id),
-    getUserStats(user.id),
     db.team.findMany({
       orderBy: [{ group: "asc" }, { name: "asc" }],
       select: { code: true, name: true, flagCode: true, group: true },
@@ -91,6 +92,7 @@ export default async function SpielplanPage({
         awayTeam: { select: { code: true, name: true, flagCode: true } },
       },
     }),
+    getGroupStandings(),
   ]);
 
   // Top-3-Teams nach erzielten Toren
@@ -106,11 +108,15 @@ export default async function SpielplanPage({
     }
   }
   const topTeams = [...teamGoalsMap.values()].sort((a, b) => b.goals - a.goals).slice(0, 3);
+
+  // Nur Gruppen anzeigen, in denen bereits Spiele gelaufen sind
+  const activeGroups = groupStandings.filter((g) => g.rows.some((r) => r.played > 0));
+
   const favoriteCodes = favoriteTeams.map((t) => t.code);
   const favoritesOverview = buildFavoritesOverview(favoriteCodes, all);
 
-  // Joker: max. 3 fürs gesamte Turnier -> alle aktiven Joker zählen
   const jokerCapReached = all.filter((m) => m.myJoker).length >= MAX_JOKERS;
+  const tipped = all.filter((m) => m.myPrediction !== null).length;
 
   const filter = searchParams.filter ?? "alle";
   const teamCode = searchParams.team ?? "";
@@ -118,16 +124,12 @@ export default async function SpielplanPage({
   const matches = applyTeamFilter(applyFilter(all, filter, favoriteCodes), teamCode);
 
   const now = Date.now();
-  // Zwei Highlights: ein laufendes Spiel (falls vorhanden) UND das nächste
-  // anstehende. Beide werden gezeigt – das nächste Spiel bleibt also erhalten.
   const liveMatch = all.find((m) => m.status === "live") ?? null;
-  const nextMatch =
-    all.find((m) => m.status !== "finished" && m.kickoff.getTime() > now) ?? null;
+  const nextMatch = all.find((m) => m.status !== "finished" && m.kickoff.getTime() > now) ?? null;
   const openCount = all.filter(
     (m) => m.status !== "finished" && !isPickLocked(m.kickoff) && !m.myPrediction,
   ).length;
 
-  // Erinnerung: ungetippte Spiele, deren Tipp-Schluss in < 60 Min ist
   const HOUR = 60 * 60 * 1000;
   const closingSoon = all.filter((m) => {
     if (m.status === "finished" || m.myPrediction) return false;
@@ -135,7 +137,6 @@ export default async function SpielplanPage({
     return ms > 0 && ms <= HOUR;
   }).length;
 
-  // nach Tag gruppieren (chronologisch)
   const byDay = new Map<string, MatchWithPrediction[]>();
   for (const m of matches) {
     const k = dayKey(m.kickoff);
@@ -148,11 +149,8 @@ export default async function SpielplanPage({
     <div className="space-y-6">
       <DashboardHero
         name={user.displayName}
-        points={stats.totalPoints}
-        rank={stats.rank}
-        totalPlayers={stats.totalPlayers}
         openCount={openCount}
-        tipped={stats.predictedCount}
+        tipped={tipped}
         totalMatches={all.length}
       />
 
@@ -169,76 +167,102 @@ export default async function SpielplanPage({
         </Link>
       )}
 
-      {/* Torschützenkönig */}
-      {topScorers.length > 0 && (
-        <div className="rounded-xl border border-border bg-card p-3">
-          <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-            <Goal className="size-3.5 text-primary" />
-            {t.history.topScorer}
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            {topScorers.map((p, i) => (
-              <div key={p.id} className="flex flex-col items-center gap-1.5 text-center">
-                <div className="relative">
-                  {p.photo ? (
-                    <Image
-                      src={p.photo}
-                      alt={p.name}
-                      width={52}
-                      height={52}
-                      className="rounded-full object-cover ring-2 ring-primary/40"
-                      unoptimized
-                    />
-                  ) : (
-                    <div className="flex size-[52px] items-center justify-center rounded-full bg-secondary text-sm font-bold">
-                      {p.name.charAt(0)}
-                    </div>
-                  )}
-                  <span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-                    {i + 1}
-                  </span>
-                </div>
-                <div className="min-w-0 w-full">
-                  <div className="truncate text-xs font-semibold leading-tight">{p.name}</div>
-                  <div className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground">
-                    {p.team && <Flag code={p.team.flagCode} className="text-xs" />}
-                    <span className="font-bold tabular-nums text-primary">{p.goals}</span>
-                    {t.history.goals}
-                  </div>
-                </div>
+      {/* Torschützen + Meiste Tore nebeneinander */}
+      {(topScorers.length > 0 || topTeams.length > 0) && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {topScorers.length > 0 && (
+            <div className="rounded-xl border border-border bg-card p-3">
+              <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <Goal className="size-3.5 text-primary" />
+                {t.history.topScorer}
               </div>
-            ))}
-          </div>
+              <div className="grid grid-cols-3 gap-2">
+                {topScorers.map((p, i) => (
+                  <div key={p.id} className="flex flex-col items-center gap-1.5 text-center">
+                    <div className="relative">
+                      {p.photo ? (
+                        <Image
+                          src={p.photo}
+                          alt={p.name}
+                          width={52}
+                          height={52}
+                          className="rounded-full object-cover ring-2 ring-primary/40"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="flex size-[52px] items-center justify-center rounded-full bg-secondary text-sm font-bold">
+                          {p.name.charAt(0)}
+                        </div>
+                      )}
+                      <span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                        {i + 1}
+                      </span>
+                    </div>
+                    <div className="min-w-0 w-full">
+                      <div className="truncate text-xs font-semibold leading-tight">{p.name}</div>
+                      <div className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground">
+                        {p.team && <Flag code={p.team.flagCode} className="text-xs" />}
+                        <span className="font-bold tabular-nums text-primary">{p.goals}</span>
+                        {t.history.goals}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {topTeams.length > 0 && (
+            <div className="rounded-xl border border-border bg-card p-3">
+              <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <Shield className="size-3.5 text-primary" />
+                Meiste Tore
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {topTeams.map((team, i) => (
+                  <div key={team.name} className="flex flex-col items-center gap-1.5 text-center">
+                    <div className="relative flex size-[52px] items-center justify-center">
+                      <Flag code={team.flagCode} className="text-4xl" />
+                      <span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                        {i + 1}
+                      </span>
+                    </div>
+                    <div className="min-w-0 w-full">
+                      <div className="truncate text-xs font-semibold leading-tight">{team.name}</div>
+                      <div className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground">
+                        <span className="font-bold tabular-nums text-primary">{team.goals}</span>
+                        {t.history.goals}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Top-3-Teams nach Toren */}
-      {topTeams.length > 0 && (
-        <div className="rounded-xl border border-border bg-card p-3">
-          <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-            <Shield className="size-3.5 text-primary" />
-            Meiste Tore
+      {/* Live-Gruppenstand */}
+      {activeGroups.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Layers className="size-4 text-primary" />
+              <h2 className="text-sm font-bold">{t.wm.groupsTitle}</h2>
+            </div>
+            <Link
+              href="/wm/gruppen"
+              className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {t.wm.group} A–L <ArrowRight className="size-3" />
+            </Link>
           </div>
-          <div className="grid grid-cols-3 gap-2">
-            {topTeams.map((team, i) => (
-              <div key={team.name} className="flex flex-col items-center gap-1.5 text-center">
-                <div className="relative flex size-[52px] items-center justify-center">
-                  <Flag code={team.flagCode} className="text-4xl" />
-                  <span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-                    {i + 1}
-                  </span>
-                </div>
-                <div className="min-w-0 w-full">
-                  <div className="truncate text-xs font-semibold leading-tight">{team.name}</div>
-                  <div className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground">
-                    <span className="font-bold tabular-nums text-primary">{team.goals}</span>
-                    {t.history.goals}
-                  </div>
-                </div>
-              </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {activeGroups.map((g, i) => (
+              <GroupTable key={g.group} group={g.group} rows={g.rows} index={i} />
             ))}
           </div>
-        </div>
+        </section>
       )}
 
       {(liveMatch || nextMatch) && (

@@ -1,69 +1,30 @@
 import Link from "next/link";
-import { Trophy, Target, ListChecks, ArrowRight } from "lucide-react";
-import { CountUp } from "@/components/count-up";
+import { Layers, BarChart3, Sparkles, Trophy } from "lucide-react";
+import { BracketIcon } from "@/components/bracket-icon";
 import { getDictionary } from "@/lib/i18n-server";
 import { cn } from "@/lib/utils";
 
-function Chip({
-  icon: Icon,
-  value,
-  label,
-  href,
-  highlight,
-}: {
-  icon: React.ElementType;
-  value: React.ReactNode;
-  label: string;
-  href?: string;
-  highlight?: boolean;
-}) {
-  const inner = (
-    <div
-      className={cn(
-        "glass flex items-center gap-3 rounded-xl px-4 py-3 transition-colors",
-        href && "hover:border-primary/40",
-        highlight && "border-primary/40 bg-primary/10",
-      )}
-    >
-      <span
-        className={cn(
-          "flex size-7 shrink-0 items-center justify-center rounded-lg",
-          highlight ? "bg-primary/20 text-primary" : "bg-secondary text-primary",
-        )}
-      >
-        <Icon className="size-3.5" />
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="text-base font-bold leading-none tabular-nums">{value}</div>
-        <div className="mt-0.5 truncate text-[11px] uppercase tracking-wide text-muted-foreground">
-          {label}
-        </div>
-      </div>
-      {href && <ArrowRight className="size-4 shrink-0 text-muted-foreground" />}
-    </div>
-  );
-  return href ? <Link href={href}>{inner}</Link> : inner;
-}
-
 export function DashboardHero({
   name,
-  points,
-  rank,
-  totalPlayers,
   openCount,
   tipped = 0,
   totalMatches = 0,
 }: {
   name: string;
-  points: number;
-  rank: number | null;
-  totalPlayers: number;
   openCount: number;
   tipped?: number;
   totalMatches?: number;
 }) {
   const t = getDictionary();
   const pct = totalMatches > 0 ? Math.round((tipped / totalMatches) * 100) : 0;
+
+  const tiles = [
+    { href: "/wm/gruppen", icon: Layers, label: t.nav.groups, cls: "text-sky-400" },
+    { href: "/turnierbaum", icon: BracketIcon, label: t.nav.bracket, cls: "text-violet-400" },
+    { href: "/statistiken", icon: BarChart3, label: t.nav.stats, cls: "text-primary" },
+    { href: "/ranking", icon: Trophy, label: t.nav.ranking, cls: "text-amber-300" },
+  ];
+
   return (
     <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-card to-card p-5 sm:p-6">
       <div className="blob right-[-20%] top-[-60%] h-48 w-48 animate-blob bg-primary/30" />
@@ -77,22 +38,17 @@ export function DashboardHero({
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 xs:grid-cols-2 sm:grid-cols-3">
-          <Chip
-            icon={Trophy}
-            value={rank ? `#${rank}` : "—"}
-            label={t.dashboard.rankSub(totalPlayers)}
-            href="/ranking"
-            highlight={rank === 1}
-          />
-          <Chip icon={Target} value={<CountUp value={points} />} label={t.ranking.points} href="/statistiken" />
-          <Chip
-            icon={ListChecks}
-            value={openCount}
-            label={t.dashboard.openTips}
-            href="/spielplan?filter=offen"
-            highlight={openCount > 0}
-          />
+        <div className="grid grid-cols-4 gap-2">
+          {tiles.map(({ href, icon: Icon, label, cls }) => (
+            <Link key={href} href={href} className="group">
+              <div className="flex flex-col items-center gap-1.5 rounded-xl border border-border/60 bg-secondary/30 px-1 py-2.5 text-center transition-colors hover:bg-secondary/60">
+                <Icon className={cn("size-5", cls)} />
+                <span className="text-[10px] font-medium leading-tight text-muted-foreground transition-colors group-hover:text-foreground">
+                  {label}
+                </span>
+              </div>
+            </Link>
+          ))}
         </div>
 
         {totalMatches > 0 && (

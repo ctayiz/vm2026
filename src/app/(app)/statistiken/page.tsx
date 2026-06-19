@@ -77,8 +77,19 @@ export default async function StatistikenPage() {
     if ((m.myPoints ?? 0) > 0) dist[m.myPrediction].correct++;
   }
 
-  // chronologisch (für Serie + Formkurve)
+  // chronologisch (für Serie + Formkurve + Verlauf)
   const chrono = [...scored].sort((a, b) => a.kickoff.getTime() - b.kickoff.getTime());
+
+  // Kumulierter Punkte-Verlauf nach Tag
+  const ptsByDay = new Map<string, number>();
+  for (const m of chrono) {
+    const day = m.kickoff.toISOString().slice(0, 10);
+    ptsByDay.set(day, (ptsByDay.get(day) ?? 0) + (m.myPoints ?? 0));
+  }
+  let cumPts = 0;
+  const chartData = [...ptsByDay.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([day, pts]) => { cumPts += pts; return { day, cum: cumPts }; });
   let best = 0;
   let run = 0;
   for (const m of chrono) {
@@ -241,6 +252,50 @@ export default async function StatistikenPage() {
           index={3}
         />
       </div>
+
+      {/* PUNKTE-VERLAUF */}
+      <Card className="glass">
+        <CardHeader>
+          <CardTitle className="text-base">{t.stats.pointsHistory}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {chartData.length < 2 ? (
+            <p className="text-sm text-muted-foreground">{t.stats.pointsHistoryEmpty}</p>
+          ) : (
+            (() => {
+              const W = 400, H = 80, px = 12, py = 10;
+              const maxY = Math.max(...chartData.map((d) => d.cum), 1);
+              const toX = (i: number) => px + (i / (chartData.length - 1)) * (W - 2 * px);
+              const toY = (v: number) => H - py - (v / maxY) * (H - 2 * py);
+              const linePts = chartData.map((d, i) => `${toX(i)},${toY(d.cum)}`).join(" ");
+              const areaPts = [
+                `${px},${H - py}`,
+                ...chartData.map((d, i) => `${toX(i)},${toY(d.cum)}`),
+                `${toX(chartData.length - 1)},${H - py}`,
+              ].join(" ");
+              const last = chartData[chartData.length - 1];
+              const lx = toX(chartData.length - 1);
+              const ly = toY(last.cum);
+              return (
+                <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 80 }}>
+                  <defs>
+                    <linearGradient id="ptGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.35" />
+                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.02" />
+                    </linearGradient>
+                  </defs>
+                  <polygon points={areaPts} fill="url(#ptGrad)" />
+                  <polyline points={linePts} fill="none" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  {chartData.map((d, i) => (
+                    <circle key={i} cx={toX(i)} cy={toY(d.cum)} r={i === chartData.length - 1 ? 4 : 2} fill="hsl(var(--primary))" opacity={i === chartData.length - 1 ? 1 : 0.55} />
+                  ))}
+                  <text x={lx} y={ly - 7} textAnchor={lx > W * 0.8 ? "end" : "middle"} fontSize="11" fill="hsl(var(--primary))" fontWeight="bold">{last.cum}</text>
+                </svg>
+              );
+            })()
+          )}
+        </CardContent>
+      </Card>
 
       {/* AUSZEICHNUNGEN */}
       <Card className="glass">
