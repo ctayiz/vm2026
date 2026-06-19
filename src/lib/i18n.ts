@@ -210,6 +210,8 @@ const de = {
     closingSoon: (n: number) =>
       `${n} ${n === 1 ? "Spiel schließt" : "Spiele schließen"} in der nächsten Stunde – jetzt tippen.`,
     closingSoonTitle: "Tipp-Schluss bald!",
+    jumpToLive: "Live-Spiel",
+    jumpToNow: "Aktuelle Spiele",
     favPrompt1: "Wähle bis zu 3",
     favPromptWord: "Lieblingsländer",
     favPrompt2: "– sie bekommen hier oben mehr Fokus.",
@@ -820,6 +822,8 @@ const tr: Dictionary = {
     fKo: "Eleme turu",
     closingSoon: (n: number) => `Önümüzdeki bir saatte ${n} maç kapanıyor – hemen tahmin et.`,
     closingSoonTitle: "Süre doluyor!",
+    jumpToLive: "Canlı maç",
+    jumpToNow: "Güncel maçlar",
     favPrompt1: "En fazla 3",
     favPromptWord: "favori ülke",
     favPrompt2: "seç – burada üstte öne çıkarlar.",
