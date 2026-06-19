@@ -5,7 +5,7 @@ import {
   type TeamOption,
   type PlayerOption,
 } from "@/components/tournament-bet-card";
-import { Lock, Sparkles } from "lucide-react";
+import { Lock, Sparkles, Clock } from "lucide-react";
 import { formatDateTime } from "@/lib/format";
 import { getLocale, getDictionary } from "@/lib/i18n-server";
 
@@ -15,7 +15,7 @@ export default async function TurnierTippsPage() {
   const user = await requireUser();
   const t = getDictionary();
   const locale = getLocale();
-  const { questions, teams, players, lock } = await getTournamentData(user.id);
+  const { questions, teams, players, lock, finished } = await getTournamentData(user.id);
 
   const teamOptions: TeamOption[] = teams.map((t) => ({
     id: t.id,
@@ -71,6 +71,14 @@ export default async function TurnierTippsPage() {
         )}
       </div>
 
+      {/* Hinweis: Punkte erst nach dem Finale */}
+      {!finished && (
+        <div className="flex items-start gap-2 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-200">
+          <Clock className="mt-0.5 size-4 shrink-0 text-amber-300" />
+          <span>{t.tournament.finalOnlyNotice}</span>
+        </div>
+      )}
+
       {/* Fragen */}
       <div className="grid gap-3 sm:grid-cols-2">
         {questions.map((q, i) => (
@@ -99,7 +107,8 @@ export default async function TurnierTippsPage() {
                 ? (q.pickedPlayer.team?.flagCode ?? null)
                 : (q.pickedTeam?.flagCode ?? null),
               status: q.status,
-              earnedPoints: q.points,
+              earnedPoints: q.earnedPoints ?? null,
+              finalOnly: q.finalOnly ?? false,
               locked: lock.locked,
             }}
           />

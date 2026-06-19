@@ -36,6 +36,7 @@ export interface QuestionView {
   pickedFlag: string | null;
   status: "fulfilled" | "missed" | "open";
   earnedPoints: number | null;
+  finalOnly?: boolean;
   locked: boolean;
 }
 
@@ -131,12 +132,22 @@ export function TournamentBetCard({
   };
 
   const statusBadge = () => {
-    if (question.status === "fulfilled")
+    if (question.status === "fulfilled") {
+      const pointsAwarded = question.earnedPoints != null && question.earnedPoints > 0;
+      if (pointsAwarded) {
+        return (
+          <span className="inline-flex items-center gap-1 rounded-full bg-primary/20 px-2 py-0.5 text-xs font-semibold text-primary">
+            <Check className="size-3" /> {t.tournament.fulfilled(question.earnedPoints!)}
+          </span>
+        );
+      }
+      // Richtig getippt, aber finalOnly – Punkte kommen erst nach dem Finale
       return (
-        <span className="inline-flex items-center gap-1 rounded-full bg-primary/20 px-2 py-0.5 text-xs font-semibold text-primary">
-          <Check className="size-3" /> {t.tournament.fulfilled(question.earnedPoints ?? 0)}
+        <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/20 px-2 py-0.5 text-xs font-semibold text-amber-300">
+          <Check className="size-3" /> {t.tournament.fulfilledPending(question.points)}
         </span>
       );
+    }
     if (question.status === "missed")
       return (
         <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-xs text-muted-foreground">
