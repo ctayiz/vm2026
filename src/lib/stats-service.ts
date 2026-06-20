@@ -48,10 +48,14 @@ export async function syncTopScorers(): Promise<ScorerSyncSummary> {
 
     for (const s of scorers) {
       const teamId = await teamIdByApiName(s.teamName, codeIndex);
+      const existing = await db.player.findUnique({ where: { externalId: s.externalId }, select: { goals: true } });
+      // Eigene Event-Zählung ist aktueller als der API-Endpoint (der laggt nach Spielende).
+      // Nur überschreiben wenn der API-Wert höher ist.
+      const goals = existing ? Math.max(existing.goals, s.goals) : s.goals;
       await db.player.upsert({
         where: { externalId: s.externalId },
-        update: { name: s.name, goals: s.goals, assists: s.assists, photo: s.photo, teamId },
-        create: { externalId: s.externalId, name: s.name, goals: s.goals, assists: s.assists, photo: s.photo, teamId },
+        update: { name: s.name, goals, assists: s.assists, photo: s.photo, teamId },
+        create: { externalId: s.externalId, name: s.name, goals, assists: s.assists, photo: s.photo, teamId },
       });
     }
 
