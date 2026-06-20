@@ -41,7 +41,16 @@ export async function runScheduledSync(): Promise<{ did: string[]; live: boolean
   if (await shouldRun("lastApiSync", interval)) {
     try {
       const r = await syncApiFootball();
-      if (r.updated > 0 || r.resolved > 0) await rescoreAll(); // beendete Spiele sofort werten
+      if (r.updated > 0 || r.resolved > 0) {
+        await rescoreAll(); // beendete Spiele sofort werten
+        if (r.newlyFinished > 0) {
+          // Spiel gerade beendet → Torschützen sofort aktualisieren (Throttle umgehen)
+          await syncMatchGoals();
+          await syncTopScorers();
+          await rescoreTournamentBets();
+          did.push("stats");
+        }
+      }
       did.push("sync");
     } catch {
       /* API-Fehler/Limit: ignorieren, nächster Lauf versucht es erneut */

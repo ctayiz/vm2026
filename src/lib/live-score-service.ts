@@ -92,6 +92,7 @@ export type SyncResult = {
   live: number;
   checked: number;
   resolved: number; // K.-o.-Paarungen neu aufgelöst
+  newlyFinished: number; // Spiele, die in diesem Lauf auf "finished" gewechselt sind
   note?: string;
 };
 
@@ -108,7 +109,7 @@ function loadMatches() {
  *  - K.-o.-Paarungen auflösen, sobald die Teams feststehen
  */
 export async function syncApiFootball(): Promise<SyncResult> {
-  if (!hasApiFootball()) return { ok: false, updated: 0, live: 0, checked: 0, resolved: 0, note: "APIFOOTBALL_KEY fehlt" };
+  if (!hasApiFootball()) return { ok: false, updated: 0, live: 0, checked: 0, resolved: 0, newlyFinished: 0, note: "APIFOOTBALL_KEY fehlt" };
 
   // Basisplan laden; Live-Daten überschreiben gecachte Einträge für laufende Spiele.
   const [allFixtures, liveFixtures] = await Promise.all([fetchFixtures(), fetchLiveFixtures()]);
@@ -139,6 +140,7 @@ export async function syncApiFootball(): Promise<SyncResult> {
   let live = 0;
   let checked = 0;
   let resolved = 0;
+  let newlyFinished = 0;
 
   for (const f of fixtures) {
     const hc = codeOf(f.homeName);
@@ -236,6 +238,7 @@ export async function syncApiFootball(): Promise<SyncResult> {
       await db.match.update({ where: { id: m.id }, data });
       if (data.status) updated++;
       if (data.status === "live") live++;
+      if (data.status === "finished" && m.status !== "finished") newlyFinished++;
     } catch {
       /* z. B. apiFixtureId-Kollision -> ignorieren */
     }
@@ -249,5 +252,5 @@ export async function syncApiFootball(): Promise<SyncResult> {
     if (t) t.apiTeamId = apiTeamId;
   }
 
-  return { ok: true, updated, live, checked, resolved };
+  return { ok: true, updated, live, checked, resolved, newlyFinished };
 }
