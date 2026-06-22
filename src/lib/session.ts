@@ -52,5 +52,8 @@ export async function getSessionUserId(): Promise<string | null> {
   const token = cookies().get(SESSION_COOKIE)?.value;
   if (!token) return null;
   const payload = await verifySessionToken(token);
-  return payload?.userId ?? null;
+  if (!payload) return null;
+  // Sliding window: Cookie-Laufzeit bei jedem Request verlängern
+  await setSessionCookie(payload.userId);
+  return payload.userId;
 }
