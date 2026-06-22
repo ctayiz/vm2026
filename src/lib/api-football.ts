@@ -304,7 +304,7 @@ export async function fetchFixtureDetail(fixtureId: number): Promise<FixtureDeta
 export async function fetchFixtureGoals(fixtureId: number): Promise<ApiGoalEvent[]> {
   const rows: any[] = await call("/fixtures/events", { fixture: fixtureId });
   return rows
-    .filter((e) => e.type === "Goal")
+    .filter((e) => e.type === "Goal" && !String(e.detail ?? "").toLowerCase().includes("missed"))
     .map((e) => {
       const detail = String(e.detail ?? "").toLowerCase();
       const type = detail.includes("own") ? "own" : detail.includes("penalty") ? "penalty" : "normal";
