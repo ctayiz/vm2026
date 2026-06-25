@@ -118,8 +118,12 @@ export default async function SpielplanPage({
   const matches = applyTeamFilter(applyFilter(all, filter, favoriteCodes), teamCode);
 
   const now = Date.now();
-  const liveMatch = all.find((m) => m.status === "live") ?? null;
-  const nextMatch = all.find((m) => m.status !== "finished" && m.kickoff.getTime() > now) ?? null;
+  const liveMatches = all.filter((m) => m.status === "live");
+  // Alle Spiele die zum gleichen Zeitpunkt (nächster Anstoß) stattfinden
+  const nextKickoff = all.find((m) => m.status !== "finished" && m.kickoff.getTime() > now)?.kickoff.getTime() ?? null;
+  const nextMatches = nextKickoff ? all.filter((m) => m.kickoff.getTime() === nextKickoff) : [];
+  const liveMatch = liveMatches[0] ?? null;
+  const nextMatch = nextMatches[0] ?? null;
   // Anchor-Ziel: erstes live oder nicht-beendetes Spiel in der gefilterten Liste
   const currentMatchId =
     (matches.find((m) => m.status === "live") ?? matches.find((m) => m.status !== "finished"))?.id ?? null;
@@ -245,10 +249,14 @@ export default async function SpielplanPage({
         </div>
       )}
 
-      {(liveMatch || nextMatch) && (
+      {(liveMatches.length > 0 || nextMatches.length > 0) && (
         <section className="space-y-3">
-          {liveMatch && <FeaturedMatch match={liveMatch} />}
-          {nextMatch && <FeaturedMatch match={nextMatch} />}
+          {liveMatches.map((m) => (
+            <FeaturedMatch key={m.id} match={m} />
+          ))}
+          {nextMatches.map((m) => (
+            <FeaturedMatch key={m.id} match={m} />
+          ))}
         </section>
       )}
 
