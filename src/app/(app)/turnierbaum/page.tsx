@@ -129,6 +129,73 @@ function Connectors({ nextCount, gold }: { nextCount: number; gold?: boolean }) 
   );
 }
 
+/**
+ * Baut die korrekte Bracket-Reihenfolge per DFS aus den W<n>-Platzhaltern.
+ *
+ * Die WM 2026 hat: Gruppenphase 72 Spiele → R32 beginnt bei Match-Nr. 73.
+ * Jede Phase nummeriert ihre Matches fortlaufend in Anpfiff-Reihenfolge.
+ * Die Platzhalter "W89", "W90" in einem QF-Match verweisen auf die R16-Matches
+ * mit diesen Nummern. Diese Referenz liefert die echte Paarungsstruktur.
+ */
+function buildBracketCols(matches: BracketMatch[]): { phase: Phase; matches: BracketMatch[] }[] {
+  const PHASE_START: Partial<Record<string, number>> = {
+    R32: 73, R16: 89, QF: 97, SF: 101,
+  };
+  const sortedByKickoff = (p: string) =>
+    matches.filter((m) => m.phase === p).sort((a, b) => +new Date(a.kickoff) - +new Date(b.kickoff));
+
+  // Map: competition match number → BracketMatch
+  const numToMatch = new Map<number, BracketMatch>();
+  for (const [phase, start] of Object.entries(PHASE_START) as [string, number][]) {
+    sortedByKickoff(phase).forEach((m, i) => numToMatch.set(start + i, m));
+  }
+
+  const parseW = (s: string | null): number | null => {
+    if (!s) return null;
+    const m = s.match(/^W(\d+)$/);
+    return m ? Number(m[1]) : null;
+  };
+
+  const prevPhaseOf: Partial<Record<string, Phase>> = {
+    FINAL: "SF", SF: "QF", QF: "R16", R16: "R32",
+  };
+
+  const ordered: Partial<Record<Phase, BracketMatch[]>> = {
+    R32: [], R16: [], QF: [], SF: [],
+  };
+  const seen = new Set<string>();
+
+  // DFS: visit a match, then recursively visit its two source matches
+  const visit = (m: BracketMatch): void => {
+    const pp = prevPhaseOf[m.phase];
+    if (!pp || !ordered[pp]) return;
+    for (const ph of [m.homePlaceholder, m.awayPlaceholder]) {
+      const num = parseW(ph);
+      if (num == null) continue;
+      const src = numToMatch.get(num);
+      if (!src || seen.has(src.id)) continue;
+      seen.add(src.id);
+      ordered[pp]!.push(src);
+      visit(src);
+    }
+  };
+
+  // Start DFS from each FINAL match (normalerweise genau eines)
+  for (const m of sortedByKickoff("FINAL")) {
+    visit(m);
+  }
+
+  return COLUMNS.map((phase) => ({
+    phase,
+    matches:
+      phase === "FINAL"
+        ? sortedByKickoff("FINAL")
+        : ordered[phase]?.length
+          ? ordered[phase]!
+          : sortedByKickoff(phase), // Fallback falls DFS fehlschlägt
+  })).filter((c) => c.matches.length > 0);
+}
+
 export default async function TurnierbaumPage() {
   await requireUser();
   const t = getDictionary();
@@ -138,9 +205,8 @@ export default async function TurnierbaumPage() {
     include: { homeTeam: true, awayTeam: true },
   })) as unknown as BracketMatch[];
 
-  const byPhase = (p: Phase) => matches.filter((m) => m.phase === p);
-  const cols = COLUMNS.map((p) => ({ phase: p, matches: byPhase(p) })).filter((c) => c.matches.length > 0);
-  const thirdPlace = byPhase("TP" as Phase);
+  const cols = buildBracketCols(matches);
+  const thirdPlace = matches.filter((m) => m.phase === "TP");
 
   return (
     <div className="space-y-5">
