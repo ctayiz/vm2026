@@ -51,7 +51,7 @@ export function scorePrediction(
   const wentToET = opts.apiStatus === "AET" || opts.apiStatus === "PEN";
   if (wentToET && prediction === "DRAW") {
     const correct = !!opts.knockoutWinner && opts.knockoutWinner === opts.winner;
-    return (correct ? POINTS.CORRECT_DRAW_KNOCKOUT : POINTS.WRONG) * multiplier;
+    return (correct ? POINTS.CORRECT_DRAW_KNOCKOUT : POINTS.CORRECT_DRAW_WRONG_WINNER) * multiplier;
   }
 
   // Alle anderen Fälle (inkl. HOME_WIN/AWAY_WIN bei AET/PEN): normale 1X2-Logik

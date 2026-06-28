@@ -31,7 +31,8 @@ export const PICK_LOCK_MINUTES = 15;
 // Punktesystem (1X2). Bewusst als Objekt, damit später leicht erweiterbar.
 export const POINTS = {
   CORRECT_OUTCOME: 3,
-  CORRECT_DRAW_KNOCKOUT: 5, // DRAW + korrekter V/E-Sieger: 3 + 2 Bonuspunkte
+  CORRECT_DRAW_KNOCKOUT: 5,      // DRAW + korrekter V/E-Sieger: 3 + 2 Bonuspunkte
+  CORRECT_DRAW_WRONG_WINNER: 1,  // DRAW richtig (Spiel ging in V/E), aber falscher Sieger
   WRONG: 0,
 } as const;
 

@@ -189,8 +189,10 @@ export function MatchCard({
               )}
             </span>
             {match.myPrediction && (
-              <Badge variant={correct ? "success" : "destructive"}>
-                {correct ? t.match.plusPoints(match.myPoints ?? 0) : t.match.zeroPoints}
+              <Badge variant={(match.myScored ? (match.myPoints ?? 0) > 0 : correct) ? "success" : "destructive"}>
+                {(match.myScored ? (match.myPoints ?? 0) > 0 : correct)
+                  ? t.match.plusPoints(match.myPoints ?? 0)
+                  : t.match.zeroPoints}
               </Badge>
             )}
           </div>
