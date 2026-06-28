@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 function OptionButton({
   value,
   label,
+  sublabel,
   selected,
   locked,
   compact,
@@ -21,6 +22,7 @@ function OptionButton({
 }: {
   value: Prediction;
   label: string;
+  sublabel?: string;
   selected: boolean;
   locked: boolean;
   compact?: boolean;
@@ -47,6 +49,7 @@ function OptionButton({
         "flex-1 rounded-lg border font-bold transition-all active:scale-95",
         compact ? "py-1 text-xs" : "py-2.5 text-sm",
         "disabled:cursor-not-allowed",
+        sublabel ? "flex flex-col items-center leading-none" : "",
         selected
           ? "border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/25"
           : "border-border bg-secondary/40 text-foreground hover:border-primary/60 hover:bg-secondary",
@@ -55,6 +58,11 @@ function OptionButton({
       )}
     >
       {label}
+      {sublabel && (
+        <span className={cn("font-normal opacity-60", compact ? "text-[8px]" : "text-[9px]")}>
+          {sublabel}
+        </span>
+      )}
     </button>
   );
 }
@@ -185,6 +193,7 @@ export function PredictionPicker({
         <OptionButton
           value="DRAW"
           label="X"
+          sublabel={isKnockout ? "bis 90min" : undefined}
           selected={current === "DRAW"}
           locked={locked}
           compact={compact}
