@@ -141,6 +141,48 @@ export default async function RegelnPage() {
         <p>{r.jokerP}</p>
       </Section>
 
+      <Section icon={Trophy} title={r.koTitle}>
+        <p>{r.koIntro}</p>
+        <div className="mt-3 space-y-1.5">
+          <div className="flex items-center justify-between rounded-lg border border-primary/30 bg-primary/10 px-3 py-2">
+            <div>
+              <p className="font-medium text-foreground">{t.koModal.row1}</p>
+              <p className="text-xs text-muted-foreground">{t.koModal.row1sub}</p>
+            </div>
+            <Badge variant="success" className="shrink-0 text-sm">
+              {POINTS.CORRECT_OUTCOME} {t.common.points}
+            </Badge>
+          </div>
+          <div className="flex items-center justify-between rounded-lg border border-primary/30 bg-primary/10 px-3 py-2">
+            <div>
+              <p className="font-medium text-foreground">{t.koModal.row2}</p>
+              <p className="text-xs text-muted-foreground">{t.koModal.row2sub}</p>
+            </div>
+            <Badge variant="success" className="shrink-0 text-sm">
+              {POINTS.CORRECT_DRAW_KNOCKOUT} {t.common.points}
+            </Badge>
+          </div>
+          <div className="flex items-center justify-between rounded-lg border border-border bg-secondary/40 px-3 py-2">
+            <div>
+              <p className="font-medium text-foreground">{t.koModal.row3}</p>
+              <p className="text-xs text-muted-foreground">{t.koModal.row3sub}</p>
+            </div>
+            <Badge variant="secondary" className="shrink-0 text-sm">
+              {POINTS.CORRECT_DRAW_WRONG_WINNER} {t.common.points}
+            </Badge>
+          </div>
+          <div className="flex items-center justify-between rounded-lg border border-border bg-secondary/40 px-3 py-2">
+            <div>
+              <p className="font-medium text-foreground">{t.koModal.row4}</p>
+            </div>
+            <Badge variant="secondary" className="shrink-0 text-sm">
+              {POINTS.WRONG} {t.common.points}
+            </Badge>
+          </div>
+        </div>
+        <p className="mt-3 text-xs">{t.koModal.note}</p>
+      </Section>
+
       <Section icon={ListOrdered} title={r.s4}>
         <p>{r.s4p}</p>
         <ol className="mt-2 space-y-1">

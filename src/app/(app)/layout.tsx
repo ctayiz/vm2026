@@ -8,6 +8,7 @@ import { Nav } from "@/components/nav";
 import { UserAvatar } from "@/components/user-avatar";
 import { AutoSync } from "@/components/auto-sync";
 import { OnboardingModal } from "@/components/onboarding-modal";
+import { KoDrawModal } from "@/components/ko-draw-modal";
 import { ScrollReset } from "@/components/scroll-reset";
 import { I18nProvider } from "@/components/i18n-provider";
 import { LanguageToggle } from "@/components/language-toggle";
@@ -29,6 +30,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <AutoSync />
         <ScrollReset />
         <OnboardingModal initialOpen={!user.onboardedAt} />
+        <KoDrawModal />
         {/* fixed + fester pt am Inhalt = deterministisch: Leiste immer oben
             sichtbar, Inhalt IMMER darunter (kein sticky-in-flex-Bug auf iOS). */}
         <header className="fixed inset-x-0 top-0 z-40 border-b border-border bg-card/80 backdrop-blur">
