@@ -63,15 +63,11 @@ export function MatchCard({
 
   const wentToET = match.apiStatus === "AET" || match.apiStatus === "PEN";
   const actualOutcome = finished ? outcomeOf(match.homeGoals!, match.awayGoals!, matchWinner) : null;
-  // Korrektheit bei K.-o.-Spielen mit V/E: DRAW + korrekter V/E-Sieger
+  // Korrektheit: bei AET/PEN + DRAW-Tipp muss auch V/E-Sieger stimmen
   let correct: boolean | null = null;
   if (match.myPrediction && finished) {
-    if (wentToET) {
-      if (match.myPrediction === "DRAW") {
-        correct = !!match.myKnockoutWinner && match.myKnockoutWinner === matchWinner;
-      } else {
-        correct = false;
-      }
+    if (wentToET && match.myPrediction === "DRAW") {
+      correct = !!match.myKnockoutWinner && match.myKnockoutWinner === matchWinner;
     } else {
       correct = actualOutcome ? match.myPrediction === actualOutcome : null;
     }
