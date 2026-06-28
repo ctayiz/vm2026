@@ -12,6 +12,7 @@ export type SafeUser = {
   role: string;
   blocked: boolean;
   onboardedAt: Date | null;
+  koModalSeenAt: Date | null;
   createdAt: Date;
 };
 
@@ -32,6 +33,7 @@ export const getCurrentUser = cache(async (): Promise<SafeUser | null> => {
       role: true,
       blocked: true,
       onboardedAt: true,
+      koModalSeenAt: true,
       createdAt: true,
     },
   });

@@ -11,3 +11,12 @@ export async function completeOnboardingAction(): Promise<{ ok: boolean }> {
   }
   return { ok: true };
 }
+
+/** Markiert das KO-Tipp-Modal für den aktuellen Nutzer als gesehen (einmalig). */
+export async function markKoModalSeenAction(): Promise<{ ok: boolean }> {
+  const user = await requireUser();
+  if (!user.koModalSeenAt) {
+    await db.user.update({ where: { id: user.id }, data: { koModalSeenAt: new Date() } });
+  }
+  return { ok: true };
+}

@@ -30,7 +30,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <AutoSync />
         <ScrollReset />
         <OnboardingModal initialOpen={!user.onboardedAt} />
-        <KoDrawModal />
+        <KoDrawModal initialOpen={!user.koModalSeenAt} />
         {/* fixed + fester pt am Inhalt = deterministisch: Leiste immer oben
             sichtbar, Inhalt IMMER darunter (kein sticky-in-flex-Bug auf iOS). */}
         <header className="fixed inset-x-0 top-0 z-40 border-b border-border bg-card/80 backdrop-blur">

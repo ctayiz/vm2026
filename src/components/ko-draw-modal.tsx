@@ -1,36 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { Trophy, CheckCircle2, XCircle } from "lucide-react";
+import { Trophy } from "lucide-react";
+import { markKoModalSeenAction } from "@/server/onboarding-actions";
 import { useT } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { POINTS } from "@/lib/constants";
 
-const STORAGE_KEY = "ko_draw_modal_v1";
-
-export function KoDrawModal() {
+export function KoDrawModal({ initialOpen }: { initialOpen: boolean }) {
   const t = useT();
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    try {
-      if (!localStorage.getItem(STORAGE_KEY)) {
-        setOpen(true);
-      }
-    } catch {
-      // localStorage unavailable (private browsing etc.)
-    }
-  }, []);
+  const [open, setOpen] = useState(initialOpen);
 
   const dismiss = () => {
     setOpen(false);
-    try {
-      localStorage.setItem(STORAGE_KEY, "1");
-    } catch {
-      // ignore
-    }
+    void markKoModalSeenAction().catch(() => {});
   };
 
   const m = t.koModal;
