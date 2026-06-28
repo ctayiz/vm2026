@@ -61,7 +61,7 @@ describe("outcomeOf (K.-o.-Sieger hat Vorrang vor Toren)", () => {
     expect(scorePrediction("AWAY_WIN", 1, 1, { winner: "HOME" })).toBe(0);
   });
   it("isCorrect mit Sieger", () => {
-    expect(isCorrect("AWAY_WIN", 2, 2, "AWAY")).toBe(true);
-    expect(isCorrect("DRAW", 2, 2, "AWAY")).toBe(false);
+    expect(isCorrect("AWAY_WIN", 2, 2, { winner: "AWAY" })).toBe(true);
+    expect(isCorrect("DRAW", 2, 2, { winner: "AWAY" })).toBe(false);
   });
 });

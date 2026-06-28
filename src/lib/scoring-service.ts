@@ -50,6 +50,8 @@ export async function rescoreMatch(matchId: string): Promise<{ scored: number }>
     const points = scorePrediction(p.prediction as Prediction, match.homeGoals, match.awayGoals, {
       jokerMultiplier: p.isJoker ? 2 : 1,
       winner: (match.winner as "HOME" | "AWAY" | null) ?? null,
+      apiStatus: match.apiStatus ?? null,
+      knockoutWinner: p.knockoutWinner ?? null,
     });
     await db.prediction.update({
       where: { id: p.id },

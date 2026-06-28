@@ -119,6 +119,8 @@ model Match {
   awayGoals  Int?
   // K.-o.-Sieger (auch nach Verlängerung/Elfmeter): "HOME" | "AWAY" | null
   winner     String?
+  // Genauer API-Football-Status: "FT" | "AET" | "PEN" | null (K.-o. Abschlussart)
+  apiStatus  String?
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -138,6 +140,8 @@ model Prediction {
   matchId    String
   // "HOME_WIN" | "DRAW" | "AWAY_WIN"
   prediction String
+  // Bei K.-o.-Spielen mit DRAW-Tipp (Verlängerung): wer gewinnt V/E? "HOME" | "AWAY" | null
+  knockoutWinner String?
   // Joker: verdoppelt die Punkte dieses Tipps (max. 1 pro Phase)
   isJoker    Boolean  @default(false)
   // vergebene Punkte (null = noch nicht ausgewertet)

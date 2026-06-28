@@ -254,7 +254,7 @@ export async function getMatches(userId: string) {
       awayTeam: true,
       predictions: {
         where: { userId },
-        select: { prediction: true, points: true, scored: true, isJoker: true },
+        select: { prediction: true, points: true, scored: true, isJoker: true, knockoutWinner: true },
       },
       goals: {
         orderBy: { minute: "asc" },
@@ -280,6 +280,7 @@ export async function getMatches(userId: string) {
   return matches.map((m) => ({
     ...m,
     myPrediction: (m.predictions[0]?.prediction as Prediction | undefined) ?? null,
+    myKnockoutWinner: (m.predictions[0]?.knockoutWinner as "HOME" | "AWAY" | undefined) ?? null,
     myPoints: m.predictions[0]?.points ?? null,
     myScored: m.predictions[0]?.scored ?? false,
     myJoker: m.predictions[0]?.isJoker ?? false,
@@ -296,7 +297,7 @@ export async function getMatchById(matchId: string, userId: string) {
       awayTeam: true,
       predictions: {
         where: { userId },
-        select: { prediction: true, points: true, scored: true, isJoker: true },
+        select: { prediction: true, points: true, scored: true, isJoker: true, knockoutWinner: true },
       },
       goals: {
         orderBy: { minute: "asc" },
@@ -308,6 +309,7 @@ export async function getMatchById(matchId: string, userId: string) {
   return {
     ...m,
     myPrediction: (m.predictions[0]?.prediction as Prediction | undefined) ?? null,
+    myKnockoutWinner: (m.predictions[0]?.knockoutWinner as "HOME" | "AWAY" | undefined) ?? null,
     myPoints: m.predictions[0]?.points ?? null,
     myScored: m.predictions[0]?.scored ?? false,
     myJoker: m.predictions[0]?.isJoker ?? false,

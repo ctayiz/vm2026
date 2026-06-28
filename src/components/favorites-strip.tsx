@@ -95,8 +95,9 @@ export function FavoritesStrip({ items }: { items: FavoriteOverview[] }) {
                   <PredictionPicker
                     matchId={next.id}
                     initialPrediction={(next.myPrediction as Prediction | null) ?? null}
+                    initialKnockoutWinner={(next.myKnockoutWinner as string | null) ?? null}
                     locked={nextLocked}
-                    allowDraw={next.phase === "GROUP"}
+                    isKnockout={next.phase !== "GROUP"}
                     homeShort={next.homeTeam?.code ?? t.match.home}
                     awayShort={next.awayTeam?.code ?? t.match.away}
                     compact

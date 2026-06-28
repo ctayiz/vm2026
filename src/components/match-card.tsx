@@ -61,8 +61,21 @@ export function MatchCard({
   const live = match.status === "live";
   const hasScore = match.homeGoals != null && match.awayGoals != null;
 
+  const wentToET = match.apiStatus === "AET" || match.apiStatus === "PEN";
   const actualOutcome = finished ? outcomeOf(match.homeGoals!, match.awayGoals!, matchWinner) : null;
-  const correct = match.myPrediction && actualOutcome ? match.myPrediction === actualOutcome : null;
+  // Korrektheit bei K.-o.-Spielen mit V/E: DRAW + korrekter V/E-Sieger
+  let correct: boolean | null = null;
+  if (match.myPrediction && finished) {
+    if (wentToET) {
+      if (match.myPrediction === "DRAW") {
+        correct = !!match.myKnockoutWinner && match.myKnockoutWinner === matchWinner;
+      } else {
+        correct = false;
+      }
+    } else {
+      correct = actualOutcome ? match.myPrediction === actualOutcome : null;
+    }
+  }
 
   // Live: liegt der eigene Tipp aktuell vorn? (vorläufig, noch keine Punkte)
   const liveOutcome = live && hasScore ? outcomeOf(match.homeGoals!, match.awayGoals!, matchWinner) : null;
@@ -160,7 +173,15 @@ export function MatchCard({
             <span className="flex items-center gap-1.5 text-muted-foreground">
               {match.myPrediction ? (
                 <>
-                  {t.match.yourTip}{" "}<span className="font-medium text-foreground">{PRED_LABEL[match.myPrediction]}</span>
+                  {t.match.yourTip}{" "}
+                  <span className="font-medium text-foreground">
+                    {PRED_LABEL[match.myPrediction]}
+                    {match.myPrediction === "DRAW" && isKnockout && match.myKnockoutWinner && (
+                      <span className="ml-1 text-muted-foreground">
+                        (+{match.myKnockoutWinner === "HOME" ? home.code : away.code})
+                      </span>
+                    )}
+                  </span>
                 </>
               ) : (
                 t.match.noTip
@@ -182,7 +203,15 @@ export function MatchCard({
             <span className="flex items-center gap-1.5 text-muted-foreground">
               {match.myPrediction ? (
                 <>
-                  {t.match.yourTip}{" "}<span className="font-medium text-foreground">{PRED_LABEL[match.myPrediction]}</span>
+                  {t.match.yourTip}{" "}
+                  <span className="font-medium text-foreground">
+                    {PRED_LABEL[match.myPrediction]}
+                    {match.myPrediction === "DRAW" && isKnockout && match.myKnockoutWinner && (
+                      <span className="ml-1 text-muted-foreground">
+                        (+{match.myKnockoutWinner === "HOME" ? home.code : away.code})
+                      </span>
+                    )}
+                  </span>
                 </>
               ) : (
                 t.match.noTip
@@ -210,8 +239,9 @@ export function MatchCard({
             <PredictionPicker
               matchId={match.id}
               initialPrediction={match.myPrediction}
+              initialKnockoutWinner={match.myKnockoutWinner}
               locked={locked}
-              allowDraw={!isKnockout}
+              isKnockout={isKnockout}
               homeShort={home.isReal ? home.code : t.match.home}
               awayShort={away.isReal ? away.code : t.match.away}
             />

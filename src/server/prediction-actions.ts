@@ -7,7 +7,7 @@ import { predictionSchema } from "@/lib/validation";
 import { isPickLocked } from "@/lib/lock";
 import { MAX_JOKERS, PHASE_META, type Phase } from "@/lib/constants";
 
-export type PredictionState = { ok: boolean; error?: string; prediction?: string };
+export type PredictionState = { ok: boolean; error?: string; prediction?: string; knockoutWinner?: string | null };
 
 /**
  * Tipp abgeben oder ändern. Alle Regeln werden SERVERSEITIG erzwungen:
@@ -37,10 +37,17 @@ export async function submitPredictionAction(
     return { ok: false, error: t.msg.matchNotFound };
   }
 
-  // K.-o.-Phase: kein Unentschieden möglich (Verlängerung/Elfmeter) – serverseitig erzwingen.
-  if (prediction === "DRAW" && PHASE_META[match.phase as Phase]?.knockout) {
-    return { ok: false, error: t.msg.noDrawKnockout };
+  const isKnockout = !!PHASE_META[match.phase as Phase]?.knockout;
+
+  // K.-o. + DRAW: V/E-Sieger muss angegeben werden
+  const rawKW = formData.get("knockoutWinner");
+  const knockoutWinner = rawKW === "HOME" || rawKW === "AWAY" ? rawKW : null;
+  if (prediction === "DRAW" && isKnockout && !knockoutWinner) {
+    return { ok: false, error: t.msg.needETWinner };
   }
+
+  // Beim direkten Sieg-Tipp keinen V/E-Sieger speichern
+  const effectiveKW = prediction === "DRAW" && isKnockout ? knockoutWinner : null;
 
   // Lock-Prüfung mit Server-Zeit (nicht manipulierbar durch Client).
   if (isPickLocked(match.kickoff)) {
@@ -49,15 +56,15 @@ export async function submitPredictionAction(
 
   await db.prediction.upsert({
     where: { userId_matchId: { userId: user.id, matchId } },
-    update: { prediction },
-    create: { userId: user.id, matchId, prediction },
+    update: { prediction, knockoutWinner: effectiveKW },
+    create: { userId: user.id, matchId, prediction, knockoutWinner: effectiveKW },
   });
 
   // KEIN revalidatePath hier: das würde die ganze Spielplan-Seite serverseitig
   // neu rendern (inkl. Leaderboard) und die Bestätigung um Sekunden verzögern.
   // Die Auswahl wird im UI optimistisch angezeigt; beim nächsten Seitenaufruf
   // (force-dynamic) sind die Daten ohnehin frisch.
-  return { ok: true, prediction };
+  return { ok: true, prediction, knockoutWinner: effectiveKW };
 }
 
 export type JokerState = { ok: boolean; error?: string; active?: boolean };

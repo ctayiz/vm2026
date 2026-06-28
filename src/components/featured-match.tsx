@@ -146,8 +146,9 @@ export function FeaturedMatch({ match }: { match: MatchWithPrediction }) {
             <PredictionPicker
               matchId={match.id}
               initialPrediction={match.myPrediction}
+              initialKnockoutWinner={match.myKnockoutWinner}
               locked={locked}
-              allowDraw={!PHASE_META[phase]?.knockout}
+              isKnockout={!!PHASE_META[phase]?.knockout}
               homeShort={home.real ? home.code : t.match.home}
               awayShort={away.real ? away.code : t.match.away}
             />

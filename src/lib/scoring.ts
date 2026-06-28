@@ -27,18 +27,39 @@ export function outcomeOf(
 }
 
 /**
- * Zentrale Scoring-Funktion (1X2). `winner` (K.-o.-Sieger) hat Vorrang vor dem
- * reinen Torergebnis.
+ * Zentrale Scoring-Funktion (1X2).
+ *
+ * KO-Besonderheit: War das Spiel ein K.-o.-Spiel das in die Verlängerung/
+ * ins Elfmeterschießen ging (apiStatus = "AET" | "PEN"), zählt:
+ *  - DRAW + korrekter V/E-Sieger (knockoutWinner = match.winner) → richtig
+ *  - HOME_WIN / AWAY_WIN → falsch (auch wenn das Team am Ende gewonnen hat)
+ * Bei regulärem FT-Ende oder Gruppenspiel gilt die normale 1X2-Logik.
  */
 export function scorePrediction(
   prediction: Prediction,
   homeGoals: number,
   awayGoals: number,
-  opts: { jokerMultiplier?: number; winner?: "HOME" | "AWAY" | null } = {},
+  opts: {
+    jokerMultiplier?: number;
+    winner?: "HOME" | "AWAY" | null;
+    apiStatus?: string | null;
+    knockoutWinner?: string | null;
+  } = {},
 ): number {
+  const multiplier = opts.jokerMultiplier ?? 1;
+
+  const wentToET = opts.apiStatus === "AET" || opts.apiStatus === "PEN";
+  if (wentToET) {
+    if (prediction === "DRAW") {
+      const correct = !!opts.knockoutWinner && opts.knockoutWinner === opts.winner;
+      return (correct ? POINTS.CORRECT_OUTCOME : POINTS.WRONG) * multiplier;
+    }
+    // Direkter Sieg getippt, aber Spiel ging in V/E → falsch
+    return POINTS.WRONG * multiplier;
+  }
+
   const actual = outcomeOf(homeGoals, awayGoals, opts.winner);
   const base = prediction === actual ? POINTS.CORRECT_OUTCOME : POINTS.WRONG;
-  const multiplier = opts.jokerMultiplier ?? 1;
   return base * multiplier;
 }
 
@@ -46,7 +67,12 @@ export function isCorrect(
   prediction: Prediction,
   homeGoals: number,
   awayGoals: number,
-  winner?: "HOME" | "AWAY" | null,
+  opts: { winner?: "HOME" | "AWAY" | null; apiStatus?: string | null; knockoutWinner?: string | null } = {},
 ): boolean {
-  return prediction === outcomeOf(homeGoals, awayGoals, winner);
+  const wentToET = opts.apiStatus === "AET" || opts.apiStatus === "PEN";
+  if (wentToET) {
+    if (prediction === "DRAW") return !!opts.knockoutWinner && opts.knockoutWinner === opts.winner;
+    return false;
+  }
+  return prediction === outcomeOf(homeGoals, awayGoals, opts.winner);
 }
