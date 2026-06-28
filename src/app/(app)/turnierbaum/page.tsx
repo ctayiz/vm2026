@@ -17,6 +17,7 @@ const COLUMNS: Phase[] = ["R32", "R16", "QF", "SF", "FINAL"];
 
 type BracketMatch = {
   id: string;
+  externalId: string;
   phase: string;
   kickoff: Date;
   status: string;
@@ -141,13 +142,17 @@ function buildBracketCols(matches: BracketMatch[]): { phase: Phase; matches: Bra
   const PHASE_START: Partial<Record<string, number>> = {
     R32: 73, R16: 89, QF: 97, SF: 101,
   };
-  const sortedByKickoff = (p: string) =>
-    matches.filter((m) => m.phase === p).sort((a, b) => +new Date(a.kickoff) - +new Date(b.kickoff));
+  // Sortierung nach dem numerischen Teil der externalId (fd-XXXXXX).
+  // Football-data.org vergibt Match-Nummern intern in dieser Reihenfolge –
+  // die W<n>-Platzhalter referenzieren genau diese Nummern, NICHT die Anpfiff-Zeit.
+  const fdNum = (m: BracketMatch) => parseInt(m.externalId.replace(/\D/g, "")) || 0;
+  const sortedByFdId = (p: string) =>
+    matches.filter((m) => m.phase === p).sort((a, b) => fdNum(a) - fdNum(b));
 
   // Map: competition match number → BracketMatch
   const numToMatch = new Map<number, BracketMatch>();
   for (const [phase, start] of Object.entries(PHASE_START) as [string, number][]) {
-    sortedByKickoff(phase).forEach((m, i) => numToMatch.set(start + i, m));
+    sortedByFdId(phase).forEach((m, i) => numToMatch.set(start + i, m));
   }
 
   const parseW = (s: string | null): number | null => {
@@ -181,7 +186,7 @@ function buildBracketCols(matches: BracketMatch[]): { phase: Phase; matches: Bra
   };
 
   // Start DFS from each FINAL match (normalerweise genau eines)
-  for (const m of sortedByKickoff("FINAL")) {
+  for (const m of sortedByFdId("FINAL")) {
     visit(m);
   }
 
@@ -189,10 +194,10 @@ function buildBracketCols(matches: BracketMatch[]): { phase: Phase; matches: Bra
     phase,
     matches:
       phase === "FINAL"
-        ? sortedByKickoff("FINAL")
+        ? sortedByFdId("FINAL")
         : ordered[phase]?.length
           ? ordered[phase]!
-          : sortedByKickoff(phase), // Fallback falls DFS fehlschlägt
+          : sortedByFdId(phase), // Fallback falls DFS fehlschlägt
   })).filter((c) => c.matches.length > 0);
 }
 
