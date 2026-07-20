@@ -32,6 +32,10 @@ model User {
   onboardedAt     DateTime?
   // Zeitpunkt nach dem der KO-Tipp-Hinweis bestätigt wurde (null = noch nicht gesehen)
   koModalSeenAt   DateTime?
+  // Sieger-Modal (Weltmeister + Top 3) nach dem Finale – einmalig anzeigen
+  winnerModalSeenAt DateTime?
+  // Danke-/Abschluss-Modal (Familie Tayiz) nach dem Sieger-Modal – einmalig anzeigen
+  farewellModalSeenAt DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -123,6 +127,9 @@ model Match {
   winner     String?
   // Genauer API-Football-Status: "FT" | "AET" | "PEN" | null (K.-o. Abschlussart)
   apiStatus  String?
+  // Elfmeterschießen-Stand (nur bei apiStatus = "PEN"), sonst null
+  homePenalties Int?
+  awayPenalties Int?
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt

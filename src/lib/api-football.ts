@@ -82,6 +82,9 @@ export interface ApiFixture {
   awayName: string;
   homeGoals: number | null;
   awayGoals: number | null;
+  // Elfmeterschießen-Stand (nur bei status = "PEN"), sonst null
+  homePenalties: number | null;
+  awayPenalties: number | null;
   status: string; // API-Football short status (NS, FT, 1H, …)
   // Sieger laut API (auch nach Verlängerung/Elfmeter); null = unentschieden/offen
   homeWinner: boolean | null;
@@ -101,6 +104,8 @@ function mapFixture(r: any): ApiFixture {
     awayName: r.teams?.away?.name ?? "",
     homeGoals: r.goals?.home ?? null,
     awayGoals: r.goals?.away ?? null,
+    homePenalties: r.score?.penalty?.home ?? null,
+    awayPenalties: r.score?.penalty?.away ?? null,
     status: r.fixture?.status?.short ?? "NS",
     homeWinner: r.teams?.home?.winner ?? null,
     awayWinner: r.teams?.away?.winner ?? null,

@@ -1,7 +1,8 @@
 import "server-only";
 import { db } from "./db";
 import { buildLeaderboard, type LeaderboardRow, type UserScoreInput } from "./ranking";
-import { TOURNAMENT_QUESTIONS, getQuestion, type Prediction } from "./constants";
+import { TOURNAMENT_QUESTIONS, getQuestion, PHASES, type Prediction, type Phase } from "./constants";
+import { isCorrect } from "./scoring";
 import { betStatus, topScorerNameMatches } from "./tournament";
 import { pickLastAndNext } from "./favorites";
 import { isPickLocked } from "./lock";
@@ -417,4 +418,235 @@ export async function getTeamProfile(code: string) {
   });
 
   return { team, matches };
+}
+
+export interface FinaleCelebration {
+  champion: { name: string; flagCode: string | null };
+  final: {
+    homeName: string;
+    awayName: string;
+    homeGoals: number;
+    awayGoals: number;
+    /** "AET" = nach Verlängerung, "PEN" = nach Elfmeterschießen, sonst null */
+    decider: "AET" | "PEN" | null;
+    homePenalties: number | null;
+    awayPenalties: number | null;
+  };
+  top3: {
+    rank: number;
+    displayName: string;
+    totalPoints: number;
+    matchPoints: number;
+    bonusPoints: number;
+  }[];
+}
+
+/**
+ * Daten für das Sieger-Modal nach dem Finale: Weltmeister, Finalergebnis und
+ * die drei besten Mitspieler. Gibt null zurück, solange das Finale nicht
+ * beendet ist – dann wird das Modal gar nicht erst gerendert.
+ */
+export async function getFinaleCelebration(): Promise<FinaleCelebration | null> {
+  const final = await db.match.findFirst({
+    where: { phase: "FINAL", status: "finished" },
+    include: { homeTeam: true, awayTeam: true },
+  });
+  if (!final || final.homeGoals == null || final.awayGoals == null) return null;
+  if (!final.homeTeam || !final.awayTeam) return null;
+
+  // Sieger: K.-o.-Feld hat Vorrang (deckt Verlängerung/Elfmeter ab), sonst Tore.
+  const championIsHome =
+    final.winner === "HOME" ||
+    (final.winner !== "AWAY" && final.homeGoals > final.awayGoals);
+  const champion = championIsHome ? final.homeTeam : final.awayTeam;
+
+  const board = await getLeaderboard();
+  const top3 = board.slice(0, 3).map((r) => {
+    const bonusPoints = r.bonusPoints ?? 0;
+    return {
+      rank: r.rank,
+      displayName: r.displayName,
+      totalPoints: r.totalPoints,
+      matchPoints: r.totalPoints - bonusPoints,
+      bonusPoints,
+    };
+  });
+  if (top3.length === 0) return null;
+
+  return {
+    champion: { name: champion.name, flagCode: champion.flagCode },
+    final: {
+      homeName: final.homeTeam.name,
+      awayName: final.awayTeam.name,
+      homeGoals: final.homeGoals,
+      awayGoals: final.awayGoals,
+      decider: final.apiStatus === "AET" || final.apiStatus === "PEN" ? final.apiStatus : null,
+      homePenalties: final.homePenalties,
+      awayPenalties: final.awayPenalties,
+    },
+    top3,
+  };
+}
+
+// --- Persönlicher Turnier-Rückblick (History eines Nutzers) ----------------
+
+export interface RecapMatch {
+  id: string;
+  phase: Phase;
+  homeName: string;
+  homeCode: string | null;
+  homeFlag: string | null;
+  awayName: string;
+  awayCode: string | null;
+  awayFlag: string | null;
+  homeGoals: number;
+  awayGoals: number;
+  /** "AET"/"PEN" für K.-o.-Abschlussart, sonst null */
+  apiStatus: string | null;
+  homePenalties: number | null;
+  awayPenalties: number | null;
+  winner: "HOME" | "AWAY" | null;
+  prediction: Prediction;
+  knockoutWinner: "HOME" | "AWAY" | null;
+  joker: boolean;
+  points: number | null;
+  correct: boolean;
+}
+
+export interface RecapBonus {
+  key: string;
+  pickLabel: string;
+  flagCode: string | null;
+  points: number | null;
+  status: "fulfilled" | "missed" | "open";
+}
+
+export interface UserRecap {
+  rank: number | null;
+  totalPlayers: number;
+  totalPoints: number;
+  matchPoints: number;
+  bonusPoints: number;
+  correctCount: number;
+  scoredCount: number;
+  jokersUsed: number;
+  phases: { phase: Phase; matches: RecapMatch[] }[];
+  bonus: RecapBonus[];
+}
+
+/**
+ * Persönliche Turnier-History eines Nutzers: alle getippten (beendeten) Spiele
+ * nach Phase gruppiert, plus Bonus-Tipps und eine Kennzahlen-Zusammenfassung.
+ * `board` kann durchgereicht werden, um das Leaderboard nicht doppelt zu laden.
+ */
+export async function getUserRecap(userId: string, board?: LeaderboardRow[]): Promise<UserRecap> {
+  const [matches, td, lb] = await Promise.all([
+    getMatches(userId),
+    getTournamentData(userId),
+    board ? Promise.resolve(board) : getLeaderboard(),
+  ]);
+
+  // Nur eigene Tipps auf bereits beendete Spiele.
+  const mine = matches.filter(
+    (m) => m.myPrediction && m.status === "finished" && m.homeGoals != null && m.awayGoals != null,
+  );
+
+  const byPhase = new Map<Phase, RecapMatch[]>();
+  let matchPoints = 0;
+  let correctCount = 0;
+  let jokersUsed = 0;
+
+  for (const m of mine) {
+    const phase = m.phase as Phase;
+    const winner = (m.winner as "HOME" | "AWAY" | null) ?? null;
+    const pred = m.myPrediction as Prediction;
+    const koWinner = (m.myKnockoutWinner as "HOME" | "AWAY" | null) ?? null;
+    matchPoints += m.myPoints ?? 0;
+    if ((m.myPoints ?? 0) > 0) correctCount++;
+    if (m.myJoker) jokersUsed++;
+
+    const rec: RecapMatch = {
+      id: m.id,
+      phase,
+      homeName: m.homeTeam?.name ?? m.homePlaceholder ?? "—",
+      homeCode: m.homeTeam?.code ?? null,
+      homeFlag: m.homeTeam?.flagCode ?? null,
+      awayName: m.awayTeam?.name ?? m.awayPlaceholder ?? "—",
+      awayCode: m.awayTeam?.code ?? null,
+      awayFlag: m.awayTeam?.flagCode ?? null,
+      homeGoals: m.homeGoals!,
+      awayGoals: m.awayGoals!,
+      apiStatus: m.apiStatus ?? null,
+      homePenalties: m.homePenalties ?? null,
+      awayPenalties: m.awayPenalties ?? null,
+      winner,
+      prediction: pred,
+      knockoutWinner: koWinner,
+      joker: m.myJoker,
+      points: m.myPoints,
+      correct: isCorrect(pred, m.homeGoals!, m.awayGoals!, {
+        winner,
+        apiStatus: m.apiStatus,
+        knockoutWinner: koWinner,
+      }),
+    };
+    const arr = byPhase.get(phase) ?? [];
+    arr.push(rec);
+    byPhase.set(phase, arr);
+  }
+
+  const phases = PHASES.filter((p) => byPhase.has(p)).map((p) => ({
+    phase: p,
+    matches: byPhase.get(p)!,
+  }));
+
+  // Bonus-Tipps: nur Fragen, auf die der Nutzer tatsächlich getippt hat.
+  const bonus: RecapBonus[] = td.questions
+    .filter((q) => q.pickedTeam || q.pickedPlayer || q.pickedPlayerName)
+    .map((q) => ({
+      key: q.key,
+      pickLabel: q.pickedTeam?.name ?? q.pickedPlayer?.name ?? q.pickedPlayerName ?? "—",
+      flagCode: q.pickedTeam?.flagCode ?? q.pickedPlayer?.team?.flagCode ?? null,
+      points: q.earnedPoints,
+      status: q.status,
+    }));
+  const bonusPoints = bonus.reduce((s, b) => s + (b.points ?? 0), 0);
+
+  const row = lb.find((r) => r.userId === userId) ?? null;
+
+  return {
+    rank: row?.rank ?? null,
+    totalPlayers: lb.length,
+    totalPoints: matchPoints + bonusPoints,
+    matchPoints,
+    bonusPoints,
+    correctCount,
+    scoredCount: mine.length,
+    jokersUsed,
+    phases,
+    bonus,
+  };
+}
+
+export interface FarewellData {
+  /** Tippspiel-Sieger (Leaderboard Platz 1); null, falls (theoretisch) keiner. */
+  winner: { displayName: string; totalPoints: number } | null;
+  recap: UserRecap;
+}
+
+/**
+ * Daten für das Danke-/Abschluss-Modal (Familie Tayiz): Tippspiel-Sieger +
+ * die persönliche History des aktuellen Nutzers. Gibt null zurück, solange das
+ * Turnier nicht beendet ist – dann wird das Modal gar nicht erst gerendert.
+ */
+export async function getFarewellData(userId: string): Promise<FarewellData | null> {
+  if (!(await isTournamentFinished())) return null;
+  const board = await getLeaderboard();
+  if (board.length === 0) return null;
+  const recap = await getUserRecap(userId, board);
+  const champ = board[0];
+  return {
+    winner: champ ? { displayName: champ.displayName, totalPoints: champ.totalPoints } : null,
+    recap,
+  };
 }

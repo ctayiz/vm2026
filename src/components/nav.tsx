@@ -45,6 +45,7 @@ export function Nav({ isAdmin }: { isAdmin: boolean }) {
       children: [
         { href: "/statistiken", label: t.nav.stats },
         { href: "/meine-tipps", label: t.nav.myTips },
+        { href: "/rueckblick", label: t.nav.recap },
       ],
     },
     ...(isAdmin ? [{ kind: "link" as const, href: "/admin", label: t.nav.admin, icon: Shield }] : []),

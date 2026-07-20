@@ -230,8 +230,12 @@ export async function syncApiFootball(): Promise<SyncResult> {
       // Immer schreiben (auch null), damit falsch gesetzte winner-Felder
       // beim nächsten Sync selbst korrigiert werden.
       data.winner = winner;
-      // Abschlussart speichern: FT = reguläre Zeit, AET = Verlängerung, PEN = Elfmeter
-      if (status === "finished") data.apiStatus = f.status;
+      // Abschlussart + Elfmeterschießen-Stand (gleiche Orientierung wie die Tore).
+      if (status === "finished") {
+        data.apiStatus = f.status;
+        data.homePenalties = sameOrient ? f.homePenalties : f.awayPenalties;
+        data.awayPenalties = sameOrient ? f.awayPenalties : f.homePenalties;
+      }
     }
 
     if (Object.keys(data).length === 0) continue;

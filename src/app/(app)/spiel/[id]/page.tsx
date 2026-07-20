@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { unstable_cache } from "next/cache";
 import Link from "next/link";
 import { ChevronLeft, MapPin, CalendarDays, User, Shirt, BarChart3, ListOrdered, Goal, ArrowRightLeft, Square } from "lucide-react";
 import { requireUser } from "@/lib/auth";
@@ -26,11 +27,21 @@ export default async function MatchDetailPage({ params }: { params: { id: string
   const match = await getMatchById(params.id, user.id);
   if (!match) notFound();
 
+  // API-Detail (Aufstellungen/Events/Statistik) GECACHT laden: sonst löst jede
+  // einzelne Seitenansicht einen eigenen API-Football-Abruf aus und verbrennt bei
+  // vielen Zuschauern das Tageskontingent. Beendete Spiele ändern sich nicht mehr
+  // -> lange TTL; laufende/kommende Spiele -> 60s (deckt sich mit dem Live-Sync).
   let detail: FixtureDetail | null = null;
   let loadError = false;
   if (match.apiFixtureId) {
+    const ttl = match.status === "finished" ? 3600 : 60;
+    const fixtureId = Number(match.apiFixtureId);
     try {
-      detail = await fetchFixtureDetail(Number(match.apiFixtureId));
+      detail = await unstable_cache(
+        () => fetchFixtureDetail(fixtureId),
+        ["fixture-detail", String(fixtureId)],
+        { revalidate: ttl },
+      )();
     } catch {
       loadError = true;
     }

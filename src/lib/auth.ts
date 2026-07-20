@@ -13,6 +13,8 @@ export type SafeUser = {
   blocked: boolean;
   onboardedAt: Date | null;
   koModalSeenAt: Date | null;
+  winnerModalSeenAt: Date | null;
+  farewellModalSeenAt: Date | null;
   createdAt: Date;
 };
 
@@ -34,6 +36,8 @@ export const getCurrentUser = cache(async (): Promise<SafeUser | null> => {
       blocked: true,
       onboardedAt: true,
       koModalSeenAt: true,
+      winnerModalSeenAt: true,
+      farewellModalSeenAt: true,
       createdAt: true,
     },
   });

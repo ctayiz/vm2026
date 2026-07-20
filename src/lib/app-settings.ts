@@ -18,11 +18,37 @@ export async function setSetting(key: string, value: string): Promise<void> {
 /**
  * Throttle-Helfer: gibt true zurück (und merkt sich "jetzt"), wenn seit dem
  * letzten Mal mehr als `minMs` vergangen sind. Sonst false.
- * Setzt den Zeitstempel SOFORT, um parallele Mehrfach-Läufe zu verhindern.
+ *
+ * ATOMAR (compare-and-swap): Nur der Aufruf, der den Zeitstempel exakt von
+ * `last` auf `now` umsetzt, gewinnt (updateMany trifft genau 1 Zeile). Parallele
+ * Aufrufe mit demselben `last` treffen 0 Zeilen -> false. Ohne diese Atomarität
+ * lesen bei einem Live-Spiel viele offene Tabs/Nutzer denselben alten Zeitstempel,
+ * bestehen alle den Check und lösen GLEICHZEITIG echte API-Abrufe aus – das
+ * verbrennt das Tageskontingent von API-Football um ein Vielfaches.
  */
 export async function shouldRun(key: string, minMs: number, now: number = Date.now()): Promise<boolean> {
   const last = await getSetting(key);
   if (last && now - Number(last) < minMs) return false;
-  await setSetting(key, String(now));
-  return true;
+
+  if (last == null) {
+    // Key existiert noch nicht: anlegen. Bei Race (unique-Konflikt) als CAS behandeln.
+    try {
+      await db.appSetting.create({ data: { key, value: String(now) } });
+      return true;
+    } catch {
+      const cur = await getSetting(key);
+      if (cur && now - Number(cur) < minMs) return false;
+      const res = await db.appSetting.updateMany({
+        where: { key, value: cur ?? undefined },
+        data: { value: String(now) },
+      });
+      return res.count > 0;
+    }
+  }
+
+  const res = await db.appSetting.updateMany({
+    where: { key, value: last },
+    data: { value: String(now) },
+  });
+  return res.count > 0;
 }

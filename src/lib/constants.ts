@@ -104,7 +104,7 @@ export const TOURNAMENT_QUESTIONS: TournamentQuestion[] = [
   {
     key: "final",
     label: "Welches Team erreicht das Finale?",
-    hint: "Punkte, wenn dein Team im Endspiel steht.",
+    hint: "Punkte am Turnierende, wenn dein Team das Finale erreicht hat.",
     target: "FINAL",
     points: 10,
     pick: "TEAM",
@@ -113,7 +113,7 @@ export const TOURNAMENT_QUESTIONS: TournamentQuestion[] = [
   {
     key: "semi",
     label: "Welches Team erreicht das Halbfinale?",
-    hint: "Punkte ab Erreichen des Halbfinales.",
+    hint: "Punkte am Turnierende, wenn dein Team das Halbfinale erreicht hat.",
     target: "SF",
     points: 7,
     pick: "TEAM",
@@ -122,7 +122,7 @@ export const TOURNAMENT_QUESTIONS: TournamentQuestion[] = [
   {
     key: "r16",
     label: "Welches Team erreicht das Achtelfinale?",
-    hint: "Punkte ab Erreichen des Achtelfinales.",
+    hint: "Punkte am Turnierende, wenn dein Team das Achtelfinale erreicht hat.",
     target: "R16",
     points: 5,
     pick: "TEAM",
@@ -131,7 +131,7 @@ export const TOURNAMENT_QUESTIONS: TournamentQuestion[] = [
   {
     key: "r32",
     label: "Welches Team erreicht die Runde der letzten 32?",
-    hint: "Punkte ab Erreichen der K.-o.-Phase.",
+    hint: "Punkte am Turnierende, wenn dein Team die K.-o.-Phase erreicht hat.",
     target: "R32",
     points: 3,
     pick: "TEAM",

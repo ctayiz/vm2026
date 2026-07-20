@@ -9,6 +9,9 @@ import { UserAvatar } from "@/components/user-avatar";
 import { AutoSync } from "@/components/auto-sync";
 import { OnboardingModal } from "@/components/onboarding-modal";
 import { KoDrawModal } from "@/components/ko-draw-modal";
+import { WinnerModal } from "@/components/winner-modal";
+import { FarewellModal } from "@/components/farewell-modal";
+import { getFinaleCelebration, getFarewellData } from "@/lib/queries";
 import { ScrollReset } from "@/components/scroll-reset";
 import { I18nProvider } from "@/components/i18n-provider";
 import { LanguageToggle } from "@/components/language-toggle";
@@ -19,6 +22,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const admin = isAdmin(user);
   const locale = getLocale();
   const t = getDictionary();
+  // Nur laden, solange der Nutzer das Sieger-Modal noch nicht gesehen hat –
+  // danach entfällt die Abfrage bei jedem Seitenaufruf komplett.
+  const celebration = user.winnerModalSeenAt ? null : await getFinaleCelebration();
+  // Danke-Modal kommt NACH dem Sieger-Modal: erst laden, wenn das Sieger-Modal
+  // bereits gesehen und das Danke-Modal noch nicht bestätigt wurde. Gibt selbst
+  // null zurück, solange das Turnier nicht beendet ist.
+  const farewell =
+    user.winnerModalSeenAt && !user.farewellModalSeenAt ? await getFarewellData(user.id) : null;
 
   return (
     <I18nProvider locale={locale}>
@@ -30,7 +41,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <AutoSync />
         <ScrollReset />
         <OnboardingModal initialOpen={!user.onboardedAt} />
-        <KoDrawModal initialOpen={!user.koModalSeenAt} />
+        {/* Nach dem Finale hat das Sieger-Modal Vorrang – der KO-Tipp-Hinweis
+            ist dann ohnehin gegenstandslos und würde sich sonst überlagern. */}
+        <KoDrawModal initialOpen={!user.koModalSeenAt && !celebration && !farewell} />
+        {celebration && <WinnerModal data={celebration} />}
+        {farewell && <FarewellModal data={farewell} />}
         {/* fixed + fester pt am Inhalt = deterministisch: Leiste immer oben
             sichtbar, Inhalt IMMER darunter (kein sticky-in-flex-Bug auf iOS). */}
         <header className="fixed inset-x-0 top-0 z-40 border-b border-border bg-card/80 backdrop-blur">

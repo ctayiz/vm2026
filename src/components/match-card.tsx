@@ -62,6 +62,7 @@ export function MatchCard({
   const hasScore = match.homeGoals != null && match.awayGoals != null;
 
   const wentToET = match.apiStatus === "AET" || match.apiStatus === "PEN";
+  const isPen = match.apiStatus === "PEN" && match.homePenalties != null && match.awayPenalties != null;
   const actualOutcome = finished ? outcomeOf(match.homeGoals!, match.awayGoals!, matchWinner) : null;
   // Korrektheit: bei AET/PEN + DRAW-Tipp muss auch V/E-Sieger stimmen
   let correct: boolean | null = null;
@@ -112,7 +113,7 @@ export function MatchCard({
           </div>
 
           {/* Mitte: Ergebnis (auch live) oder vs */}
-          <div className="shrink-0 px-2 text-center">
+          <div className="flex shrink-0 flex-col items-center px-2 text-center">
             {finished || (live && hasScore) ? (
               <span
                 className={cn(
@@ -124,6 +125,14 @@ export function MatchCard({
               </span>
             ) : (
               <span className="text-xs font-medium text-muted-foreground">{t.common.vs}</span>
+            )}
+            {finished && isPen && (
+              <span className="mt-0.5 text-[10px] font-medium tabular-nums text-muted-foreground">
+                {t.bracket.afterPenalties} {match.homePenalties}:{match.awayPenalties}
+              </span>
+            )}
+            {finished && !isPen && match.apiStatus === "AET" && (
+              <span className="mt-0.5 text-[10px] font-medium text-muted-foreground">{t.bracket.afterExtraTime}</span>
             )}
           </div>
 
